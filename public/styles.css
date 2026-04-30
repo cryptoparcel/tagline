@@ -18,6 +18,28 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+/* Skip-to-content link — first focusable element on every page.
+   Visually hidden until focused. Required for keyboard users to bypass
+   the nav (WCAG 2.4.1 "Bypass Blocks"). */
+.skip-link{
+  position:absolute;
+  top:8px;left:8px;
+  padding:10px 14px;
+  background:var(--gold);
+  color:#08080a;
+  font-size:13px;font-weight:600;
+  letter-spacing:.06em;
+  border-radius:4px;
+  z-index:1000;
+  transform:translateY(-150%);
+  transition:transform .15s ease;
+}
+.skip-link:focus{
+  transform:translateY(0);
+  outline:2px solid var(--ink);
+  outline-offset:2px;
+}
 html{
   scroll-behavior:smooth;
   -webkit-text-size-adjust:100%;

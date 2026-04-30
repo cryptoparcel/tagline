@@ -474,6 +474,31 @@
   let qvCurrentProduct = null;
   let qvCurrentSize = null;
   let qvCurrentQty = 1;
+  let qvLastFocus = null; // element to restore focus to on close
+
+  // Focus trap via the `inert` attribute. When set on an element,
+  // it and all its descendants become unfocusable and invisible to
+  // assistive tech. Setting it on the drawer's siblings means
+  // keyboard users can't Tab out of the drawer, satisfying
+  // WAI-ARIA APG "Dialog (Modal)" focus-trap requirement.
+  function lockBackground() {
+    const drawer = document.getElementById('qvDrawer');
+    const backdrop = document.getElementById('qvBackdrop');
+    Array.from(document.body.children).forEach(el => {
+      if (el === drawer || el === backdrop) return;
+      // Don't double-set or accidentally trap our own toast announcements
+      if (!el.hasAttribute('inert')) {
+        el.setAttribute('inert', '');
+        el.dataset.qvInertSet = '1';
+      }
+    });
+  }
+  function unlockBackground() {
+    document.querySelectorAll('[data-qv-inert-set]').forEach(el => {
+      el.removeAttribute('inert');
+      delete el.dataset.qvInertSet;
+    });
+  }
 
   function getQvElements() {
     return {
@@ -576,6 +601,9 @@
       els.addBtn.classList.remove('added');
     }
 
+    // Remember where focus was before the drawer opened (we'll restore on close)
+    qvLastFocus = document.activeElement;
+
     // Show drawer
     els.backdrop.removeAttribute('hidden');
     els.drawer.removeAttribute('hidden');
@@ -584,6 +612,7 @@
       els.drawer.classList.add('open');
     });
     document.body.classList.add('qv-open');
+    lockBackground();
 
     // Focus close button for keyboard accessibility
     setTimeout(() => els.closeBtn && els.closeBtn.focus(), 100);
@@ -595,11 +624,17 @@
     els.backdrop.classList.remove('open');
     els.drawer.classList.remove('open');
     document.body.classList.remove('qv-open');
+    unlockBackground();
     setTimeout(() => {
       els.backdrop.setAttribute('hidden', '');
       els.drawer.setAttribute('hidden', '');
     }, 400);
     qvCurrentProduct = null;
+    // Restore focus to the element that opened the drawer
+    if (qvLastFocus && typeof qvLastFocus.focus === 'function') {
+      try { qvLastFocus.focus(); } catch {}
+    }
+    qvLastFocus = null;
   }
 
   function selectSize(size) {

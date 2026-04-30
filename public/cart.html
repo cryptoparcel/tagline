@@ -203,13 +203,16 @@
       return;
     }
 
-    sub.textContent = `${items.reduce((s,i)=>s+i.quantity,0)} item${items.length === 1 ? '' : 's'} in your cart`;
+    // Filter out items whose product isn't in our catalog (deleted or unknown).
+    // Avoids the "items in your cart" count diverging from what's rendered.
+    const validItems = items.filter(i => PRODUCT_DATA[i.product_id]);
+    const totalQty = validItems.reduce((s,i)=>s+i.quantity,0);
+    sub.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} in your cart`;
 
     let subtotal = 0;
     const esc = window.Tagline.escapeHtml;
-    const itemsHtml = items.map((item, idx) => {
+    const itemsHtml = validItems.map((item, idx) => {
       const p = PRODUCT_DATA[item.product_id];
-      if (!p) return '';
       const lineTotal = p.price * item.quantity;
       subtotal += lineTotal;
       const sizeLabel = item.size ? `<div class="color">Size: ${esc(item.size)}</div>` : '';
@@ -254,9 +257,9 @@
         </aside>
       </div>
     `;
-
-    container.addEventListener('click', handleClick);
-    document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+    // Note: click handler is attached once in init via event delegation,
+    // so we don't re-attach here (which used to leak handlers per render
+    // and cause multi-step quantity updates).
   }
 
   function handleClick(e) {
@@ -313,11 +316,24 @@
     }
   }
 
-  // Wait for app to load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', render);
-  } else {
+  // Single delegated click handler for qty +/-/remove and checkout —
+  // attached once on the static container, not re-attached on each render.
+  function init() {
+    const container = document.getElementById('cartContent');
+    container.addEventListener('click', (e) => {
+      if (e.target.id === 'checkoutBtn') {
+        handleCheckout();
+        return;
+      }
+      handleClick(e);
+    });
     render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
   window.addEventListener('cart:updated', render);
 })();

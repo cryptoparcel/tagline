@@ -92,6 +92,62 @@ This file tracks specific bugs discovered during code review and what was done a
 
 ---
 
+---
+
+## Fixed in second-pass audit
+
+### 8. CRITICAL — cart.html event-listener leak caused multi-step quantity changes
+
+**Symptom:** after a few interactions on the cart page, clicking the "+" button on a line item would advance the quantity by 2, then 3, then 4 in a single click. Same for "−" and Remove.
+
+**Root cause:** [public/cart.html](../public/cart.html) `render()` re-attached a `click` listener to `#cartContent` on every render. Each cart change triggered `cart:updated` → `render()` → another listener added on top of the existing ones. After N renders, a single click fired N handlers, each calling `cart.updateQuantity(...)` independently.
+
+**Fix:** moved the listener attachment to a one-time `init()` function. The container's listener uses event delegation (`e.target` checks) so it survives `innerHTML` replacements.
+
+**Source:** Classic event-listener leak pattern; see MDN "EventTarget.addEventListener" — "Multiple identical event listeners".
+
+---
+
+### 9. api/profile.js partial-address PATCH wiped the existing address
+
+**Symptom:** if a client sent `{shipping_address: {city: 'NYC'}}` to PATCH /api/profile, the entire shipping_address column got overwritten with `{city: 'NYC'}` — losing line1, state, zip.
+
+**Root cause:** the column is a JSONB blob; we replace it on update. The sanitizer let any subset of fields through.
+
+**Fix:** [api/profile.js](../api/profile.js) `sanitizeAddress` now requires `line1, city, state, zip` together (country defaults to 'US' if omitted). The UI in [account.html](../public/account.html) already enforced this client-side; this hardens the server too (defense in depth).
+
+**Source:** OWASP ASVS V8.3.6 — "Verify that data validators are present at the application boundary."
+
+---
+
+### 10. customize.html had a broken `#sizing` link
+
+**Symptom:** "Need help? Size guide" link on /customize did nothing — anchor `#sizing` doesn't exist on the customize page.
+
+**Fix:** changed to `/sizing` (the actual size-guide page).
+
+---
+
+### 11. Email-confirmation handler didn't strip token from URL on auth failure
+
+**Symptom:** if Supabase's `/auth/v1/user` call failed (network blip, expired token), the URL still contained `#access_token=...&type=signup`. A page refresh would re-trigger the attempt; sharing the URL or screenshotting it would leak the token.
+
+**Fix:** [tagline-app.js](../public/tagline-app.js) `handleAuthHash` now strips the hash *before* calling Supabase — the token is consumed regardless of whether auth succeeds. If auth fails, the user just sees the page they landed on without any session set.
+
+**Source:** OWASP ASVS V3.5 — "Verify that tokens are not exposed in URLs unless absolutely necessary."
+
+---
+
+### 12. Add-to-cart silently lied about success when cart was full
+
+**Symptom:** `Cart.add()` returns `false` when the 50-item cap is hit or input is invalid, but two callers (`wireAddToCart` and `addQuickViewToCart` in [tagline-app.js](../public/tagline-app.js)) ignored the return value and showed "Added ✓" anyway. User thinks they added an item; cart is unchanged.
+
+**Fix:** both callers now check the return; on `false` they show "Cart full" / "Cart is full" instead of the success state.
+
+**Source:** Defensive UI; NN/g "Visibility of system status" heuristic.
+
+---
+
 ## Known issues — not yet fixed
 
 These are tracked in [IMPROVEMENTS.md](../IMPROVEMENTS.md) but flagged here so you don't deploy unaware.
@@ -113,9 +169,11 @@ These are tracked in [IMPROVEMENTS.md](../IMPROVEMENTS.md) but flagged here so y
 ### Frontend
 
 - **`window.confirm()` for sign-out** ([public/account.html](../public/account.html)) is functional but ugly and not accessible across all platforms equally.
-- **No "Forgot password?" link** on signin page.
-- **Admin dashboard uses raw `fetch`** ([public/admin.html](../public/admin.html)) instead of the shared `Tagline.API` client — duplicated error handling and no preview-mode plumbing.
+- **Admin dashboard uses raw `fetch`** ([public/admin.html](../public/admin.html)) instead of the shared `Tagline.API` client — duplicated error handling and no preview-mode plumbing. Also: `res.json()` on a 404 HTML response would throw and break the dashboard.
 - **`o.id.slice(0,8)` in [public/account.html](../public/account.html)** assumes `o.id` is non-null. The DB schema makes this true (`uuid not null`), so this is a latent issue at most — but worth noting.
+- **Triple-duplicated product catalog**: [public/tagline-app.js](../public/tagline-app.js), [public/cart.html](../public/cart.html), and [public/wishlist.html](../public/wishlist.html) each maintain their own copy of the 24-product map. A price change has to be made in three places (plus Supabase). High drift hazard — see IMPROVEMENTS.md #77.
+- **`API.request` marks the whole session as preview mode on any network error** ([public/tagline-app.js:351](../public/tagline-app.js#L351)). A real user with a transient blip stays in preview mode until they refresh. Should retry once before declaring preview, or scope to the failed call only.
+- **`stripe-webhook.js` stock decrement fallback is racy** if the RPC fails — does `select` then `update` with no transaction. Already in IMPROVEMENTS.md #16.
 
 ---
 

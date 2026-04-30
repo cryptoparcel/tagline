@@ -456,8 +456,19 @@
         e.stopPropagation();
         const productId = btn.dataset.addToCart;
         if (!productId) return;
-        Cart.add(productId, 1);
         const original = btn.textContent;
+        const added = Cart.add(productId, 1);
+        if (!added) {
+          // Hit the 50-item cap or invalid input — tell the user instead
+          // of silently lying with "Added ✓".
+          btn.textContent = 'Cart full';
+          btn.disabled = true;
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.disabled = false;
+          }, 1800);
+          return;
+        }
         btn.textContent = 'Added ✓';
         btn.disabled = true;
         showToast(PRODUCTS[productId]);
@@ -670,10 +681,17 @@
     if (!qvCurrentProduct || !qvCurrentSize || qvCurrentProduct.stock === 0) return;
 
     // Add to cart with size info
-    Cart.add(qvCurrentProduct.id, qvCurrentQty, { size: qvCurrentSize });
+    const added = Cart.add(qvCurrentProduct.id, qvCurrentQty, { size: qvCurrentSize });
+
+    const els = getQvElements();
+    if (!added) {
+      // Hit the cart-line cap or some validation; tell the user.
+      els.addBtn.textContent = 'Cart is full';
+      els.addBtn.disabled = true;
+      return;
+    }
 
     // Visual confirmation
-    const els = getQvElements();
     els.addBtn.classList.add('added');
     els.addBtn.textContent = 'Added ✓';
     els.addBtn.disabled = true;
@@ -890,6 +908,86 @@
     }
   }
 
+  // ============ EMAIL CONFIRMATION HANDLER ============
+  // Supabase email-confirmation links (sign-up + email-change) bring the
+  // user back with a hash like:
+  //   #access_token=eyJ...&refresh_token=...&type=signup
+  // We capture the token, save the session, strip the hash, and show
+  // a brief confirmation banner. Runs on every page load so the user
+  // can land anywhere and still get confirmed.
+  function handleAuthHash() {
+    const hash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1) : '';
+    if (!hash || hash.indexOf('access_token=') === -1) return;
+
+    const params = {};
+    for (const pair of hash.split('&')) {
+      const [k, v] = pair.split('=');
+      if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+    }
+    if (!params.access_token || !params.type) return;
+
+    // Recovery hashes are handled by /reset-password — leave them alone
+    if (params.type === 'recovery') return;
+
+    // Validate JWT shape before trusting it
+    if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(params.access_token)) {
+      return;
+    }
+
+    // Strip the token from the URL immediately — even before we attempt
+    // auth — so refresh / share / screenshot doesn't keep the token around.
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+
+    // Fetch the user object so the navbar and account page have it.
+    fetch('/api/config').then(r => r.ok ? r.json() : null).then(cfg => {
+      if (!cfg || !cfg.ok || !cfg.supabaseUrl) return;
+      return fetch(cfg.supabaseUrl + '/auth/v1/user', {
+        headers: {
+          'apikey': cfg.supabaseAnonKey,
+          'Authorization': 'Bearer ' + params.access_token
+        }
+      }).then(r => r.ok ? r.json() : null).then(user => {
+        if (!user || !user.id) return;
+        Auth.setSession(params.access_token, { id: user.id, email: user.email });
+        showConfirmBanner(params.type === 'signup'
+          ? 'Email confirmed — you\'re signed in.'
+          : 'Email updated.');
+      });
+    }).catch(() => {});
+  }
+
+  function showConfirmBanner(text) {
+    const banner = document.createElement('div');
+    banner.textContent = text;
+    banner.setAttribute('role', 'status');
+    Object.assign(banner.style, {
+      position: 'fixed',
+      top: '14px',
+      left: '50%',
+      transform: 'translateX(-50%) translateY(-150%)',
+      transition: 'transform .3s ease',
+      padding: '10px 18px',
+      background: 'rgba(184,137,61,.95)',
+      color: '#08080a',
+      fontSize: '13px',
+      fontWeight: '600',
+      letterSpacing: '0.04em',
+      borderRadius: '999px',
+      zIndex: '999',
+      fontFamily: 'Inter, sans-serif',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+    });
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => {
+      banner.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+      banner.style.transform = 'translateX(-50%) translateY(-150%)';
+      setTimeout(() => banner.remove(), 400);
+    }, 3500);
+  }
+
   // ============ STRUCTURED DATA (JSON-LD) ============
   // Build a Product ItemList from the PRODUCTS catalog and inject it as
   // a JSON-LD script tag. Helps Google show price, availability, and
@@ -962,6 +1060,7 @@
     safeInit('productCards', () => autoWireProductCards());
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
     safeInit('jsonLdProducts', () => injectProductJsonLd());
+    safeInit('emailConfirm', () => handleAuthHash());
 
     // Update other tabs when cart/wishlist changes
     safeInit('storageEvents', () => {

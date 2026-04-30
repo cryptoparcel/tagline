@@ -24,36 +24,44 @@ const ZIP = /^[A-Za-z0-9 -]{3,12}$/;
 const PHONE = /^[+()\-.\s\d]{7,20}$/;
 
 function sanitizeAddress(input) {
-  if (!input || typeof input !== 'object') return null;
+  if (!input || typeof input !== 'object') return { error: 'Invalid address' };
   const a = input;
-  const out = {};
-  if (a.line1 != null) {
-    if (!isString(String(a.line1), { min: 1, max: 100 })) return { error: 'Invalid line1' };
-    out.line1 = String(a.line1).trim();
+
+  // Address is stored as a single JSONB column; PATCHing it overwrites the
+  // whole thing. Require all four required fields together so a partial
+  // body (e.g. {city: 'X'}) doesn't wipe line1/state/zip from the existing
+  // address. Country defaults to US if omitted.
+  const required = ['line1', 'city', 'state', 'zip'];
+  for (const f of required) {
+    if (a[f] == null || String(a[f]).trim() === '') {
+      return { error: `Missing required address field: ${f}` };
+    }
   }
+
+  const out = {};
+  if (!isString(String(a.line1), { min: 1, max: 100 })) return { error: 'Invalid line1' };
+  out.line1 = String(a.line1).trim();
+
   if (a.line2 != null && a.line2 !== '') {
     if (!isString(String(a.line2), { min: 0, max: 100 })) return { error: 'Invalid line2' };
     out.line2 = String(a.line2).trim();
   }
-  if (a.city != null) {
-    if (!isString(String(a.city), { min: 1, max: 80 })) return { error: 'Invalid city' };
-    out.city = String(a.city).trim();
-  }
-  if (a.state != null) {
-    const s = String(a.state).trim().toUpperCase();
-    if (!US_STATE.test(s)) return { error: 'Invalid state (use 2-letter code)' };
-    out.state = s;
-  }
-  if (a.zip != null) {
-    const z = String(a.zip).trim();
-    if (!ZIP.test(z)) return { error: 'Invalid postal code' };
-    out.zip = z;
-  }
-  if (a.country != null) {
-    const c = String(a.country).trim().toUpperCase();
-    if (!ALLOWED_COUNTRIES.includes(c)) return { error: 'Country not supported' };
-    out.country = c;
-  }
+
+  if (!isString(String(a.city), { min: 1, max: 80 })) return { error: 'Invalid city' };
+  out.city = String(a.city).trim();
+
+  const s = String(a.state).trim().toUpperCase();
+  if (!US_STATE.test(s)) return { error: 'Invalid state (use 2-letter code)' };
+  out.state = s;
+
+  const z = String(a.zip).trim();
+  if (!ZIP.test(z)) return { error: 'Invalid postal code' };
+  out.zip = z;
+
+  const c = a.country != null ? String(a.country).trim().toUpperCase() : 'US';
+  if (!ALLOWED_COUNTRIES.includes(c)) return { error: 'Country not supported' };
+  out.country = c;
+
   // Reject any unexpected keys silently — never trust extra input
   return { value: out };
 }

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>Page not found — TAGLINE</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  .nf-stage{
+    min-height:calc(100vh - 200px);
+    min-height:calc(100dvh - 200px);
+    display:grid;
+    place-items:center;
+    text-align:center;
+    padding:48px 24px;
+  }
+  .nf-cross{
+    width:80px;
+    height:140px;
+    margin:0 auto 32px;
+    color:var(--gold);
+    opacity:.6;
+    filter:
+      drop-shadow(0 0 12px rgba(255,235,180,.4))
+      drop-shadow(0 0 32px rgba(184,137,61,.25));
+    animation:nfPulse 3.5s ease-in-out infinite;
+  }
+  @keyframes nfPulse{
+    0%,100% { opacity:.6; transform:scale(1); }
+    50%     { opacity:.85; transform:scale(1.04); }
+  }
+  .nf-code{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14px;
+    letter-spacing:.32em;
+    color:var(--gold);
+    margin-bottom:18px;
+    font-weight:600;
+  }
+  .nf-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(36px,6vw,64px);
+    font-weight:600;
+    letter-spacing:-0.025em;
+    color:var(--ink);
+    margin-bottom:16px;
+    line-height:1;
+  }
+  .nf-sub{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin-bottom:36px;
+    max-width:420px;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.7;
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Home</a>
+    <a href="/contact" class="nav-link">Contact</a>
+  </div>
+</header>
+
+<main>
+  <div class="nf-stage">
+    <div>
+      <svg class="nf-cross" viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="nfg" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#b8893d" stop-opacity="0.7"/>
+          </linearGradient>
+        </defs>
+        <path d="M88 0 L112 0 L112 100 L180 100 L180 128 L112 128 L112 340 L88 340 L88 128 L20 128 L20 100 L88 100 Z" fill="url(#nfg)"/>
+      </svg>
+      <div class="nf-code">404</div>
+      <h1 class="nf-title">This page is lost.</h1>
+      <p class="nf-sub">The link is broken or the page never existed. Find your way back.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="/" class="btn btn-primary">Back to home</a>
+        <a href="/contact" class="btn btn-ghost">Get help</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <a href="/contact">Contact</a>
+</footer>
+
+</body>
+</html>

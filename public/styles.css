@@ -1,0 +1,351 @@
+/* =================================================================
+   TAGLINE — Shared styles for secondary pages
+   ================================================================= */
+
+:root{
+  --bg:#08080a;
+  --surface:#111114;
+  --surface-2:#161618;
+  --ink:#fafaf7;
+  --ink-soft:#c8c8c0;
+  --muted:#7a7a72;
+  --line:rgba(255,255,250,.06);
+  --line-strong:rgba(255,255,250,.14);
+  --gold:#b8893d;
+  --gold-soft:#d4a558;
+  --gold-glow:rgba(184,137,61,.35);
+  --error:#e57373;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+  line-height:1.6;
+  letter-spacing:-0.005em;
+  font-weight:400;
+  min-height:100vh;
+  min-height:100dvh;
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+input, textarea, select, button{
+  font-family:inherit;
+  font-size:16px;
+  color:inherit;
+}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+:focus:not(:focus-visible){outline:none}
+img,svg,video{max-width:100%;height:auto;display:block}
+
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:0.01ms !important;
+    transition-duration:0.01ms !important;
+  }
+}
+
+/* Header */
+.nav{
+  position:sticky;top:0;z-index:50;
+  max-width:1240px;margin:0 auto;
+  padding:18px 24px;
+  background:rgba(8,8,10,.85);
+  backdrop-filter:blur(18px) saturate(140%);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;
+}
+.logo{
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;font-size:18px;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+}
+.nav-links{
+  display:flex;gap:14px;align-items:center;
+}
+.nav-link{
+  color:var(--ink-soft);font-size:13px;font-weight:400;
+  letter-spacing:.04em;
+  padding:8px 12px;
+  transition:color .2s;
+}
+.nav-link:hover{color:var(--ink)}
+.cart-icon-btn{
+  width:44px;height:44px;border-radius:50%;
+  display:grid;place-items:center;color:var(--ink);
+  position:relative;
+  transition:background .2s;
+}
+.cart-icon-btn:hover{background:rgba(255,255,250,.06)}
+.cart-icon-btn svg{width:19px;height:19px;stroke-width:1.8}
+.cart-badge{
+  position:absolute;top:8px;right:8px;
+  background:var(--gold);color:var(--bg);
+  min-width:14px;height:14px;padding:0 4px;
+  border-radius:999px;
+  display:grid;place-items:center;
+  font-size:9px;font-weight:600;line-height:1;
+}
+
+/* Page container */
+.page{
+  max-width:960px;margin:0 auto;
+  padding:48px 24px 80px;
+}
+.page-narrow{
+  max-width:520px;margin:0 auto;
+  padding:48px 24px 80px;
+}
+.page-wide{
+  max-width:1240px;margin:0 auto;
+  padding:48px 24px 80px;
+}
+
+/* Section markers (consistent with homepage) */
+.section-marker{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:18px;
+}
+.section-marker::before{
+  content:'';width:32px;height:1px;background:var(--gold);
+}
+.section-marker .label{
+  font-size:11px;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold);
+}
+
+h1.page-title{
+  font-family:'Space Grotesk', sans-serif;
+  font-size:clamp(32px, 5vw, 48px);
+  font-weight:600;
+  letter-spacing:-0.025em;
+  line-height:1;
+  color:var(--ink);
+  margin-bottom:14px;
+}
+.page-sub{
+  color:var(--ink-soft);
+  font-size:15px;
+  margin-bottom:48px;
+}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:16px 32px;
+  border-radius:0;
+  font-size:13px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:background-color .25s ease, color .25s ease, border-color .25s ease, transform .12s ease;
+  min-height:48px;
+  user-select:none;
+  text-decoration:none;
+  width:auto;
+}
+/* Tactile press feedback — subtle scale-down on click/tap.
+   Feels responsive without being distracting. */
+.btn:active:not(:disabled){
+  transform:scale(.97);
+}
+.btn-primary{
+  background:var(--ink);color:var(--bg);border-color:var(--ink);
+}
+.btn-primary:hover{
+  background:var(--gold);color:var(--bg);border-color:var(--gold);
+}
+.btn-primary:disabled{
+  opacity:.5;cursor:not-allowed;
+}
+.btn-ghost{
+  background:transparent;color:var(--ink);
+  border-color:var(--line-strong);
+}
+.btn-ghost:hover{
+  background:var(--ink);color:var(--bg);border-color:var(--ink);
+}
+.btn-gold{
+  background:transparent;color:var(--gold-soft);
+  border:1px solid var(--gold);
+}
+.btn-gold:hover{
+  background:var(--gold);color:var(--bg);
+}
+.btn-block{width:100%}
+.btn-link{
+  background:transparent;color:var(--gold-soft);
+  font-size:13px;font-weight:500;
+  letter-spacing:0;text-transform:none;
+  padding:0;border:none;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  min-height:auto;
+}
+
+/* Forms */
+.form-group{
+  margin-bottom:20px;
+}
+.form-label{
+  display:block;
+  font-size:11px;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.form-input, .form-textarea{
+  width:100%;
+  background:var(--surface);
+  border:1px solid var(--line-strong);
+  border-radius:0;
+  padding:14px 16px;
+  color:var(--ink);
+  font-size:16px;
+  font-family:inherit;
+  font-weight:400;
+  transition:border-color .2s;
+  outline:none;
+}
+.form-input:focus, .form-textarea:focus{
+  border-color:var(--gold);
+}
+.form-input::placeholder, .form-textarea::placeholder{
+  color:var(--muted);
+}
+.form-textarea{
+  resize:vertical;
+  min-height:120px;
+  line-height:1.6;
+}
+.form-error{
+  color:var(--error);
+  font-size:13px;
+  margin-top:8px;
+}
+.form-success{
+  color:var(--gold-soft);
+  font-size:13px;
+  margin-top:8px;
+}
+
+/* Card */
+.card{
+  background:linear-gradient(160deg, #14110c 0%, #0d0c0a 100%);
+  border:1px solid var(--line);
+  padding:32px;
+  margin-bottom:16px;
+}
+
+/* Empty states */
+.empty{
+  text-align:center;
+  padding:80px 24px;
+  color:var(--muted);
+}
+.empty h2{
+  font-family:'Space Grotesk', sans-serif;
+  color:var(--ink-soft);
+  font-size:24px;
+  font-weight:600;
+  margin-bottom:12px;
+  letter-spacing:-0.025em;
+}
+.empty p{
+  margin-bottom:32px;
+  font-size:15px;
+}
+
+/* Alerts */
+.alert{
+  padding:14px 18px;
+  margin-bottom:24px;
+  font-size:14px;
+  border:1px solid var(--line-strong);
+  background:var(--surface);
+}
+.alert-error{
+  border-color:rgba(229,115,115,.3);
+  color:var(--error);
+}
+.alert-success{
+  border-color:var(--gold);
+  color:var(--gold-soft);
+}
+
+/* Footer */
+footer{
+  max-width:1240px;
+  margin:80px auto 0;
+  padding:48px 24px 32px;
+  border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:14px;
+  font-size:12px;color:var(--muted);
+  position:relative;
+}
+footer::before{
+  content:'';
+  position:absolute;
+  top:-1px;left:50%;
+  transform:translateX(-50%);
+  width:80px;height:1px;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+footer a{color:var(--muted)}
+footer a:hover{color:var(--ink)}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .nav{
+    padding:12px 14px;
+    gap:8px;
+  }
+  .logo{font-size:13px; letter-spacing:.18em}
+  /* Keep nav links visible on mobile (no hamburger on secondary pages),
+     but make them tighter and smaller */
+  .nav-link{
+    font-size:11px;
+    padding:6px 6px;
+    letter-spacing:.02em;
+  }
+  .nav-links{
+    gap:4px;
+    align-items:center;
+  }
+  /* Only show critical links on mobile, hide secondary ones */
+  .nav-link.hide-mobile{display:none}
+  .cart-icon-btn{
+    width:38px;height:38px;
+  }
+  .cart-icon-btn svg{width:17px;height:17px}
+  .page, .page-narrow, .page-wide{padding:24px 16px 48px}
+  .card{padding:20px}
+  h1.page-title{font-size:28px; line-height:1.05}
+  .page-sub{font-size:14px; margin-bottom:32px}
+  .btn{padding:14px 24px; font-size:12px}
+  footer{padding:32px 16px 24px;flex-direction:column;align-items:flex-start;gap:10px}
+  .form-input, .form-textarea{padding:13px 14px; font-size:16px}
+  /* Keep iOS from zooming on input focus */
+  input, textarea, select { font-size:16px }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+  .nav{padding:10px 12px}
+  .nav-link{font-size:10px; padding:6px 4px}
+  .logo{font-size:12px}
+}

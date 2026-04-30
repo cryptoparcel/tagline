@@ -1,0 +1,201 @@
+import { getStripe } from '../lib/stripe.js';
+import { getSupabaseAdmin } from '../lib/supabase.js';
+import { sendEmail, orderConfirmationHtml } from '../lib/email.js';
+
+// Vercel needs raw body for signature verification
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
+
+async function getRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.status(405).end();
+    return;
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured');
+    res.status(500).end();
+    return;
+  }
+
+  let event;
+  try {
+    const stripe = getStripe();
+    const rawBody = await getRawBody(req);
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        await handleCheckoutCompleted(session, supabase);
+        break;
+      }
+      case 'checkout.session.expired': {
+        const session = event.data.object;
+        await supabase
+          .from('orders')
+          .update({ status: 'cancelled' })
+          .eq('stripe_session_id', session.id)
+          .eq('status', 'pending');
+        break;
+      }
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        await supabase
+          .from('orders')
+          .update({ status: 'refunded' })
+          .eq('stripe_payment_intent', charge.payment_intent);
+        break;
+      }
+      default:
+        // Unhandled event types are fine — Stripe sends many we don't need
+        break;
+    }
+  } catch (err) {
+    console.error(`Error handling ${event.type}:`, err);
+    // Return 500 so Stripe retries
+    res.status(500).send('Handler error');
+    return;
+  }
+
+  res.status(200).send('OK');
+}
+
+async function handleCheckoutCompleted(session, supabase) {
+  // Find the pending order
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('stripe_session_id', session.id)
+    .single();
+
+  if (fetchError || !order) {
+    console.error('Order not found for session', session.id, fetchError);
+    return;
+  }
+
+  if (order.status === 'paid') {
+    // Already processed (Stripe sometimes sends duplicate events)
+    return;
+  }
+
+  const customerEmail = session.customer_details?.email || order.email;
+  const shippingAddress = session.shipping_details?.address || null;
+
+  // Mark order paid
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({
+      status: 'paid',
+      email: customerEmail,
+      stripe_payment_intent: session.payment_intent,
+      shipping_address: shippingAddress
+        ? {
+            name: session.shipping_details.name,
+            line1: shippingAddress.line1,
+            line2: shippingAddress.line2,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            zip: shippingAddress.postal_code,
+            country: shippingAddress.country
+          }
+        : null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', order.id);
+
+  if (updateError) {
+    console.error('Failed to mark order paid:', updateError);
+    return;
+  }
+
+  // Decrement stock for each item
+  for (const item of order.items) {
+    const { error: stockError } = await supabase.rpc('decrement_stock', {
+      product_id: item.product_id,
+      qty: item.quantity
+    });
+    if (stockError) {
+      // Fallback if RPC doesn't exist - direct update
+      const { data: prod } = await supabase
+        .from('products')
+        .select('stock')
+        .eq('id', item.product_id)
+        .single();
+      if (prod) {
+        await supabase
+          .from('products')
+          .update({ stock: Math.max(0, prod.stock - item.quantity) })
+          .eq('id', item.product_id);
+      }
+    }
+  }
+
+  // Add to subscribers (best effort)
+  if (customerEmail) {
+    await supabase
+      .from('subscribers')
+      .upsert(
+        { email: customerEmail.toLowerCase(), source: 'checkout', active: true },
+        { onConflict: 'email' }
+      );
+  }
+
+  // Send confirmation email (best effort)
+  if (customerEmail) {
+    sendEmail({
+      to: customerEmail,
+      subject: `Order confirmed — TAGLINE`,
+      html: orderConfirmationHtml(order)
+    }).catch(err => console.error('Confirmation email failed:', err));
+  }
+
+  // Notify admin
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    const itemsList = order.items
+      .map(i => `${escapeHtml(i.name)} x${escapeHtml(String(i.quantity))}`)
+      .join(', ');
+    sendEmail({
+      to: adminEmail,
+      subject: `[TAGLINE] New order — $${(order.total_cents / 100).toFixed(2)}`,
+      html: `
+        <p>New order from ${escapeHtml(customerEmail)}</p>
+        <p>Order ID: ${escapeHtml(order.id)}</p>
+        <p>Total: $${(order.total_cents / 100).toFixed(2)}</p>
+        <p>Items: ${itemsList}</p>
+      `
+    }).catch(err => console.error('Admin notify failed:', err));
+  }
+}
+
+// HTML escape — used everywhere user-influenced data hits an HTML string
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

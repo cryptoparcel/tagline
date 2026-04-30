@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>About — TAGLINE</title>
+<meta name="description" content="The story behind TAGLINE. Custom athletic wear made with intention." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  .about-hero{
+    text-align:center;
+    padding:64px 24px 48px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:64px;
+    position:relative;
+  }
+  .about-cross{
+    width:64px;
+    height:108px;
+    margin:0 auto 32px;
+    color:var(--gold);
+    opacity:.85;
+    filter:
+      drop-shadow(0 0 8px rgba(255,235,180,.4))
+      drop-shadow(0 0 24px rgba(184,137,61,.25));
+  }
+  .about-tagline{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(36px, 5vw, 56px);
+    font-weight:700;
+    letter-spacing:-0.03em;
+    line-height:1;
+    margin-bottom:18px;
+    color:var(--ink);
+  }
+  .about-tagline .dot{color:#f5d57a;margin:0 .08em;font-weight:400}
+  .about-eyebrow{
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:14px;
+    font-weight:600;
+  }
+
+  .about-pillars{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:48px;
+    margin:64px 0;
+  }
+  .pillar{
+    text-align:center;
+  }
+  .pillar-letter{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:64px;
+    font-weight:700;
+    color:var(--gold);
+    line-height:1;
+    margin-bottom:16px;
+    letter-spacing:-0.04em;
+  }
+  .pillar h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:18px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+  .pillar p{
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.7;
+  }
+
+  .story-block{
+    max-width:680px;
+    margin:0 auto 64px;
+  }
+  .story-block h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:32px;
+    font-weight:600;
+    letter-spacing:-0.025em;
+    color:var(--ink);
+    margin-bottom:24px;
+    line-height:1.1;
+  }
+  .story-block p{
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1.85;
+    margin-bottom:18px;
+  }
+  .story-block p strong{ color:var(--ink); font-weight:500 }
+
+  .pull-quote{
+    border-left:2px solid var(--gold);
+    padding:18px 28px;
+    margin:32px 0;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px;
+    font-weight:500;
+    line-height:1.5;
+    color:var(--ink);
+    letter-spacing:-0.015em;
+  }
+
+  @media (max-width:880px){
+    .about-pillars{grid-template-columns:1fr; gap:36px}
+    .pillar-letter{font-size:48px}
+  }
+  @media (max-width:640px){
+    .about-hero{padding:48px 16px 36px;margin-bottom:48px}
+    .about-cross{width:48px;height:80px;margin-bottom:24px}
+    .story-block h2{font-size:26px}
+    .story-block p{font-size:15px}
+    .pull-quote{padding:14px 20px;font-size:17px}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Home</a>
+    <a href="/contact" class="nav-link">Contact</a>
+    <a href="/signin" class="nav-link signin-link">Sign in</a>
+    <a href="/cart" class="cart-icon-btn" aria-label="Cart">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12a2 2 0 0 1-2 1.8h-7a2 2 0 0 1-2-1.8L5 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <svg class="about-cross" viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="abg" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#b8893d"/>
+        </linearGradient>
+      </defs>
+      <path d="M88 0 L112 0 L112 100 L180 100 L180 128 L112 128 L112 340 L88 340 L88 128 L20 128 L20 100 L88 100 Z" fill="url(#abg)"/>
+    </svg>
+    <div class="about-eyebrow">Our story</div>
+    <h1 class="about-tagline">GOD<span class="dot">·</span>HEALTH<span class="dot">·</span>WEALTH</h1>
+    <p style="color:var(--ink-soft);font-size:16px;max-width:540px;margin:0 auto;line-height:1.7">
+      Three pillars. One brand. Built for those who pursue all three with intention.
+    </p>
+  </div>
+
+  <!-- Pillars -->
+  <div class="about-pillars">
+    <div class="pillar">
+      <div class="pillar-letter">G</div>
+      <h3>God first.</h3>
+      <p>Faith over fear. Purpose over comfort. Every piece carries the cross because we believe what you wear should mean something.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-letter">H</div>
+      <h3>Health second.</h3>
+      <p>Built for movement. Cut for performance. Whether you're training, walking, or just living — these clothes work as hard as you do.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-letter">W</div>
+      <h3>Wealth third.</h3>
+      <p>True wealth is freedom. Built to last so you buy less and spend smarter. The goal isn't more clothes — it's better ones.</p>
+    </div>
+  </div>
+
+  <!-- Story -->
+  <div class="story-block">
+    <h2>Why we exist.</h2>
+    <p>
+      The fashion industry is broken. Mass production. Disposable quality. Sweatshop labor. Trends that change every six weeks just to keep you buying. We saw all of that and asked a simple question: <strong>what would clothing look like if we cared more about the wearer than the cycle?</strong>
+    </p>
+    <p>
+      TAGLINE is our answer. Every piece is made to order in family-run workshops by people we know by name. Heavyweight fabrics that get better with age. Designs that don't chase trends. And a cross stitched into every label — not as decoration, but as a reminder that what you wear says something about who you are.
+    </p>
+
+    <div class="pull-quote">
+      Not louder. Not flashier. Just better — and built to last.
+    </div>
+
+    <p>
+      We don't keep inventory. We don't run sales to clear unsold stock. We don't make pieces we wouldn't wear ourselves. Everything you see here was designed by people who wear it every day, made by people paid fairly, and shipped only after you order it.
+    </p>
+    <p>
+      <strong>You can buy clothes anywhere.</strong> If you're going to spend money on something you put on every morning, spend it on something with intention behind every stitch.
+    </p>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;padding:48px 24px;border-top:1px solid var(--line)">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;letter-spacing:-0.025em;margin-bottom:12px">Built with intention.</h2>
+    <p style="color:var(--ink-soft);font-size:14px;margin-bottom:24px">Browse the collection or build a custom piece.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="/" class="btn btn-primary">Shop the collection</a>
+      <a href="/customize" class="btn btn-ghost">Build your own</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <a href="/contact">Contact</a>
+</footer>
+
+<script src="/tagline-app.js" defer></script>
+
+</body>
+</html>

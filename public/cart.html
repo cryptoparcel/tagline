@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>Cart — TAGLINE</title>
+<meta name="description" content="Your TAGLINE shopping cart." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  .cart-layout{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:48px;
+    align-items:start;
+  }
+  @media (max-width:880px){
+    .cart-layout{grid-template-columns:1fr;gap:24px}
+  }
+
+  .cart-items{
+    display:flex;flex-direction:column;gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .cart-item{
+    background:var(--surface);
+    padding:20px;
+    display:grid;
+    grid-template-columns:80px 1fr auto;
+    gap:18px;
+    align-items:center;
+  }
+  @media (max-width:520px){
+    .cart-item{grid-template-columns:64px 1fr;gap:14px}
+    .cart-item-price{grid-column:2;text-align:right;margin-top:8px}
+  }
+  .cart-item-thumb{
+    width:80px;height:80px;
+    background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    display:grid;place-items:center;
+    color:var(--ink-soft);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:20px;
+  }
+  @media (max-width:520px){
+    .cart-item-thumb{width:64px;height:64px;font-size:16px}
+  }
+  .cart-item-info .name{
+    font-size:14px;font-weight:600;
+    letter-spacing:0;
+    margin-bottom:4px;
+  }
+  .cart-item-info .color{
+    font-size:12px;color:var(--muted);
+    margin-bottom:12px;
+  }
+  .qty-control{
+    display:inline-flex;align-items:center;
+    border:1px solid var(--line-strong);
+  }
+  .qty-btn{
+    width:32px;height:32px;
+    display:grid;place-items:center;
+    color:var(--ink-soft);
+    transition:color .2s,background .2s;
+  }
+  .qty-btn:hover{color:var(--ink);background:rgba(255,255,250,.04)}
+  .qty-display{
+    width:36px;text-align:center;
+    font-size:13px;font-weight:600;
+    color:var(--ink);
+  }
+  .remove-btn{
+    background:transparent;color:var(--muted);
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    padding:8px 0;
+    margin-left:14px;
+    transition:color .2s;
+  }
+  .remove-btn:hover{color:var(--error)}
+  .cart-item-price{
+    font-size:14px;font-weight:600;
+    color:var(--ink);
+    text-align:right;
+  }
+
+  .cart-summary{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:28px;
+    position:sticky;top:96px;
+  }
+  .summary-row{
+    display:flex;justify-content:space-between;
+    padding:10px 0;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .summary-row.total{
+    border-top:1px solid var(--line);
+    padding-top:18px;margin-top:14px;
+    font-weight:600;color:var(--ink);font-size:17px;
+  }
+  .summary-row .label{color:var(--ink-soft)}
+  .summary-row .value{color:var(--ink);font-weight:500}
+  .summary-shipping-note{
+    font-size:12px;color:var(--gold-soft);
+    margin-top:8px;
+    padding:10px 14px;
+    background:rgba(184,137,61,.08);
+    border:1px solid rgba(184,137,61,.2);
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Continue shopping</a>
+    <a href="/signin" class="nav-link signin-link">Sign in</a>
+    <a href="/cart" class="cart-icon-btn" aria-label="Cart">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12a2 2 0 0 1-2 1.8h-7a2 2 0 0 1-2-1.8L5 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="page-wide">
+  <div class="section-marker"><span class="label">Cart</span></div>
+  <h1 class="page-title">Your cart</h1>
+  <div class="page-sub" id="cartSub">Review your items and proceed to checkout.</div>
+
+  <div id="cartContent"></div>
+</main>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <a href="/contact">Contact</a>
+</footer>
+
+<script src="/tagline-app.js" defer></script>
+<script>
+(function(){
+  const PRODUCT_DATA = {
+    'ascend-hoodie':     {name:'Ascend Hoodie',    color:'Cream',         price:148, initial:'A'},
+    'halo-zip':          {name:'Halo Zip',         color:'Bone',          price:165, initial:'H'},
+    'origin-tee':        {name:'Origin Tee',       color:'Ivory',         price:58,  initial:'O'},
+    'sigil-tank':        {name:'Sigil Tank',       color:'White',         price:78,  initial:'S'},
+    'vesper-long':       {name:'Vesper Long',      color:'Pearl',         price:92,  initial:'V'},
+    'path-jogger':       {name:'Path Jogger',      color:'Bone',          price:118, initial:'P'},
+    'trial-short':       {name:'Trial Short',      color:'Ivory',         price:72,  initial:'T'},
+    'cloud-crew':        {name:'Cloud Crew',       color:'Fog',           price:128, initial:'C'},
+    'crown-cap':         {name:'Crown Cap',        color:'White',         price:48,  initial:'C'},
+    'halo-runner':       {name:'Halo Runner',      color:'Triple White',  price:215, initial:'H'},
+    'aether-bra':        {name:'Aether Bra',       color:'Pearl',         price:68,  initial:'A'},
+    'aether-legging':    {name:'Aether Legging',   color:'White',         price:98,  initial:'A'},
+    'reign-bomber':      {name:'Reign Bomber',     color:'Bone',          price:245, initial:'R'},
+    'velocity-track':    {name:'Velocity Track',   color:'Ivory',         price:185, initial:'V'},
+    'vow-beanie':        {name:'Vow Beanie',       color:'Cream',         price:42,  initial:'V'},
+    'anthem-polo':       {name:'Anthem Polo',      color:'White',         price:88,  initial:'A'},
+    'lumen-crop':        {name:'Lumen Crop',       color:'Pearl',         price:54,  initial:'L'},
+    'pilgrim-pant':      {name:'Pilgrim Pant',     color:'Ivory',         price:128, initial:'P'},
+    'spirit-shell':      {name:'Spirit Shell',     color:'White',         price:198, initial:'S'},
+    'echo-vest':         {name:'Echo Vest',        color:'Bone',          price:155, initial:'E'},
+    'verse-henley':      {name:'Verse Henley',     color:'Cream',         price:84,  initial:'V'},
+    'sole-sock':         {name:'Sole Sock',        color:'White Pair',    price:24,  initial:'S'},
+    'pulse-band':        {name:'Pulse Band',       color:'White',         price:22,  initial:'P'},
+    'quill-tote':        {name:'Quill Tote',       color:'Canvas White',  price:38,  initial:'Q'}
+  };
+
+  function render() {
+    const items = window.Tagline.Cart.get();
+    const container = document.getElementById('cartContent');
+    const sub = document.getElementById('cartSub');
+
+    if (items.length === 0) {
+      sub.textContent = '';
+      container.innerHTML = `
+        <div class="empty">
+          <svg style="width:42px;height:72px;margin:0 auto 24px;color:var(--gold);opacity:.6;display:block" viewBox="0 0 200 340" fill="currentColor" aria-hidden="true">
+            <path d="M88 0 L112 0 L112 100 L180 100 L180 128 L112 128 L112 340 L88 340 L88 128 L20 128 L20 100 L88 100 Z"/>
+          </svg>
+          <h2>Your cart is empty.</h2>
+          <p>Find something you love and bring it home.</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+            <a href="/" class="btn btn-primary">Shop the collection</a>
+            <a href="/customize" class="btn btn-ghost">Build your own</a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    sub.textContent = `${items.reduce((s,i)=>s+i.quantity,0)} item${items.length === 1 ? '' : 's'} in your cart`;
+
+    let subtotal = 0;
+    const esc = window.Tagline.escapeHtml;
+    const itemsHtml = items.map((item, idx) => {
+      const p = PRODUCT_DATA[item.product_id];
+      if (!p) return '';
+      const lineTotal = p.price * item.quantity;
+      subtotal += lineTotal;
+      const sizeLabel = item.size ? `<div class="color">Size: ${esc(item.size)}</div>` : '';
+      const sizeAttr = item.size ? `data-size="${esc(item.size)}"` : '';
+      return `
+        <div class="cart-item" data-id="${esc(item.product_id)}" ${sizeAttr}>
+          <div class="cart-item-thumb">${esc(p.initial)}</div>
+          <div class="cart-item-info">
+            <div class="name">${esc(p.name)}</div>
+            <div class="color">${esc(p.color)}</div>
+            ${sizeLabel}
+            <div style="display:flex;align-items:center;flex-wrap:wrap">
+              <div class="qty-control">
+                <button type="button" class="qty-btn" data-action="decrease" aria-label="Decrease">−</button>
+                <div class="qty-display">${item.quantity}</div>
+                <button type="button" class="qty-btn" data-action="increase" aria-label="Increase">+</button>
+              </div>
+              <button type="button" class="remove-btn" data-action="remove">Remove</button>
+            </div>
+          </div>
+          <div class="cart-item-price">$${lineTotal.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+
+    const shipping = subtotal >= 150 ? 0 : 8;
+    const total = subtotal + shipping;
+    const toFreeShip = Math.max(0, 150 - subtotal);
+
+    container.innerHTML = `
+      <div class="cart-layout">
+        <div class="cart-items">${itemsHtml}</div>
+        <aside class="cart-summary">
+          <div class="summary-row"><span class="label">Subtotal</span><span class="value">$${subtotal.toFixed(2)}</span></div>
+          <div class="summary-row"><span class="label">Shipping</span><span class="value">${shipping === 0 ? 'Free' : '$' + shipping.toFixed(2)}</span></div>
+          ${toFreeShip > 0 ? `<div class="summary-shipping-note">Add $${toFreeShip.toFixed(2)} more for free shipping.</div>` : ''}
+          <div class="summary-row total"><span class="label">Total</span><span class="value">$${total.toFixed(2)}</span></div>
+          <button type="button" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:24px">
+            Checkout
+          </button>
+          <p style="font-size:11px;color:var(--muted);margin-top:14px;text-align:center">Secure checkout via Stripe</p>
+        </aside>
+      </div>
+    `;
+
+    container.addEventListener('click', handleClick);
+    document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+  }
+
+  function handleClick(e) {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    const item = e.target.closest('.cart-item');
+    if (!item) return;
+    const id = item.dataset.id;
+    const size = item.dataset.size || undefined;
+    const cart = window.Tagline.Cart;
+    const current = cart.get().find(i =>
+      i.product_id === id && (i.size || null) === (size || null)
+    );
+    if (!current) return;
+
+    if (action === 'increase') cart.updateQuantity(id, current.quantity + 1, size);
+    if (action === 'decrease') cart.updateQuantity(id, current.quantity - 1, size);
+    if (action === 'remove') cart.remove(id, size);
+    render();
+  }
+
+  async function handleCheckout() {
+    const btn = document.getElementById('checkoutBtn');
+    btn.disabled = true;
+    btn.textContent = 'Loading checkout…';
+
+    const items = window.Tagline.Cart.get();
+    const result = await window.Tagline.API.request('/api/checkout', {
+      method: 'POST',
+      body: { items },
+      auth: true
+    });
+
+    if (result.ok && result.url) {
+      window.location.href = result.url;
+    } else if (result.preview) {
+      // Preview mode - show friendly message
+      btn.textContent = 'Checkout coming soon';
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--gold-soft)';
+      btn.style.borderColor = 'rgba(184,137,61,.4)';
+      const note = document.createElement('p');
+      note.textContent = 'This is a preview. Checkout activates at launch.';
+      note.style.cssText = 'font-size:11px;color:var(--muted);margin-top:14px;text-align:center';
+      const existing = btn.parentElement.querySelector('.preview-note');
+      if (!existing) {
+        note.className = 'preview-note';
+        btn.parentElement.appendChild(note);
+      }
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Checkout';
+      alert(result.error || 'Could not start checkout. Please try again.');
+    }
+  }
+
+  // Wait for app to load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+  window.addEventListener('cart:updated', render);
+})();
+</script>
+
+</body>
+</html>

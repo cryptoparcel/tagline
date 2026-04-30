@@ -1,0 +1,18 @@
+{
+  "name": "tagline",
+  "version": "1.0.0",
+  "description": "TAGLINE — Custom athletic wear",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "stripe": "^17.0.0",
+    "resend": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.x"
+  }
+}

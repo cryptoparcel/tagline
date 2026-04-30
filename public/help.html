@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>Help & FAQ — TAGLINE</title>
+<meta name="description" content="Shipping, returns, FAQ, and everything else you need to know." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  /* Help section layout */
+  .help-section{
+    margin-bottom:64px;
+    scroll-margin-top:96px;
+  }
+  .help-section h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:32px;
+    font-weight:600;
+    letter-spacing:-0.025em;
+    color:var(--ink);
+    margin-bottom:24px;
+    line-height:1.1;
+  }
+
+  /* Help nav (jump to section) */
+  .help-nav{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:6px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:48px;
+    position:sticky;
+    top:78px;
+    z-index:10;
+    backdrop-filter:blur(12px);
+  }
+  .help-nav a{
+    flex:1;
+    min-width:120px;
+    padding:11px 14px;
+    text-align:center;
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    transition:color .2s, background .2s;
+    text-decoration:none;
+  }
+  .help-nav a:hover{
+    color:var(--ink);
+    background:rgba(255,255,250,.04);
+  }
+
+  /* FAQ accordion */
+  .faq-item{
+    border-bottom:1px solid var(--line);
+  }
+  .faq-question{
+    width:100%;
+    background:transparent;
+    color:var(--ink);
+    text-align:left;
+    padding:20px 0;
+    font-size:15px;
+    font-weight:500;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    transition:color .2s;
+    font-family:inherit;
+    border:none;
+  }
+  .faq-question:hover{ color:var(--gold-soft); }
+  .faq-question .chevron{
+    flex-shrink:0;
+    width:14px; height:14px;
+    transition:transform .25s ease;
+    color:var(--gold);
+  }
+  .faq-item.open .chevron{ transform:rotate(180deg); }
+  .faq-answer{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .35s cubic-bezier(.22,.61,.36,1);
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.7;
+  }
+  .faq-item.open .faq-answer{
+    max-height:400px;
+  }
+  .faq-answer-inner{
+    padding:0 0 24px;
+  }
+
+  /* Info blocks */
+  .info-block{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:28px;
+    margin-bottom:14px;
+  }
+  .info-block h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:16px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:8px;
+    letter-spacing:-0.01em;
+  }
+  .info-block p{
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.7;
+  }
+
+  /* Shipping table */
+  .ship-table{
+    display:grid;
+    grid-template-columns:1.5fr 1fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-bottom:24px;
+  }
+  .ship-cell{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    padding:18px 20px;
+    font-size:13px;
+  }
+  .ship-cell.head{
+    background:rgba(0,0,0,.3);
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  .ship-cell strong{color:var(--ink); font-weight:600}
+
+  @media (max-width:640px){
+    .help-nav{position:static;padding:4px}
+    .help-nav a{min-width:auto;font-size:10px;padding:10px 8px;letter-spacing:.04em}
+    .help-section h2{font-size:26px}
+    .ship-table{grid-template-columns:1fr; gap:1px}
+    .ship-cell{padding:14px 16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Home</a>
+    <a href="/contact" class="nav-link">Contact</a>
+    <a href="/signin" class="nav-link signin-link">Sign in</a>
+    <a href="/cart" class="cart-icon-btn" aria-label="Cart">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12a2 2 0 0 1-2 1.8h-7a2 2 0 0 1-2-1.8L5 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="section-marker"><span class="label">Help center</span></div>
+  <h1 class="page-title">Help & FAQ.</h1>
+  <p class="page-sub">Everything you need to know about ordering, shipping, returns, and our process.</p>
+
+  <!-- Quick navigation -->
+  <nav class="help-nav">
+    <a href="#shipping">Shipping</a>
+    <a href="#returns">Returns</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+
+  <!-- SHIPPING -->
+  <section class="help-section" id="shipping">
+    <h2>Shipping</h2>
+
+    <div class="info-block">
+      <h3>Production time</h3>
+      <p>Each piece is made to order. Production takes 4–6 weeks. We'll keep you posted every step of the way.</p>
+    </div>
+
+    <div class="info-block">
+      <h3>Shipping rates</h3>
+      <p style="margin-bottom:18px">Once your order is made, here's what shipping looks like:</p>
+      <div class="ship-table">
+        <div class="ship-cell head">Region</div>
+        <div class="ship-cell head">Standard</div>
+        <div class="ship-cell head">Express</div>
+        <div class="ship-cell"><strong>United States</strong></div>
+        <div class="ship-cell">$8 (free over $150)<br/><span style="color:var(--muted);font-size:12px">5-7 business days</span></div>
+        <div class="ship-cell">$24<br/><span style="color:var(--muted);font-size:12px">2-3 business days</span></div>
+        <div class="ship-cell"><strong>Canada</strong></div>
+        <div class="ship-cell">$18<br/><span style="color:var(--muted);font-size:12px">7-10 business days</span></div>
+        <div class="ship-cell">$45<br/><span style="color:var(--muted);font-size:12px">3-5 business days</span></div>
+        <div class="ship-cell"><strong>International</strong></div>
+        <div class="ship-cell">Coming soon</div>
+        <div class="ship-cell">Coming soon</div>
+      </div>
+    </div>
+
+    <div class="info-block">
+      <h3>Tracking</h3>
+      <p>You'll get a tracking number by email as soon as your order ships. You can also see live status from your <a href="/account" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">account page</a>.</p>
+    </div>
+  </section>
+
+  <!-- RETURNS -->
+  <section class="help-section" id="returns">
+    <h2>Returns & Exchanges</h2>
+
+    <div class="info-block">
+      <h3>30-day exchange window</h3>
+      <p>If your fit isn't right, we'll exchange it within 30 days of delivery. Items must be unworn, with tags attached.</p>
+    </div>
+
+    <div class="info-block">
+      <h3>Final sale items</h3>
+      <p>Custom orders, personalized pieces, and items marked "Final Sale" cannot be returned or exchanged.</p>
+    </div>
+
+    <div class="info-block">
+      <h3>How to start a return</h3>
+      <p>Email us at <a href="/contact" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">our contact page</a> with your order number and reason for return. We'll send you a prepaid label and instructions.</p>
+    </div>
+
+    <div class="info-block">
+      <h3>Lifetime repair</h3>
+      <p>Our pieces are built to last. If something tears, comes apart at the seams, or has a manufacturing defect — at any point in the future — send it back and we'll repair it free of charge.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="help-section" id="faq">
+    <h2>Frequently asked questions</h2>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        How long does production take?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Each piece is cut and sewn after you order. Standard production is 4–6 weeks, plus shipping time. Custom and personalized pieces may take an extra week.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        Why is production so long?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        We don't keep inventory. Mass-produced fashion creates massive waste — billions of unsold pieces end up in landfills every year. By making to order, we eliminate that waste, support our manufacturers fairly, and ensure you get a piece made specifically for you.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        Can I cancel or change my order?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        You can change or cancel your order within 24 hours of placing it. After that, your piece has entered production. Reach out to <a href="/contact" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">our contact page</a> as quickly as possible.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        What sizes do you offer?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        XS through XXL on all standard pieces. Custom orders can be cut to your exact measurements — see the <a href="/customize" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">customize page</a>. Detailed sizing tables are on our <a href="/sizing" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">size guide</a>.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        How do I care for my piece?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Cold water wash, gentle cycle, hang dry. Care labels are sewn into every piece with specific instructions. Avoid bleach and tumble drying — both shorten the life of the fabric significantly.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        Do you make custom pieces?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Yes. Visit our <a href="/customize" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">build your own</a> page to pick a piece, color, size, and add personalized embroidery. We'll confirm details by email before producing.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        Where are your pieces made?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Our pieces are made in family-run workshops in the United States. We pay above-market wages, audit our suppliers regularly, and visit production sites in person multiple times a year.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        What's your return policy on custom items?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Custom and personalized pieces are final sale and cannot be returned. If there's a manufacturing defect or sizing issue caused by us, we'll remake the piece at no charge — just <a href="/contact" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:3px">contact us</a>.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        Do you ship internationally?
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">
+        Currently we ship to the United States and Canada. International shipping is in the works — sign up for our newsletter to be the first to know when we expand.
+      </div></div>
+    </div>
+  </section>
+
+  <!-- Final help CTA -->
+  <div style="text-align:center;padding:48px 24px;border-top:1px solid var(--line);margin-top:48px">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-0.025em;margin-bottom:12px">Need something else?</h2>
+    <p style="color:var(--ink-soft);font-size:14px;margin-bottom:24px">Reach out and we'll get back within one business day.</p>
+    <a href="/contact" class="btn btn-primary">Contact us</a>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <a href="/contact">Contact</a>
+</footer>
+
+<script src="/tagline-app.js" defer></script>
+<script>
+(function(){
+  // FAQ accordion
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const wasOpen = item.classList.contains('open');
+      // Close all others
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      // Toggle clicked one
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

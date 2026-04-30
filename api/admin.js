@@ -1,10 +1,12 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
+import { sendEmail, orderShippedHtml } from '../lib/email.js';
 import {
-  requireMethod, getBody, ok, unauthorized, badRequest, serverError, isAdmin
+  requireMethod, getBody, ok, unauthorized, badRequest, serverError, isAdmin, requireSameOrigin
 } from '../lib/util.js';
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'GET', 'POST')) return;
+  if (!requireSameOrigin(req, res)) return;
 
   if (!isAdmin(req)) {
     return unauthorized(res, 'Admin access required.');
@@ -103,8 +105,32 @@ export default async function handler(req, res) {
           updates.tracking_number = tracking_number.toUpperCase();
         }
 
+        // Read the order's prior status so we only fire the "shipped" email
+        // on the actual transition (not on subsequent edits to a shipped order).
+        const { data: prior } = await supabase
+          .from('orders')
+          .select('status, email, tracking_number')
+          .eq('id', order_id)
+          .maybeSingle();
+
         const { error } = await supabase.from('orders').update(updates).eq('id', order_id);
         if (error) throw error;
+
+        // Fire the shipped email on transition to 'shipped' (best-effort,
+        // never blocks the API response).
+        const becomingShipped =
+          updates.status === 'shipped' && prior && prior.status !== 'shipped';
+        if (becomingShipped && prior.email) {
+          sendEmail({
+            to: prior.email,
+            subject: 'Your TAGLINE order has shipped',
+            html: orderShippedHtml({
+              id: order_id,
+              tracking_number: updates.tracking_number || prior.tracking_number || ''
+            })
+          }).catch(err => console.error('Shipped email failed:', err));
+        }
+
         return ok(res, { updated: true });
       }
 

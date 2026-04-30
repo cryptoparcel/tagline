@@ -3,7 +3,7 @@ import { sendEmail } from '../lib/email.js';
 import { escapeHtml } from '../lib/html.js';
 import {
   requireMethod, getBody, ok, badRequest, serverError,
-  isEmail, isString, rateLimit, getClientId
+  isEmail, isString, rateLimit, getClientId, requireSameOrigin
 } from '../lib/util.js';
 
 export const config = {
@@ -14,6 +14,7 @@ export const config = {
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
+  if (!requireSameOrigin(req, res)) return;
 
   // Rate limit: 3 contact submissions per IP per 5 min
   const clientId = getClientId(req);

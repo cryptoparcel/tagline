@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import {
   requireMethod, getBody, ok, badRequest, serverError,
-  isEmail, normalizeEmail, rateLimit, getClientId
+  isEmail, normalizeEmail, rateLimit, getClientId, requireSameOrigin
 } from '../lib/util.js';
 
 export const config = {
@@ -12,6 +12,7 @@ export const config = {
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
+  if (!requireSameOrigin(req, res)) return;
 
   // Rate limit: 5 signups per IP per minute
   const clientId = getClientId(req);

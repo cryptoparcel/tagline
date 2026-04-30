@@ -315,6 +315,18 @@
   };
 
   // ============ API CLIENT ============
+  // Mark a session as "preview mode" only on the FIRST probe that fails.
+  // Once we've established the backend is alive (any successful call), a
+  // transient network blip should never demote the user back to preview —
+  // they just see "Network error, try again" and can retry.
+  function maybeFlipToPreview(reason) {
+    if (previewModeChecked) return false;
+    isPreviewMode = true;
+    previewModeChecked = true;
+    showPreviewBadge();
+    return true;
+  }
+
   const API = {
     async request(path, { method = 'GET', body, auth = false } = {}) {
       const headers = { 'Content-Type': 'application/json' };
@@ -328,29 +340,39 @@
           headers,
           body: body ? JSON.stringify(body) : undefined
         });
-        // Treat 404 (route not deployed) and 500 with no JSON as preview mode
+        // 404 = route not deployed. If we haven't checked preview mode yet,
+        // treat this as the probe and flip. Otherwise just return the error.
         if (res.status === 404) {
-          isPreviewMode = true;
-          showPreviewBadge();
-          return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+          if (maybeFlipToPreview('404')) {
+            return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+          }
+          return { ok: false, error: 'Endpoint not found.' };
         }
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          // If we get a 500 with the "Server is not properly configured" error from our APIs,
-          // it means backend env vars aren't set — treat as preview mode
+          // 500 with "not configured" → backend env vars missing → preview
+          // (only on first probe though — same logic as 404)
           if (res.status === 500 && data.error && /not.*configured|missing.*env|SUPABASE/i.test(data.error)) {
-            isPreviewMode = true;
-            showPreviewBadge();
-            return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+            if (maybeFlipToPreview('500-misconfig')) {
+              return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+            }
           }
+          // Once we've confirmed backend is alive, mark it so future blips
+          // don't demote the session to preview mode.
+          previewModeChecked = true;
           return { ok: false, error: data.error || `Request failed (${res.status})` };
         }
+        // Success implies the backend exists; lock the determination.
+        previewModeChecked = true;
         return { ok: true, ...data };
       } catch (err) {
-        // Network error usually means we're in preview/local mode without backend
-        isPreviewMode = true;
-        showPreviewBadge();
-        return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+        // Network failure. If we haven't determined yet, this is the probe
+        // and we flip to preview. Otherwise it's just a transient blip —
+        // surface a real error so the user can retry.
+        if (maybeFlipToPreview('network')) {
+          return { ok: false, error: 'This feature isn\'t live yet — coming soon.', preview: true };
+        }
+        return { ok: false, error: 'Network error. Please try again.' };
       }
     }
   };

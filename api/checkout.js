@@ -3,7 +3,7 @@ import { getStripe } from '../lib/stripe.js';
 import { getUserFromRequest } from '../lib/supabase.js';
 import {
   requireMethod, getBody, ok, badRequest, serverError,
-  rateLimit, getClientId
+  rateLimit, getClientId, requireSameOrigin
 } from '../lib/util.js';
 
 // Body shape:
@@ -15,6 +15,7 @@ import {
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
+  if (!requireSameOrigin(req, res)) return;
 
   const clientId = getClientId(req);
   if (!rateLimit(`checkout:${clientId}`, { windowMs: 60_000, max: 10 })) {

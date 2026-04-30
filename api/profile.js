@@ -9,7 +9,7 @@
 import { getSupabaseAdmin, getUserFromRequest } from '../lib/supabase.js';
 import {
   requireMethod, getBody, ok, badRequest, unauthorized, serverError,
-  isString, rateLimit, getClientId
+  isString, rateLimit, getClientId, requireSameOrigin
 } from '../lib/util.js';
 
 export const config = {
@@ -68,6 +68,7 @@ function sanitizeAddress(input) {
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'GET', 'PATCH')) return;
+  if (!requireSameOrigin(req, res)) return;
 
   const user = await getUserFromRequest(req);
   if (!user) return unauthorized(res, 'Sign in required.');

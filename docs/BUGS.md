@@ -94,6 +94,33 @@ This file tracks specific bugs discovered during code review and what was done a
 
 ---
 
+## ⚠️ Required migration after pulling latest
+
+The `processed_webhook_events` table needs to exist for the Stripe
+webhook idempotency fix (#13 below) to work. After deploying:
+
+1. Open your Supabase project → **SQL Editor → New query**
+2. Paste this and run:
+
+```sql
+create table if not exists processed_webhook_events (
+  event_id text primary key,
+  event_type text not null,
+  processed_at timestamptz default now()
+);
+create index if not exists idx_processed_events_at on processed_webhook_events(processed_at);
+alter table processed_webhook_events enable row level security;
+```
+
+(The full updated `sql/schema.sql` includes this — re-running the
+whole file is also safe because every statement uses `if not exists`.)
+
+If you skip this step, the webhook will fail with a "DB error" 500 on
+every event because the dedupe insert can't find the table. Stripe
+will retry forever.
+
+---
+
 ## Fixed in second-pass audit
 
 ### 8. CRITICAL — cart.html event-listener leak caused multi-step quantity changes
@@ -135,6 +162,24 @@ This file tracks specific bugs discovered during code review and what was done a
 **Fix:** [tagline-app.js](../public/tagline-app.js) `handleAuthHash` now strips the hash *before* calling Supabase — the token is consumed regardless of whether auth succeeds. If auth fails, the user just sees the page they landed on without any session set.
 
 **Source:** OWASP ASVS V3.5 — "Verify that tokens are not exposed in URLs unless absolutely necessary."
+
+---
+
+### 13. Stripe webhook had no real idempotency
+
+**Symptom:** if Stripe redelivered the same event (which happens on transient network failures or 5xx responses), the webhook would re-process it from scratch — running the stock decrement loop a second time, sending a second order-confirmation email, etc. The only guard was `if (order.status === 'paid') return;` inside `handleCheckoutCompleted`, which protects that one handler but doesn't protect the others (charge.refunded, checkout.session.expired) and doesn't protect against concurrent duplicate events.
+
+**Root cause:** no record of which Stripe events had been processed.
+
+**Fix:** new `processed_webhook_events` table with a unique constraint on `event_id`. The webhook handler now:
+1. Tries to insert `event.id` BEFORE doing any work.
+2. If the insert collides (Postgres `23505` unique violation), the event was already processed — ack 200 immediately and exit.
+3. If the insert succeeds, run the actual handler.
+4. If the handler throws, **delete the idempotency row** so Stripe's retry actually re-processes (rather than being silently treated as a duplicate that we never finished).
+
+This is the standard pattern from the Stripe docs ("Best practices for using webhooks → Make your event processing idempotent"). It's not bullet-proof — a function timeout between insert and delete-on-error means the event can be silently lost. Acceptable tradeoff for a small e-commerce site; if you need stronger guarantees, move to a transactional outbox pattern (see IMPROVEMENTS.md).
+
+**Source:** Stripe webhooks best practices; OWASP ASVS V8.3.4 — "Verify that all sensitive data is sent to the server in the HTTP message body or headers."
 
 ---
 

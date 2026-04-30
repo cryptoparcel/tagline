@@ -45,6 +45,33 @@ export default async function handler(req, res) {
 
   const supabase = getSupabaseAdmin();
 
+  // ============ IDEMPOTENCY ============
+  // Stripe can re-deliver the same event (network blips, our 5xx replies).
+  // Insert event.id into processed_webhook_events first; if the insert
+  // collides on the primary key, this event was already handled and we
+  // ack with 200 immediately. Prevents double stock decrement, duplicate
+  // confirmation emails, etc.
+  //
+  // Reference: Stripe docs — "Best practices for using webhooks" →
+  // "Make your event processing idempotent".
+  const { error: dedupeError } = await supabase
+    .from('processed_webhook_events')
+    .insert({ event_id: event.id, event_type: event.type });
+
+  if (dedupeError) {
+    // Postgres unique_violation = already processed
+    if (dedupeError.code === '23505') {
+      res.status(200).send('OK (duplicate, ignored)');
+      return;
+    }
+    // Some other DB error — return 500 so Stripe retries.
+    // The retry will hit the same path; either it'll succeed (transient
+    // DB error) or collide (we managed to insert + process anyway).
+    console.error('Idempotency insert failed:', dedupeError);
+    res.status(500).send('DB error');
+    return;
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -74,6 +101,15 @@ export default async function handler(req, res) {
         break;
     }
   } catch (err) {
+    // Processing failed. Roll back the idempotency insert so Stripe's
+    // retry actually re-processes (instead of seeing a "duplicate" we
+    // never finished). Best-effort delete — if it fails, the worst case
+    // is the event is lost; the original error is still the priority.
+    await supabase
+      .from('processed_webhook_events')
+      .delete()
+      .eq('event_id', event.id)
+      .then(() => {}, () => {});
     console.error(`Error handling ${event.type}:`, err);
     // Return 500 so Stripe retries
     res.status(500).send('Handler error');

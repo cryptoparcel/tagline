@@ -149,6 +149,25 @@ alter table subscribers enable row level security;
 alter table contact_messages enable row level security;
 
 -- ============================================================
+-- WEBHOOK IDEMPOTENCY
+-- ============================================================
+-- Stripe occasionally redelivers the same webhook event (transient
+-- network errors, retries on our 5xx). Inserting event.id into this
+-- table before processing means a duplicate insert collides on the
+-- primary key and we know to skip the work — preventing double
+-- stock decrements, duplicate confirmation emails, etc.
+create table if not exists processed_webhook_events (
+  event_id text primary key,
+  event_type text not null,
+  processed_at timestamptz default now()
+);
+
+create index if not exists idx_processed_events_at on processed_webhook_events(processed_at);
+
+-- Lock down — only the server (service role) writes here
+alter table processed_webhook_events enable row level security;
+
+-- ============================================================
 -- ATOMIC STOCK DECREMENT
 -- ============================================================
 -- Decrements stock atomically. Used by Stripe webhook on order paid.

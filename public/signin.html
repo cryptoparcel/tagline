@@ -78,6 +78,9 @@
         <input class="form-input" type="password" id="signinPassword" name="password" required autocomplete="current-password" minlength="6" />
       </div>
       <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      <div style="text-align:center;margin-top:14px">
+        <button type="button" class="btn-link" id="forgotLink" style="background:none;border:none;color:var(--gold-soft);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Forgot password?</button>
+      </div>
     </form>
 
     <!-- Sign up form -->
@@ -95,6 +98,21 @@
         <input class="form-input" type="password" id="signupPassword" name="password" required autocomplete="new-password" minlength="8" />
       </div>
       <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+
+    <!-- Reset password (forgot) form -->
+    <form class="auth-form" id="resetForm">
+      <p style="color:var(--ink-soft);font-size:14px;margin-bottom:18px;line-height:1.5">
+        Enter the email address you signed up with. We'll send you a link to set a new password.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="resetEmail">Email</label>
+        <input class="form-input" type="email" id="resetEmail" name="email" required autocomplete="email" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+      <div style="text-align:center;margin-top:14px">
+        <button type="button" class="btn-link" id="backToSigninLink" style="background:none;border:none;color:var(--gold-soft);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Back to sign in</button>
+      </div>
     </form>
   </div>
 
@@ -135,15 +153,29 @@
   }
 
   // Tab switching
+  function switchToForm(formName) {
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    const target = document.getElementById(formName + 'Form');
+    if (target) target.classList.add('active');
+    document.getElementById('alertContainer').innerHTML = '';
+  }
+
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
       tab.classList.add('active');
-      const target = tab.dataset.tab;
-      document.getElementById(target + 'Form').classList.add('active');
-      document.getElementById('alertContainer').innerHTML = '';
+      switchToForm(tab.dataset.tab);
     });
+  });
+
+  // "Forgot password?" link → reveal reset form (no tab; deliberate one-way path)
+  document.getElementById('forgotLink').addEventListener('click', () => {
+    switchToForm('reset');
+  });
+  document.getElementById('backToSigninLink').addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.auth-tab[data-tab="signin"]').classList.add('active');
+    switchToForm('signin');
   });
 
   function showAlert(message, type = 'error') {
@@ -258,6 +290,46 @@
       showAlert('Network error. Please try again.');
       btn.disabled = false;
       btn.textContent = 'Create account';
+    }
+  });
+
+  // Reset password (request email)
+  document.getElementById('resetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!authConfig) {
+      showAlert('Page is still loading. One moment.');
+      return;
+    }
+    const email = document.getElementById('resetEmail').value.trim();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      const url = authConfig.supabaseUrl + '/auth/v1/recover';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': authConfig.supabaseAnonKey
+        },
+        body: JSON.stringify({
+          email,
+          // Where Supabase sends the user after they click the email link.
+          // Must be in Supabase project's "Redirect URLs" allow-list.
+          options: { redirectTo: window.location.origin + '/reset-password' }
+        })
+      });
+      // Always show the same success message — never leak whether the email
+      // exists in our system (account-enumeration mitigation per OWASP ASVS V2.1).
+      showAlert('If an account exists for that email, a reset link is on its way.', 'success');
+      btn.disabled = false;
+      btn.textContent = 'Send reset link';
+      document.getElementById('resetEmail').value = '';
+    } catch (err) {
+      showAlert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send reset link';
     }
   });
 

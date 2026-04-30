@@ -7,6 +7,7 @@
     { "source": "/cart", "destination": "/cart.html" },
     { "source": "/account", "destination": "/account.html" },
     { "source": "/signin", "destination": "/signin.html" },
+    { "source": "/reset-password", "destination": "/reset-password.html" },
     { "source": "/contact", "destination": "/contact.html" },
     { "source": "/success", "destination": "/success.html" },
     { "source": "/customize", "destination": "/customize.html" },

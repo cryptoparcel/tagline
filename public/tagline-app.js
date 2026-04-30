@@ -890,6 +890,56 @@
     }
   }
 
+  // ============ STRUCTURED DATA (JSON-LD) ============
+  // Build a Product ItemList from the PRODUCTS catalog and inject it as
+  // a JSON-LD script tag. Helps Google show price, availability, and
+  // image data in product search results.
+  // Only runs on the homepage (where the .product-card grid exists).
+  function injectProductJsonLd() {
+    if (!document.querySelector('.product-card')) return;
+    if (document.getElementById('jsonLdProducts')) return; // idempotent
+    const origin = window.location.origin;
+    const items = Object.keys(PRODUCTS).map((id, idx) => {
+      const p = PRODUCTS[id];
+      return {
+        "@type": "ListItem",
+        "position": idx + 1,
+        "item": {
+          "@type": "Product",
+          "name": p.name,
+          "description": p.description,
+          "sku": id,
+          "category": p.category,
+          "color": p.color,
+          "brand": { "@type": "Brand", "name": "TAGLINE" },
+          "image": `${origin}/images/products/${id}.jpg`,
+          "offers": {
+            "@type": "Offer",
+            "url": `${origin}/#shop`,
+            "priceCurrency": "USD",
+            "price": p.price.toFixed(2),
+            "availability": p.stock > 0
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            "itemCondition": "https://schema.org/NewCondition"
+          }
+        }
+      };
+    });
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "TAGLINE collection",
+      "numberOfItems": items.length,
+      "itemListElement": items
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'jsonLdProducts';
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
+  }
+
   // ============ INIT ============
   // Each step is wrapped in try/catch so a failure in one feature
   // doesn't break the rest of the page. Errors logged silently.
@@ -911,6 +961,7 @@
     safeInit('addToCart', () => wireAddToCart());
     safeInit('productCards', () => autoWireProductCards());
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
+    safeInit('jsonLdProducts', () => injectProductJsonLd());
 
     // Update other tabs when cart/wishlist changes
     safeInit('storageEvents', () => {

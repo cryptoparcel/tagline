@@ -1,6 +1,7 @@
 import { getStripe } from '../lib/stripe.js';
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import { sendEmail, orderConfirmationHtml } from '../lib/email.js';
+import { escapeHtml } from '../lib/html.js';
 
 // Vercel needs raw body for signature verification
 export const config = {
@@ -190,12 +191,3 @@ async function handleCheckoutCompleted(session, supabase) {
   }
 }
 
-// HTML escape — used everywhere user-influenced data hits an HTML string
-function escapeHtml(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}

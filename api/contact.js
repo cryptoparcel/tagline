@@ -1,9 +1,16 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import { sendEmail } from '../lib/email.js';
+import { escapeHtml } from '../lib/html.js';
 import {
   requireMethod, getBody, ok, badRequest, serverError,
   isEmail, isString, rateLimit, getClientId
 } from '../lib/util.js';
+
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: '8kb' }
+  }
+};
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
@@ -68,10 +75,10 @@ export default async function handler(req, res) {
         replyTo: email,
         subject: `[TAGLINE] New message from ${safeName}${safeSubject ? ': ' + safeSubject : ''}`,
         html: `
-          <p><strong>From:</strong> ${escape(name)} &lt;${escape(email)}&gt;</p>
-          ${subject ? `<p><strong>Subject:</strong> ${escape(subject)}</p>` : ''}
+          <p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
+          ${subject ? `<p><strong>Subject:</strong> ${escapeHtml(subject)}</p>` : ''}
           <p><strong>Message:</strong></p>
-          <p style="white-space:pre-wrap">${escape(message)}</p>
+          <p style="white-space:pre-wrap">${escapeHtml(message)}</p>
         `
       }).catch(err => console.error('Admin email failed:', err));
     }
@@ -94,11 +101,3 @@ function sanitizeForSubject(s) {
     .slice(0, 100);
 }
 
-function escape(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}

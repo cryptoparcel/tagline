@@ -4,6 +4,12 @@ import {
   isEmail, normalizeEmail, rateLimit, getClientId
 } from '../lib/util.js';
 
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: '2kb' }
+  }
+};
+
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
 

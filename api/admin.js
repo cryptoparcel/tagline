@@ -95,11 +95,12 @@ export default async function handler(req, res) {
           updates.status = status;
         }
         if (tracking_number) {
-          if (typeof tracking_number !== 'string' || tracking_number.length > 100 ||
-              /[\r\n\t<>]/.test(tracking_number)) {
+          // Common carrier formats are alphanumeric (UPS, FedEx, USPS, DHL).
+          // Allow 8-40 chars of [A-Z0-9] (case-insensitive) to cover them all.
+          if (typeof tracking_number !== 'string' || !/^[A-Z0-9]{8,40}$/i.test(tracking_number)) {
             return badRequest(res, 'Invalid tracking number');
           }
-          updates.tracking_number = tracking_number;
+          updates.tracking_number = tracking_number.toUpperCase();
         }
 
         const { error } = await supabase.from('orders').update(updates).eq('id', order_id);

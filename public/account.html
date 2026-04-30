@@ -97,6 +97,53 @@
     padding:0; margin:-1px; overflow:hidden;
     clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
+
+  /* ============ SETTINGS / TABS ============ */
+  .acct-tabs{
+    display:flex;gap:24px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:32px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .acct-tabs::-webkit-scrollbar{display:none}
+  .acct-tab{
+    background:transparent;
+    color:var(--muted);
+    font-size:13px;font-weight:500;
+    padding:14px 0;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    transition:color .2s,border-color .2s;
+  }
+  .acct-tab.active{
+    color:var(--ink);
+    border-bottom-color:var(--gold);
+  }
+  .acct-pane{display:none}
+  .acct-pane.active{display:block}
+
+  .settings-card{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:28px;
+    margin-bottom:14px;
+  }
+  .settings-card h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:16px;font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    margin-bottom:18px;
+  }
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:520px){
+    .grid-2{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -117,17 +164,85 @@
   <h1 class="page-title">Hello.</h1>
   <p class="page-sub">Signed in as <span data-user-email style="color:var(--ink)">…</span></p>
 
-  <div style="display:flex;gap:8px;margin-bottom:48px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap">
     <button class="signout-btn" id="signoutBtn">Sign out</button>
   </div>
 
-  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-0.025em;margin-bottom:24px">Order history</h2>
-
-  <div id="ordersContainer">
-    <div class="empty">
-      <p>Loading your orders…</p>
-    </div>
+  <div class="acct-tabs" role="tablist">
+    <button class="acct-tab active" role="tab" aria-selected="true" data-tab="orders">Orders</button>
+    <button class="acct-tab" role="tab" aria-selected="false" data-tab="settings">Settings</button>
   </div>
+
+  <section class="acct-pane active" id="pane-orders" role="tabpanel" aria-labelledby="tab-orders">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-0.025em;margin-bottom:24px">Order history</h2>
+    <div id="ordersContainer">
+      <div class="empty">
+        <p>Loading your orders…</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="acct-pane" id="pane-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;letter-spacing:-0.025em;margin-bottom:24px">Settings</h2>
+
+    <div id="settingsAlert" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <form id="profileForm" autocomplete="on" novalidate>
+      <div class="settings-card">
+        <h3>Profile</h3>
+        <div class="form-group">
+          <label class="form-label" for="pf-name">Full name</label>
+          <input class="form-input" type="text" id="pf-name" name="full_name" autocomplete="name" maxlength="80" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pf-email">Email</label>
+          <input class="form-input" type="email" id="pf-email" name="email" autocomplete="email" disabled style="opacity:.6;cursor:not-allowed" />
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Email is tied to sign-in. Contact us to change it.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pf-phone">Phone</label>
+          <input class="form-input" type="tel" id="pf-phone" name="phone" autocomplete="tel" placeholder="+1 555 123 4567" maxlength="20" />
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>Default shipping address</h3>
+        <div class="form-group">
+          <label class="form-label" for="pf-line1">Address line 1</label>
+          <input class="form-input" type="text" id="pf-line1" name="line1" autocomplete="address-line1" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pf-line2">Address line 2 (optional)</label>
+          <input class="form-input" type="text" id="pf-line2" name="line2" autocomplete="address-line2" maxlength="100" />
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="pf-city">City</label>
+            <input class="form-input" type="text" id="pf-city" name="city" autocomplete="address-level2" maxlength="80" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pf-state">State (2-letter)</label>
+            <input class="form-input" type="text" id="pf-state" name="state" autocomplete="address-level1" maxlength="2" style="text-transform:uppercase" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="pf-zip">Postal code</label>
+            <input class="form-input" type="text" id="pf-zip" name="zip" autocomplete="postal-code" maxlength="12" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pf-country">Country</label>
+            <select class="form-input" id="pf-country" name="country" autocomplete="country">
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="saveSettingsBtn">Save changes</button>
+    </form>
+  </section>
 </main>
 
 <footer>
@@ -254,6 +369,103 @@
       window.Tagline.Auth.clear();
       window.location.href = '/';
     }
+  });
+
+  // ============ TABS ============
+  document.querySelectorAll('.acct-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.acct-tab').forEach(t => {
+        t.classList.toggle('active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      document.querySelectorAll('.acct-pane').forEach(p => {
+        const isMatch = p.id === 'pane-' + target;
+        p.classList.toggle('active', isMatch);
+        if (isMatch) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+      if (target === 'settings' && !window.__profileLoaded) {
+        loadProfile();
+      }
+    });
+  });
+
+  // ============ SETTINGS / PROFILE ============
+  function settingsAlert(message, type = 'success') {
+    const el = document.getElementById('settingsAlert');
+    el.innerHTML = '';
+    if (!message) return;
+    const div = document.createElement('div');
+    div.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
+    div.textContent = message;
+    div.style.marginBottom = '14px';
+    el.appendChild(div);
+  }
+
+  function fillProfileForm(p) {
+    if (!p) return;
+    document.getElementById('pf-name').value = p.full_name || '';
+    document.getElementById('pf-email').value = p.email || '';
+    document.getElementById('pf-phone').value = p.phone || '';
+    const a = p.shipping_address || {};
+    document.getElementById('pf-line1').value = a.line1 || '';
+    document.getElementById('pf-line2').value = a.line2 || '';
+    document.getElementById('pf-city').value = a.city || '';
+    document.getElementById('pf-state').value = a.state || '';
+    document.getElementById('pf-zip').value = a.zip || '';
+    document.getElementById('pf-country').value = a.country || 'US';
+  }
+
+  async function loadProfile() {
+    const result = await window.Tagline.API.request('/api/profile', { auth: true });
+    if (!result.ok) {
+      settingsAlert(result.error || 'Could not load profile.', 'error');
+      return;
+    }
+    fillProfileForm(result.profile);
+    window.__profileLoaded = true;
+  }
+
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveSettingsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    settingsAlert('');
+
+    const v = (id) => document.getElementById(id).value.trim();
+    const line1 = v('pf-line1');
+    const city = v('pf-city');
+    const state = v('pf-state').toUpperCase();
+    const zip = v('pf-zip');
+    const country = v('pf-country');
+
+    // Only send shipping_address if at least line1+city+state+zip provided
+    const hasAddress = line1 && city && state && zip;
+    const body = {
+      full_name: v('pf-name'),
+      phone: v('pf-phone')
+    };
+    if (hasAddress) {
+      body.shipping_address = {
+        line1, city, state, zip, country,
+        ...(v('pf-line2') ? { line2: v('pf-line2') } : {})
+      };
+    }
+
+    const result = await window.Tagline.API.request('/api/profile', {
+      method: 'PATCH', body, auth: true
+    });
+
+    if (!result.ok) {
+      settingsAlert(result.error || 'Could not save changes.', 'error');
+    } else {
+      settingsAlert('Saved.');
+      fillProfileForm(result.profile);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Save changes';
   });
 
   if (document.readyState === 'loading') {

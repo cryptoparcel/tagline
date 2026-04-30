@@ -111,9 +111,12 @@
 <script src="/tagline-app.js" defer></script>
 <script>
 (function(){
-  // Check if we're in preview mode (no Supabase keys configured)
-  if (window.SUPABASE_URL && window.SUPABASE_URL.indexOf('REPLACE_WITH') === 0) {
-    // Show preview mode UI instead of forms
+  // Auth config (Supabase URL + anon key) is fetched from /api/config so we
+  // never have to hand-edit keys in this file. Until config arrives, the
+  // forms are disabled.
+  let authConfig = null;
+
+  function showPreview() {
     document.querySelector('.card').innerHTML = `
       <div style="padding:48px 24px;text-align:center">
         <div style="width:48px;height:48px;margin:0 auto 24px;color:var(--gold);opacity:.7">
@@ -129,7 +132,6 @@
         </div>
       </div>
     `;
-    return;
   }
 
   // Tab switching
@@ -156,6 +158,10 @@
   // Sign in
   document.getElementById('signinForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!authConfig) {
+      showAlert('Sign-in is still loading. One moment, then try again.');
+      return;
+    }
     const email = document.getElementById('signinEmail').value.trim();
     const password = document.getElementById('signinPassword').value;
     const btn = e.target.querySelector('button[type="submit"]');
@@ -163,18 +169,19 @@
     btn.textContent = 'Signing in…';
 
     try {
-      const url = window.SUPABASE_URL + '/auth/v1/token?grant_type=password';
+      const url = authConfig.supabaseUrl + '/auth/v1/token?grant_type=password';
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': window.SUPABASE_ANON_KEY
+          'apikey': authConfig.supabaseAnonKey
         },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (!res.ok) {
-        showAlert(data.error_description || data.msg || 'Sign in failed.');
+        // Generic message — don't leak whether the email exists
+        showAlert('Email or password is incorrect.');
         btn.disabled = false;
         btn.textContent = 'Sign in';
         return;
@@ -191,20 +198,41 @@
   // Sign up
   document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!authConfig) {
+      showAlert('Sign-up is still loading. One moment, then try again.');
+      return;
+    }
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
+
+    // Client-side guards (server enforces too)
+    if (name.length < 1 || name.length > 80) {
+      showAlert('Please enter your name (under 80 characters).');
+      return;
+    }
+    if (password.length < 8) {
+      showAlert('Password must be at least 8 characters.');
+      return;
+    }
+    // Block the most common weak passwords up-front (NIST SP 800-63B Sec 5.1.1.2)
+    const COMMON_BAD = ['password','12345678','123456789','qwerty123','password1','iloveyou','admin123','letmein1','welcome1'];
+    if (COMMON_BAD.indexOf(password.toLowerCase()) !== -1) {
+      showAlert('That password is too common. Pick a stronger one.');
+      return;
+    }
+
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Creating account…';
 
     try {
-      const url = window.SUPABASE_URL + '/auth/v1/signup';
+      const url = authConfig.supabaseUrl + '/auth/v1/signup';
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': window.SUPABASE_ANON_KEY
+          'apikey': authConfig.supabaseAnonKey
         },
         body: JSON.stringify({
           email, password,
@@ -233,23 +261,37 @@
     }
   });
 
-  // Redirect away if already logged in
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Tagline.Auth.isLoggedIn()) {
-        window.location.href = '/account';
+  // Bootstrap: fetch auth config from server, then enable forms.
+  // If config endpoint 404s or returns "not configured", show preview UI.
+  async function bootstrap() {
+    // If user is already signed in, skip straight to account
+    if (window.Tagline?.Auth?.isLoggedIn()) {
+      window.location.href = '/account';
+      return;
+    }
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) {
+        showPreview();
+        return;
       }
-    });
-  } else if (window.Tagline?.Auth?.isLoggedIn()) {
-    window.location.href = '/account';
+      const data = await res.json();
+      if (!data.ok || !data.supabaseUrl || !data.supabaseAnonKey) {
+        showPreview();
+        return;
+      }
+      authConfig = { supabaseUrl: data.supabaseUrl, supabaseAnonKey: data.supabaseAnonKey };
+    } catch {
+      showPreview();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
   }
 })();
-</script>
-
-<!-- Public Supabase keys (safe to expose) - replace with real values -->
-<script>
-  window.SUPABASE_URL = 'REPLACE_WITH_PUBLIC_SUPABASE_URL';
-  window.SUPABASE_ANON_KEY = 'REPLACE_WITH_PUBLIC_SUPABASE_ANON_KEY';
 </script>
 
 </body>

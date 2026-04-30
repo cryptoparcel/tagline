@@ -112,24 +112,9 @@ git push -u origin main
 
 ---
 
-## Step 7 — Update signin page with public Supabase keys
+## Step 7 — (Nothing to do)
 
-The signin page needs your public Supabase URL and anon key. Edit `public/signin.html`, find these two lines near the bottom:
-
-```js
-window.SUPABASE_URL = 'REPLACE_WITH_PUBLIC_SUPABASE_URL';
-window.SUPABASE_ANON_KEY = 'REPLACE_WITH_PUBLIC_SUPABASE_ANON_KEY';
-```
-
-Replace with the actual values from Step 2. Commit and push:
-
-```powershell
-git add public/signin.html
-git commit -m "Add Supabase public keys"
-git push
-```
-
-Vercel auto-deploys.
+The signin page used to require hand-editing `public/signin.html` with your public Supabase keys. That's been replaced by the `/api/config` endpoint, which serves the public values from your env vars. Set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY` in Vercel (Step 6) and that's it.
 
 ---
 

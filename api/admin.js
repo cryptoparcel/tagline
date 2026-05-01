@@ -1,5 +1,4 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
-import { getStripe } from '../lib/stripe.js';
 import { sendEmail, orderShippedHtml } from '../lib/email.js';
 import {
   requireMethod, getBody, ok, unauthorized, badRequest, serverError, isAdmin, requireSameOrigin
@@ -84,7 +83,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = getBody(req);
-      const { action, order_id, status, tracking_number, message_id, message_status, reason } = body;
+      const { action, order_id, status, tracking_number, message_id, message_status } = body;
 
       // UUID v4 format check
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -133,46 +132,6 @@ export default async function handler(req, res) {
         }
 
         return ok(res, { updated: true });
-      }
-
-      if (action === 'refund') {
-        if (!order_id || typeof order_id !== 'string' || !uuidRegex.test(order_id)) {
-          return badRequest(res, 'Invalid order_id');
-        }
-        // Optional refund reason (Stripe accepts: duplicate, fraudulent, requested_by_customer)
-        const validReasons = ['duplicate', 'fraudulent', 'requested_by_customer'];
-        const refundReason = reason && validReasons.includes(reason)
-          ? reason : 'requested_by_customer';
-
-        const { data: order, error: fetchError } = await supabase
-          .from('orders')
-          .select('id, status, stripe_payment_intent, total_cents')
-          .eq('id', order_id)
-          .maybeSingle();
-        if (fetchError) throw fetchError;
-        if (!order) return badRequest(res, 'Order not found.');
-        if (!order.stripe_payment_intent) {
-          return badRequest(res, 'No payment to refund (this order was never paid).');
-        }
-        if (order.status === 'refunded') {
-          return badRequest(res, 'Order is already refunded.');
-        }
-
-        // Issue the refund via Stripe. The charge.refunded webhook will
-        // flip our DB status to 'refunded' once Stripe confirms — we don't
-        // do it pre-emptively here (single source of truth is Stripe).
-        try {
-          const stripe = getStripe();
-          await stripe.refunds.create({
-            payment_intent: order.stripe_payment_intent,
-            reason: refundReason
-          });
-        } catch (err) {
-          console.error('Stripe refund failed:', err);
-          return badRequest(res, err.message || 'Stripe refund failed.');
-        }
-
-        return ok(res, { refunded: true });
       }
 
       if (action === 'update_message') {

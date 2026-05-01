@@ -1128,9 +1128,13 @@
       .replace(/'/g, '&#39;');
   }
 
-  // Expose for use on individual pages
+  // Expose for use on individual pages.
+  // PRODUCTS is now the single source of truth — cart.html and wishlist.html
+  // read from this instead of maintaining their own copies. PRODUCT_NAME_TO_ID
+  // is a derived map for homepage card → id resolution.
   window.Tagline = {
     Cart, Wishlist, Auth, API, escapeHtml,
+    PRODUCTS, PRODUCT_NAME_TO_ID,
     isPreviewMode: () => isPreviewMode,
     checkPreviewMode
   };

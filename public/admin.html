@@ -111,6 +111,27 @@
     margin-bottom:12px;letter-spacing:-0.025em;
   }
   .auth-prompt p{color:var(--ink-soft);margin-bottom:24px;font-size:14px}
+
+  /* Refund button — destructive, slightly subdued styling */
+  .refund-btn{
+    background:transparent;
+    color:var(--error);
+    border:1px solid rgba(229,115,115,.4);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:6px 12px;
+    cursor:pointer;
+    transition:background .2s, color .2s;
+  }
+  .refund-btn:hover{
+    background:rgba(229,115,115,.12);
+  }
+  .refund-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+  }
 </style>
 </head>
 <body>
@@ -138,18 +159,31 @@
   function setKey(k){ localStorage.setItem(KEY_STORAGE, k); }
   function clearKey(){ localStorage.removeItem(KEY_STORAGE); }
 
-  async function adminFetch(path){
-    const res = await fetch(path, { headers: { 'X-Admin-Key': getKey() } });
-    return res.json();
+  // Admin fetch — wraps the raw response with consistent shape so callers
+  // don't have to handle non-JSON responses, network errors, or 404s.
+  async function adminRequest(path, { method = 'GET', body } = {}) {
+    const headers = { 'X-Admin-Key': getKey() || '' };
+    if (body) headers['Content-Type'] = 'application/json';
+    try {
+      const res = await fetch(path, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      if (res.status === 404) {
+        return { ok: false, error: 'Backend not deployed.', preview: true };
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data.error || `Request failed (${res.status})` };
+      }
+      return { ok: true, ...data };
+    } catch {
+      return { ok: false, error: 'Network error. Please try again.' };
+    }
   }
-  async function adminPost(path, body){
-    const res = await fetch(path, {
-      method:'POST',
-      headers: { 'Content-Type':'application/json', 'X-Admin-Key': getKey() },
-      body: JSON.stringify(body)
-    });
-    return res.json();
-  }
+  const adminFetch = (path) => adminRequest(path);
+  const adminPost = (path, body) => adminRequest(path, { method: 'POST', body });
 
   function renderAuth(error){
     main.innerHTML = `
@@ -240,6 +274,12 @@
       const rows = (result.orders || []).map(o => {
         const safeStatus = ['paid','shipped','delivered','pending','cancelled','refunded'].includes(o.status) ? o.status : 'pending';
         const itemsHtml = (o.items||[]).map(i => `${escapeHtml(i.name)} ×${escapeHtml(String(i.quantity))}`).join('<br/>');
+        // Refund only available for paid/shipped/delivered orders that haven't
+        // been refunded yet AND that have an actual Stripe payment to refund.
+        const refundable = ['paid','shipped','delivered'].includes(o.status);
+        const refundBtn = refundable
+          ? `<button type="button" class="refund-btn" data-action="refund" data-order-id="${escapeHtml(o.id)}" data-amount="${(o.total_cents/100).toFixed(2)}">Refund</button>`
+          : '';
         return `
           <tr>
             <td class="mono">#${escapeHtml(o.id.slice(0,8).toUpperCase())}</td>
@@ -248,14 +288,15 @@
             <td><span class="status-pill ${safeStatus}">${escapeHtml(o.status)}</span></td>
             <td>$${(o.total_cents/100).toFixed(2)}</td>
             <td style="font-size:12px;color:var(--ink-soft)">${itemsHtml}</td>
+            <td>${refundBtn}</td>
           </tr>
         `;
       }).join('');
       target.innerHTML = `
         <div class="data-table-wrap">
           <table class="data-table">
-            <thead><tr><th>Order</th><th>Date</th><th>Email</th><th>Status</th><th>Total</th><th>Items</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--muted)">No orders yet.</td></tr>'}</tbody>
+            <thead><tr><th>Order</th><th>Date</th><th>Email</th><th>Status</th><th>Total</th><th>Items</th><th>Actions</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--muted)">No orders yet.</td></tr>'}</tbody>
           </table>
         </div>
       `;
@@ -309,6 +350,33 @@
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+
+  // Refund button click handler — single delegated listener on the main
+  // content area. Confirms with admin, calls /api/admin POST action=refund,
+  // reloads the orders view on success.
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.refund-btn');
+    if (!btn) return;
+    const orderId = btn.dataset.orderId;
+    const amount = btn.dataset.amount;
+    if (!orderId) return;
+    if (!confirm(`Refund $${amount} for this order? This will charge your Stripe account and email the customer.`)) {
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Refunding…';
+    const result = await adminPost('/api/admin', { action: 'refund', order_id: orderId, reason: 'requested_by_customer' });
+    if (!result.ok) {
+      alert(result.error || 'Refund failed.');
+      btn.disabled = false;
+      btn.textContent = 'Refund';
+      return;
+    }
+    // Status updates flow back via the charge.refunded webhook → DB → here.
+    // Reload the view to pick up the new status.
+    btn.textContent = 'Refunded ✓';
+    setTimeout(loadView, 500);
+  });
 
   logoutBtn.addEventListener('click', () => {
     clearKey();

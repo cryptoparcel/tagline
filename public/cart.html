@@ -153,34 +153,25 @@
 <script src="/tagline-app.js" defer></script>
 <script>
 (function(){
-  const PRODUCT_DATA = {
-    'ascend-hoodie':     {name:'Ascend Hoodie',    color:'Cream',         price:148, initial:'A'},
-    'halo-zip':          {name:'Halo Zip',         color:'Bone',          price:165, initial:'H'},
-    'origin-tee':        {name:'Origin Tee',       color:'Ivory',         price:58,  initial:'O'},
-    'sigil-tank':        {name:'Sigil Tank',       color:'White',         price:78,  initial:'S'},
-    'vesper-long':       {name:'Vesper Long',      color:'Pearl',         price:92,  initial:'V'},
-    'path-jogger':       {name:'Path Jogger',      color:'Bone',          price:118, initial:'P'},
-    'trial-short':       {name:'Trial Short',      color:'Ivory',         price:72,  initial:'T'},
-    'cloud-crew':        {name:'Cloud Crew',       color:'Fog',           price:128, initial:'C'},
-    'crown-cap':         {name:'Crown Cap',        color:'White',         price:48,  initial:'C'},
-    'halo-runner':       {name:'Halo Runner',      color:'Triple White',  price:215, initial:'H'},
-    'aether-bra':        {name:'Aether Bra',       color:'Pearl',         price:68,  initial:'A'},
-    'aether-legging':    {name:'Aether Legging',   color:'White',         price:98,  initial:'A'},
-    'reign-bomber':      {name:'Reign Bomber',     color:'Bone',          price:245, initial:'R'},
-    'velocity-track':    {name:'Velocity Track',   color:'Ivory',         price:185, initial:'V'},
-    'vow-beanie':        {name:'Vow Beanie',       color:'Cream',         price:42,  initial:'V'},
-    'anthem-polo':       {name:'Anthem Polo',      color:'White',         price:88,  initial:'A'},
-    'lumen-crop':        {name:'Lumen Crop',       color:'Pearl',         price:54,  initial:'L'},
-    'pilgrim-pant':      {name:'Pilgrim Pant',     color:'Ivory',         price:128, initial:'P'},
-    'spirit-shell':      {name:'Spirit Shell',     color:'White',         price:198, initial:'S'},
-    'echo-vest':         {name:'Echo Vest',        color:'Bone',          price:155, initial:'E'},
-    'verse-henley':      {name:'Verse Henley',     color:'Cream',         price:84,  initial:'V'},
-    'sole-sock':         {name:'Sole Sock',        color:'White Pair',    price:24,  initial:'S'},
-    'pulse-band':        {name:'Pulse Band',       color:'White',         price:22,  initial:'P'},
-    'quill-tote':        {name:'Quill Tote',       color:'Canvas White',  price:38,  initial:'Q'}
-  };
+  // Product display data lives in tagline-app.js (window.Tagline.PRODUCTS) —
+  // the single source of truth. We derive `initial` from name on the fly.
+  function getProductData(id) {
+    const p = window.Tagline?.PRODUCTS?.[id];
+    if (!p) return null;
+    return {
+      name: p.name,
+      color: p.color,
+      price: p.price,
+      initial: p.name.charAt(0).toUpperCase()
+    };
+  }
 
   function render() {
+    if (!window.Tagline?.PRODUCTS) {
+      // Catalog hasn't loaded yet — defer
+      setTimeout(render, 50);
+      return;
+    }
     const items = window.Tagline.Cart.get();
     const container = document.getElementById('cartContent');
     const sub = document.getElementById('cartSub');
@@ -205,14 +196,14 @@
 
     // Filter out items whose product isn't in our catalog (deleted or unknown).
     // Avoids the "items in your cart" count diverging from what's rendered.
-    const validItems = items.filter(i => PRODUCT_DATA[i.product_id]);
+    const validItems = items.filter(i => getProductData(i.product_id));
     const totalQty = validItems.reduce((s,i)=>s+i.quantity,0);
     sub.textContent = `${totalQty} item${totalQty === 1 ? '' : 's'} in your cart`;
 
     let subtotal = 0;
     const esc = window.Tagline.escapeHtml;
     const itemsHtml = validItems.map((item, idx) => {
-      const p = PRODUCT_DATA[item.product_id];
+      const p = getProductData(item.product_id);
       const lineTotal = p.price * item.quantity;
       subtotal += lineTotal;
       const sizeLabel = item.size ? `<div class="color">Size: ${esc(item.size)}</div>` : '';

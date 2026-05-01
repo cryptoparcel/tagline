@@ -19,6 +19,45 @@
   const TOKEN_KEY = 'tagline_token';
   const USER_KEY = 'tagline_user';
 
+  // Centralized limits — prevents drift between defensive validators
+  // (read-side caps in get(), write-side caps in add()) and gives a
+  // single place to tune.
+  const LIMITS = Object.freeze({
+    CART_LINES: 50,        // distinct line items in cart
+    CART_QTY_MAX: 10,      // max qty per line item
+    WISHLIST: 100,         // saved items
+    RECENT: 8,             // recently-viewed history
+  });
+
+  const VALID_SIZES = ['XS','S','M','L','XL','XXL'];
+
+  // Shared validators — used in Cart/Wishlist/Recent get-time filters AND
+  // in their public add/toggle methods (defense in depth).
+  const isValidProductId = (s) =>
+    typeof s === 'string' && /^[a-z0-9-]{1,50}$/.test(s);
+
+  const isValidCartItem = (item) =>
+    item && typeof item === 'object' &&
+    isValidProductId(item.product_id) &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0 && item.quantity <= LIMITS.CART_QTY_MAX &&
+    (item.size === undefined || VALID_SIZES.indexOf(item.size) !== -1);
+
+  // localStorage helpers — read/parse/validate/cap in one shot.
+  // Returns [] on any failure (missing, malformed, tampered).
+  function readList(key, validateItem, max) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(validateItem).slice(0, max);
+    } catch { return []; }
+  }
+  function writeList(key, items) {
+    try { localStorage.setItem(key, JSON.stringify(items)); } catch {}
+  }
+
   // ============ PREVIEW MODE DETECTION ============
   // Cache result per-session. We probe /api/products once on first page load.
   // If it fails, the site goes into "preview mode" — backend features show
@@ -82,59 +121,27 @@
   // ============ CART ============
   const Cart = {
     get() {
-      try {
-        const raw = localStorage.getItem(CART_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        // Defensive: if anyone tampered with localStorage, reject anything
-        // that isn't an array of clean { product_id, quantity, size? } objects.
-        if (!Array.isArray(parsed)) return [];
-        const VALID_SIZES = ['XS','S','M','L','XL','XXL'];
-        return parsed
-          .filter(item =>
-            item &&
-            typeof item.product_id === 'string' &&
-            // product_id format: lowercase letters, digits, hyphens only
-            /^[a-z0-9-]{1,50}$/.test(item.product_id) &&
-            Number.isInteger(item.quantity) &&
-            item.quantity > 0 &&
-            item.quantity <= 10 &&
-            // size, if present, must be one of the known sizes
-            (item.size === undefined || VALID_SIZES.indexOf(item.size) !== -1)
-          )
-          .map(item => {
-            const out = {
-              product_id: item.product_id,
-              quantity: Math.min(10, Math.max(1, item.quantity))
-            };
-            if (item.size && VALID_SIZES.indexOf(item.size) !== -1) {
-              out.size = item.size;
-            }
-            return out;
-          })
-          .slice(0, 50); // cap cart at 50 line items
-      } catch {
-        return [];
-      }
+      // Read + validate via shared helper, then normalize each item.
+      // Normalization re-clamps quantity in case any older client wrote
+      // looser values before the cap existed.
+      return readList(CART_KEY, isValidCartItem, LIMITS.CART_LINES).map(item => {
+        const out = {
+          product_id: item.product_id,
+          quantity: Math.min(LIMITS.CART_QTY_MAX, Math.max(1, item.quantity))
+        };
+        if (item.size && VALID_SIZES.indexOf(item.size) !== -1) out.size = item.size;
+        return out;
+      });
     },
     save(items) {
-      try {
-        localStorage.setItem(CART_KEY, JSON.stringify(items));
-      } catch {}
+      writeList(CART_KEY, items);
       this.updateBadge();
       window.dispatchEvent(new CustomEvent('cart:updated'));
     },
     add(productId, quantity = 1, options = {}) {
       // Validate inputs before storing — defense in depth.
-      // get() also filters on read, but rejecting bad input here
-      // means we never save garbage in the first place.
-      if (typeof productId !== 'string' || !/^[a-z0-9-]{1,50}$/.test(productId)) {
-        return false;
-      }
-      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
-        return false;
-      }
-      const VALID_SIZES = ['XS','S','M','L','XL','XXL'];
+      if (!isValidProductId(productId)) return false;
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > LIMITS.CART_QTY_MAX) return false;
       const size = (options && typeof options.size === 'string' && VALID_SIZES.indexOf(options.size) !== -1)
         ? options.size : null;
 
@@ -144,10 +151,10 @@
         i.product_id === productId && (i.size || null) === size
       );
       if (existing) {
-        existing.quantity = Math.min(10, existing.quantity + quantity);
+        existing.quantity = Math.min(LIMITS.CART_QTY_MAX, existing.quantity + quantity);
       } else {
-        if (items.length >= 50) return false; // honor 50-item cap
-        const item = { product_id: productId, quantity: Math.min(10, quantity) };
+        if (items.length >= LIMITS.CART_LINES) return false;
+        const item = { product_id: productId, quantity: Math.min(LIMITS.CART_QTY_MAX, quantity) };
         if (size) item.size = size;
         items.push(item);
       }
@@ -173,7 +180,7 @@
       if (quantity <= 0) {
         this.remove(productId, size);
       } else {
-        item.quantity = Math.min(10, quantity);
+        item.quantity = Math.min(LIMITS.CART_QTY_MAX, quantity);
         this.save(items);
       }
     },
@@ -193,54 +200,30 @@
   };
 
   // ============ WISHLIST ============
-  // Saves products the user "hearted" via localStorage. Persists across
-  // sessions. Updates count badge on nav heart icon. Same defensive
+  // Saved products ("hearted"), persists across sessions. Same defensive
   // validation as Cart — only allows clean product_id strings.
   const Wishlist = {
-    get() {
-      try {
-        const raw = localStorage.getItem(WISHLIST_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed
-          .filter(id => typeof id === 'string' && /^[a-z0-9-]{1,50}$/.test(id))
-          .slice(0, 100); // cap at 100 wishlisted items
-      } catch {
-        return [];
-      }
-    },
+    get() { return readList(WISHLIST_KEY, isValidProductId, LIMITS.WISHLIST); },
     save(items) {
-      try {
-        localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
-        this.updateBadge();
-        this.updateHearts();
-      } catch {}
+      writeList(WISHLIST_KEY, items);
+      this.updateBadge();
+      this.updateHearts();
     },
-    has(productId) {
-      return this.get().indexOf(productId) !== -1;
-    },
+    has(productId) { return this.get().indexOf(productId) !== -1; },
     toggle(productId) {
-      // Validate productId before storing — defense in depth.
-      // get() also filters on read, but rejecting bad input here
-      // means we never save garbage in the first place.
-      if (typeof productId !== 'string' || !/^[a-z0-9-]{1,50}$/.test(productId)) {
-        return false;
-      }
+      if (!isValidProductId(productId)) return false;
       const items = this.get();
       const idx = items.indexOf(productId);
       if (idx === -1) {
-        if (items.length >= 100) return false; // honor the 100-item cap
+        if (items.length >= LIMITS.WISHLIST) return false;
         items.push(productId);
       } else {
         items.splice(idx, 1);
       }
       this.save(items);
-      return idx === -1; // true if just added, false if removed
+      return idx === -1; // true if just added
     },
-    count() {
-      return this.get().length;
-    },
+    count() { return this.get().length; },
     updateBadge() {
       const count = this.count();
       document.querySelectorAll('.wishlist-badge, [data-wishlist-count]').forEach(el => {
@@ -249,7 +232,6 @@
       });
     },
     updateHearts() {
-      // Update all visible heart buttons to reflect current state
       const items = this.get();
       document.querySelectorAll('.heart-btn').forEach(btn => {
         const id = btn.dataset.productId;
@@ -260,26 +242,15 @@
   };
 
   // ============ RECENTLY VIEWED ============
-  // Tracks the last 8 product IDs the user opened in quick view.
-  // Stored in localStorage; rendered as a small carousel on the
-  // homepage if the list has 3+ items (any fewer feels thin).
+  // Tracks the last LIMITS.RECENT product IDs the user opened in quick
+  // view. Rendered as a small carousel on the homepage if 3+ entries.
   const Recent = {
-    get() {
-      try {
-        const raw = localStorage.getItem(RECENT_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed
-          .filter(id => typeof id === 'string' && /^[a-z0-9-]{1,50}$/.test(id))
-          .slice(0, 8);
-      } catch { return []; }
-    },
+    get() { return readList(RECENT_KEY, isValidProductId, LIMITS.RECENT); },
     add(id) {
-      if (typeof id !== 'string' || !/^[a-z0-9-]{1,50}$/.test(id)) return;
+      if (!isValidProductId(id)) return;
       const list = this.get().filter(x => x !== id); // dedupe
       list.unshift(id);                              // most-recent first
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8))); } catch {}
+      writeList(RECENT_KEY, list.slice(0, LIMITS.RECENT));
     }
   };
 

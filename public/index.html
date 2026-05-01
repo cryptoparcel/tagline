@@ -90,6 +90,59 @@
 
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
+  /* ============ RECENTLY VIEWED ============ */
+  .recently-viewed{
+    max-width:1240px;
+    margin:0 auto;
+    padding:24px 18px 48px;
+  }
+  .recently-viewed-head{
+    margin-bottom:24px;
+  }
+  .recently-viewed-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:14px;
+  }
+  .recently-viewed .product-card-mini{
+    background:linear-gradient(160deg, #14110c 0%, #0d0c0a 100%);
+    border:1px solid var(--line);
+    cursor:pointer;
+    transition:border-color .25s, transform .25s;
+    text-decoration:none;
+    color:inherit;
+    display:block;
+  }
+  .recently-viewed .product-card-mini:hover{
+    border-color:var(--line-strong);
+    transform:translateY(-2px);
+  }
+  .recently-viewed .pcm-image{
+    aspect-ratio:1/1.1;
+    display:grid; place-items:center;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(160deg, #1a1814 0%, #0d0c0a 100%);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:48px; font-weight:600;
+    color:rgba(255,255,250,.06);
+    letter-spacing:-0.04em;
+    overflow:hidden;
+  }
+  .recently-viewed .pcm-info{ padding:12px 14px 14px; }
+  .recently-viewed .pcm-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px; font-weight:500; color:var(--ink);
+    margin-bottom:2px;
+  }
+  .recently-viewed .pcm-price{
+    font-size:13px; font-weight:600; color:var(--gold-soft);
+  }
+  @media (max-width:640px){
+    .recently-viewed{padding:16px 14px 36px}
+    .recently-viewed-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .recently-viewed .pcm-image{font-size:36px}
+  }
+
   /* Skip-to-content link — first focusable element on the page.
      Visually hidden until focused. WCAG 2.4.1 "Bypass Blocks". */
   .skip-link{
@@ -2671,6 +2724,18 @@
       <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </a>
   </div>
+</section>
+
+<!-- ============ RECENTLY VIEWED ============ -->
+<!-- Populated by tagline-app.js when the user has 3+ items in their
+     local history. Hidden by default; shown once injectRecentlyViewed()
+     fills in the cards. -->
+<section class="recently-viewed" id="recentlyViewed" hidden aria-label="Recently viewed">
+  <div class="recently-viewed-head">
+    <div class="section-marker"><span class="label">Recently viewed</span></div>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(22px,3vw,28px);font-weight:600;letter-spacing:-0.025em;color:var(--ink)">Pick up where you left off.</h2>
+  </div>
+  <div class="recently-viewed-grid" id="recentlyViewedGrid"></div>
 </section>
 
 <!-- ============ SHOP BY CATEGORY ============ -->

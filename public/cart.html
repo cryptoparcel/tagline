@@ -120,6 +120,82 @@
     background:rgba(184,137,61,.08);
     border:1px solid rgba(184,137,61,.2);
   }
+
+  /* ============ LOADING SKELETON ============
+     Shown while we wait for tagline-app.js (and therefore Tagline.PRODUCTS)
+     to finish loading. Matches the grid-vs-summary layout the cart will
+     use, so there's no jump-in when the real content arrives. */
+  .cart-skeleton{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:48px;
+    align-items:start;
+  }
+  @media (max-width:880px){
+    .cart-skeleton{grid-template-columns:1fr;gap:24px}
+  }
+  .cs-items{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .cs-item{
+    background:var(--surface);
+    height:120px; padding:20px;
+    display:flex; align-items:center; gap:18px;
+    position:relative; overflow:hidden;
+  }
+  .cs-thumb{ width:80px; height:80px; background:rgba(255,255,250,.04); }
+  .cs-line{ background:rgba(255,255,250,.04); height:14px; border-radius:2px; }
+  .cs-line.short{ width:40%; }
+  .cs-line.med{ width:65%; }
+  .cs-summary{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:28px;
+    height:280px;
+    position:relative; overflow:hidden;
+  }
+  .cs-item::after, .cs-summary::after{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,250,.04), transparent);
+    animation:cartSkelShimmer 1.6s ease-in-out infinite;
+  }
+  @keyframes cartSkelShimmer{
+    0%{ transform:translateX(-100%); }
+    100%{ transform:translateX(100%); }
+  }
+
+  /* ============ UNDO TOAST ============
+     Shown briefly after a cart-item removal — gives the user a 5-second
+     window to undo. NN/g: "undo > confirm" for reversible actions. */
+  .undo-toast{
+    position:fixed;
+    left:50%; bottom:24px;
+    transform:translateX(-50%) translateY(150%);
+    background:#16161a;
+    color:var(--ink);
+    border:1px solid var(--line-strong);
+    padding:14px 22px;
+    display:flex; align-items:center; gap:18px;
+    font-size:13px;
+    font-family:'Inter',sans-serif;
+    z-index:300;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,.7);
+    transition:transform .25s ease;
+    max-width:calc(100vw - 32px);
+  }
+  .undo-toast.show{ transform:translateX(-50%) translateY(0); }
+  .undo-toast .undo-btn{
+    background:transparent; border:none;
+    color:var(--gold-soft);
+    font-size:13px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+    cursor:pointer; padding:0;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .undo-toast .undo-btn:hover{ color:var(--gold); }
+  @media (max-width:520px){
+    .undo-toast{ left:14px; right:14px; bottom:14px; transform:translateY(150%); justify-content:space-between; }
+    .undo-toast.show{ transform:translateY(0); }
+  }
 </style>
 </head>
 <body>
@@ -142,7 +218,17 @@
   <h1 class="page-title">Your cart</h1>
   <div class="page-sub" id="cartSub">Review your items and proceed to checkout.</div>
 
-  <div id="cartContent"></div>
+  <div id="cartContent">
+    <!-- Loading skeleton — replaced by render() once Tagline.PRODUCTS arrives -->
+    <div class="cart-skeleton" aria-live="polite" aria-busy="true">
+      <div class="cs-items">
+        <div class="cs-item"><div class="cs-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="cs-line med"></div><div class="cs-line short"></div></div></div>
+        <div class="cs-item"><div class="cs-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div class="cs-line med"></div><div class="cs-line short"></div></div></div>
+      </div>
+      <div class="cs-summary"></div>
+      <span class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Loading your cart…</span>
+    </div>
+  </div>
 </main>
 
 <footer>
@@ -277,8 +363,65 @@
 
     if (action === 'increase') cart.updateQuantity(id, current.quantity + 1, size);
     if (action === 'decrease') cart.updateQuantity(id, current.quantity - 1, size);
-    if (action === 'remove') cart.remove(id, size);
+    if (action === 'remove') {
+      // Capture the item before removal so we can restore it on undo
+      const removed = { product_id: id, quantity: current.quantity, size: size };
+      cart.remove(id, size);
+      showUndoToast(removed);
+    }
     render();
+  }
+
+  // ============ UNDO TOAST ============
+  let undoTimer = null;
+  let undoToastEl = null;
+
+  function showUndoToast(removedItem) {
+    // Dismiss any in-flight toast immediately
+    if (undoToastEl) {
+      clearTimeout(undoTimer);
+      undoToastEl.remove();
+      undoToastEl = null;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'undo-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const span = document.createElement('span');
+    span.textContent = 'Item removed.';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'undo-btn';
+    btn.textContent = 'Undo';
+    toast.appendChild(span);
+    toast.appendChild(btn);
+    document.body.appendChild(toast);
+    undoToastEl = toast;
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    btn.addEventListener('click', () => {
+      // Restore the removed item to the cart
+      window.Tagline.Cart.add(
+        removedItem.product_id,
+        removedItem.quantity,
+        removedItem.size ? { size: removedItem.size } : {}
+      );
+      dismissUndoToast();
+      render();
+    });
+
+    undoTimer = setTimeout(dismissUndoToast, 5000);
+  }
+
+  function dismissUndoToast() {
+    clearTimeout(undoTimer);
+    if (!undoToastEl) return;
+    undoToastEl.classList.remove('show');
+    const t = undoToastEl;
+    setTimeout(() => { t.remove(); }, 280);
+    undoToastEl = null;
   }
 
   async function handleCheckout() {

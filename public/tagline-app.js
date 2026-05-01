@@ -15,6 +15,7 @@
 
   const CART_KEY = 'tagline_cart_v1';
   const WISHLIST_KEY = 'tagline_wishlist_v1';
+  const RECENT_KEY = 'tagline_recent_v1';
   const TOKEN_KEY = 'tagline_token';
   const USER_KEY = 'tagline_user';
 
@@ -255,6 +256,30 @@
         if (!id) return;
         btn.classList.toggle('active', items.indexOf(id) !== -1);
       });
+    }
+  };
+
+  // ============ RECENTLY VIEWED ============
+  // Tracks the last 8 product IDs the user opened in quick view.
+  // Stored in localStorage; rendered as a small carousel on the
+  // homepage if the list has 3+ items (any fewer feels thin).
+  const Recent = {
+    get() {
+      try {
+        const raw = localStorage.getItem(RECENT_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter(id => typeof id === 'string' && /^[a-z0-9-]{1,50}$/.test(id))
+          .slice(0, 8);
+      } catch { return []; }
+    },
+    add(id) {
+      if (typeof id !== 'string' || !/^[a-z0-9-]{1,50}$/.test(id)) return;
+      const list = this.get().filter(x => x !== id); // dedupe
+      list.unshift(id);                              // most-recent first
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8))); } catch {}
     }
   };
 
@@ -562,6 +587,9 @@
     qvCurrentProduct = { id: productId, ...product };
     qvCurrentSize = null;
     qvCurrentQty = 1;
+
+    // Track for "recently viewed" carousel on the homepage
+    Recent.add(productId);
 
     // Populate drawer with product data (using textContent for XSS safety)
     els.imageLetter.textContent = product.name.charAt(0);
@@ -1010,6 +1038,62 @@
     }, 3500);
   }
 
+  // ============ RECENTLY VIEWED RENDERER ============
+  // Only runs on pages that have the #recentlyViewed section (homepage).
+  // Hidden by default; shown only if the user has 3+ items in history.
+  function renderRecentlyViewed() {
+    const section = document.getElementById('recentlyViewed');
+    const grid = document.getElementById('recentlyViewedGrid');
+    if (!section || !grid) return;
+    const ids = Recent.get();
+    if (ids.length < 3) return; // nothing to show
+
+    const cards = ids
+      .map(id => {
+        const p = PRODUCTS[id];
+        if (!p) return null;
+        const initial = p.name.charAt(0).toUpperCase();
+        const safeId = id.replace(/[^a-z0-9-]/g, '');
+        return `
+          <a class="product-card-mini" href="#shop" data-recent-id="${safeId}" aria-label="${escapeHtml(p.name)}">
+            <div class="pcm-image" data-letter="${escapeHtml(initial)}">${escapeHtml(initial)}</div>
+            <div class="pcm-info">
+              <div class="pcm-name">${escapeHtml(p.name)}</div>
+              <div class="pcm-price">$${p.price}</div>
+            </div>
+          </a>
+        `;
+      })
+      .filter(Boolean)
+      .join('');
+
+    if (!cards) return;
+    grid.innerHTML = cards;
+    section.removeAttribute('hidden');
+
+    // Click → open quick view (so users can re-add without scrolling)
+    grid.querySelectorAll('[data-recent-id]').forEach(card => {
+      const id = card.dataset.recentId;
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        openQuickView(id);
+      });
+      // Try to swap in real product images if they exist
+      const imageEl = card.querySelector('.pcm-image');
+      const test = new Image();
+      test.onload = () => {
+        imageEl.textContent = '';
+        const img = document.createElement('img');
+        img.src = `/images/products/${id}.jpg`;
+        img.alt = PRODUCTS[id]?.name || '';
+        img.loading = 'lazy';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        imageEl.appendChild(img);
+      };
+      test.src = `/images/products/${id}.jpg`;
+    });
+  }
+
   // ============ STRUCTURED DATA (JSON-LD) ============
   // Build a Product ItemList from the PRODUCTS catalog and inject it as
   // a JSON-LD script tag. Helps Google show price, availability, and
@@ -1083,6 +1167,7 @@
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
     safeInit('jsonLdProducts', () => injectProductJsonLd());
     safeInit('emailConfirm', () => handleAuthHash());
+    safeInit('recentlyViewed', () => renderRecentlyViewed());
 
     // Update other tabs when cart/wishlist changes
     safeInit('storageEvents', () => {

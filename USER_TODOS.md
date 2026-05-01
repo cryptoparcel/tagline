@@ -99,6 +99,44 @@ You can do this one at a time — the placeholder stays for products without an 
 
 ---
 
+### 7a. Enable additional payment methods in Stripe (FREE — just toggles)
+
+**Why:** the cart's payment-method icons advertise Visa/Mastercard/Amex/Discover/Apple Pay/Google Pay/PayPal — but only the cards work until you flip these on. All are free with Stripe Checkout (no separate processor needed). The icons are aspirational until you enable them.
+
+**How:**
+1. **Stripe Dashboard → Settings → Payment methods** (in the gear icon)
+2. Find each method below and click **Turn on**:
+   - **Apple Pay** — works on iOS Safari automatically once enabled. No domain verification needed since we use Stripe Checkout (Stripe handles it on `checkout.stripe.com`).
+   - **Google Pay** — works on Chrome Android automatically once enabled.
+   - **PayPal** — Stripe acts as your PayPal merchant. Stripe will walk you through PayPal Business onboarding (~5 min). Once approved, PayPal appears as an option on the Stripe Checkout page.
+   - *(optional)* **Klarna / Afterpay / Cash App** — buy-now-pay-later options. Same toggle pattern. Boost AOV ~30% per Stripe data.
+
+3. Customers see whichever methods are enabled, on the device that supports them, automatically. **No code changes needed** — Stripe Checkout adapts.
+
+---
+
+### 7b. Crypto payments via NowPayments (separate integration — ask Claude to build when ready)
+
+**Why:** crypto is a separate processor — different webhooks, different reconciliation, different refund flow. Worth the integration if it brings real customers, but should NOT be built before the Stripe flow has handled real production traffic for 2-4 weeks.
+
+**How (when ready):**
+1. Sign up at nowpayments.io → get API key + IPN (webhook) secret
+2. Tell Claude to build the integration. It'll add a "Pay with Crypto" option on the cart, a `/api/checkout-crypto` endpoint, and a `/api/nowpayments-webhook` handler with the same idempotency pattern Stripe uses.
+3. **Always enable auto-conversion to USD** in NowPayments settings — avoids holding crypto, avoids US state money-transmitter regulations.
+
+---
+
+### 7c. Veteran discount via GovX (separate integration — ask Claude to build when ready)
+
+**Why:** retail-grade veteran verification (used by Under Armour, Yeti, North Face, Adidas). Free to integrate, ~$0.50 per redemption. Strong brand fit for athletic wear. ID.me is the alternative but heavier UX (designed for IRS/VA, not retail).
+
+**How (when ready):**
+1. Sign up at govx.com/merchants → get API credentials
+2. Create a `VETERANS10` coupon in Stripe Dashboard (10% off)
+3. Tell Claude to build the integration. It'll add a "Verify with GovX" button on the cart, a `/api/verify-veteran` endpoint, and pass `discounts: [{ coupon: 'VETERANS10' }]` to Stripe Checkout server-side after verification.
+
+---
+
 ### 8. Set up DKIM / DMARC for `FROM_EMAIL` in Resend
 
 **Why:** without these, ~30% of order confirmation emails land in Gmail/Yahoo spam folders. With them, deliverability is near 99%.

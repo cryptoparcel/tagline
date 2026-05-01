@@ -43,6 +43,30 @@
     item.quantity > 0 && item.quantity <= LIMITS.CART_QTY_MAX &&
     (item.size === undefined || VALID_SIZES.indexOf(item.size) !== -1);
 
+  // ============ IMAGE-PROBE CACHE ============
+  // The homepage probes /images/products/{id}.jpg for each of the 24
+  // product cards on every page load. With most images missing, that
+  // was 24+ wasted 404s per visit. Cache the result per-session so we
+  // probe each id at most ONCE — and skip future probes for known-404s.
+  //   sessionStorage value: 'ok' (image exists) or '404' (doesn't)
+  function probeProductImage(productId, onFound) {
+    const key = 'tagline_img_' + productId;
+    let cached = null;
+    try { cached = sessionStorage.getItem(key); } catch {}
+    if (cached === '404') return;        // known-missing, skip
+    if (cached === 'ok') { onFound(); return; }
+
+    const test = new Image();
+    test.onload = () => {
+      try { sessionStorage.setItem(key, 'ok'); } catch {}
+      onFound();
+    };
+    test.onerror = () => {
+      try { sessionStorage.setItem(key, '404'); } catch {}
+    };
+    test.src = `/images/products/${productId}.jpg`;
+  }
+
   // localStorage helpers — read/parse/validate/cap in one shot.
   // Returns [] on any failure (missing, malformed, tampered).
   function readList(key, validateItem, max) {
@@ -569,17 +593,15 @@
     els.price.textContent = '$' + product.price;
     els.description.textContent = product.description;
 
-    // Try to load real product image; fall back to letter placeholder
+    // Try to load real product image; fall back to letter placeholder.
+    // probeProductImage caches per-session so re-opens are instant and
+    // we never re-probe known-missing images.
     const imageEl = document.getElementById('qvImage');
     if (imageEl) {
-      // Remove any previously injected image
       const oldImg = imageEl.querySelector('img.qv-real-image');
       if (oldImg) oldImg.remove();
       els.imageLetter.style.display = '';
-      // Try loading real image
-      const testImg = new Image();
-      testImg.onload = function() {
-        // Hide letter placeholder and inject real image
+      probeProductImage(productId, () => {
         els.imageLetter.style.display = 'none';
         const img = document.createElement('img');
         img.src = `/images/products/${productId}.jpg`;
@@ -587,8 +609,7 @@
         img.className = 'qv-real-image';
         img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0';
         imageEl.insertBefore(img, imageEl.firstChild);
-      };
-      testImg.src = `/images/products/${productId}.jpg`;
+      });
     }
 
     // Tag badge (New, Restock, Limited, Sold Out)
@@ -765,16 +786,13 @@
       }
 
       // ============ REAL IMAGE SUPPORT ============
-      // Try to load /images/products/{id}.jpg. If it loads successfully,
-      // replace the SVG illustration with a real image. If 404, keep SVG.
-      // This lets you drop real photos in /public/images/products/ anytime
-      // (named like 'ascend-hoodie.jpg') without changing any HTML.
+      // Try to load /images/products/{id}.jpg. probeProductImage caches
+      // results in sessionStorage so each card is probed at most once
+      // per session — vs 24 probes on every page load before.
       const illu = card.querySelector('.product-illu');
       if (illu) {
         const productName = nameEl.textContent.trim();
-        const testImg = new Image();
-        testImg.onload = function() {
-          // Image exists — replace SVG with real photo using DOM API (XSS-safe)
+        probeProductImage(productId, () => {
           while (illu.firstChild) illu.removeChild(illu.firstChild);
           const img = document.createElement('img');
           img.src = `/images/products/${productId}.jpg`;
@@ -783,11 +801,7 @@
           img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
           illu.appendChild(img);
           illu.classList.add('has-image');
-        };
-        testImg.onerror = function() {
-          // No image, leave SVG illustration — silent failure is fine
-        };
-        testImg.src = `/images/products/${productId}.jpg`;
+        });
       }
 
       // Make whole card clickable
@@ -1049,10 +1063,9 @@
         e.preventDefault();
         openQuickView(id);
       });
-      // Try to swap in real product images if they exist
+      // Swap in real product images via the shared cache
       const imageEl = card.querySelector('.pcm-image');
-      const test = new Image();
-      test.onload = () => {
+      probeProductImage(id, () => {
         imageEl.textContent = '';
         const img = document.createElement('img');
         img.src = `/images/products/${id}.jpg`;
@@ -1060,8 +1073,7 @@
         img.loading = 'lazy';
         img.style.cssText = 'width:100%;height:100%;object-fit:cover';
         imageEl.appendChild(img);
-      };
-      test.src = `/images/products/${id}.jpg`;
+      });
     });
   }
 

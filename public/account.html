@@ -59,6 +59,83 @@
     font-size:13px;color:var(--ink-soft);
   }
   .order-tracking strong{color:var(--ink);font-weight:500}
+
+  /* ============ ORDER TIMELINE ============
+     Visual progress track: Ordered → Paid → Shipped → Delivered.
+     Reached steps are gold; future steps are muted grey. */
+  .order-timeline{
+    display:flex;
+    align-items:flex-start;
+    gap:0;
+    margin:18px 0 4px;
+    padding:14px 0 0;
+    border-top:1px solid var(--line);
+  }
+  .timeline-step{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    min-width:0;
+  }
+  .timeline-step .dot{
+    width:14px;height:14px;
+    border-radius:50%;
+    background:var(--surface);
+    border:2px solid var(--line-strong);
+    z-index:2;
+    transition:all .3s;
+  }
+  .timeline-step.done .dot{
+    background:var(--gold);
+    border-color:var(--gold);
+    box-shadow:0 0 0 4px rgba(184,137,61,.15);
+  }
+  .timeline-step.current .dot{
+    background:var(--gold-soft);
+    border-color:var(--gold-soft);
+    animation:timelinePulse 2s ease-in-out infinite;
+  }
+  @keyframes timelinePulse{
+    0%,100% { box-shadow:0 0 0 4px rgba(212,165,88,.25); }
+    50%     { box-shadow:0 0 0 8px rgba(212,165,88,.10); }
+  }
+  .timeline-step .lbl{
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-top:8px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .timeline-step.done .lbl,
+  .timeline-step.current .lbl{
+    color:var(--ink-soft);
+  }
+  .timeline-step.current .lbl{
+    color:var(--gold-soft);
+    font-weight:600;
+  }
+  /* Connecting lines between steps — drawn via :not(:last-child) */
+  .timeline-step:not(:last-child)::after{
+    content:'';
+    position:absolute;
+    top:6px;
+    left:calc(50% + 7px);
+    right:calc(-50% + 7px);
+    height:2px;
+    background:var(--line-strong);
+    z-index:1;
+  }
+  .timeline-step.done:not(:last-child)::after{
+    background:var(--gold);
+  }
+  /* Cancelled / refunded — don't show the timeline; just the pill */
+  @media (max-width:480px){
+    .timeline-step .lbl{font-size:9px;letter-spacing:.06em}
+  }
   .signout-btn{
     background:transparent;
     color:var(--muted);
@@ -316,11 +393,32 @@
               <div class="order-total">$${(o.total_cents/100).toFixed(2)}</div>
             </div>
           </div>
+          ${renderTimeline(o.status)}
           <div class="order-items">${itemsList}</div>
           ${o.tracking_number ? `<div class="order-tracking"><strong>Tracking:</strong> ${esc(o.tracking_number)}</div>` : ''}
         </div>
       `;
     }).join('');
+  }
+
+  // Build the visual timeline (Ordered → Paid → Shipped → Delivered).
+  // Cancelled / refunded orders skip the timeline (the status pill alone
+  // tells that story; a half-filled progress bar would be misleading).
+  function renderTimeline(status) {
+    if (status === 'cancelled' || status === 'refunded') return '';
+    const steps = ['pending', 'paid', 'shipped', 'delivered'];
+    const labels = { pending: 'Ordered', paid: 'Paid', shipped: 'Shipped', delivered: 'Delivered' };
+    const currentIdx = steps.indexOf(status);
+    return `
+      <div class="order-timeline" aria-label="Order status">
+        ${steps.map((s, i) => {
+          const cls = i < currentIdx ? 'done'
+                    : i === currentIdx ? 'done current'
+                    : '';
+          return `<div class="timeline-step ${cls}"><div class="dot"></div><div class="lbl">${labels[s]}</div></div>`;
+        }).join('')}
+      </div>
+    `;
   }
 
   function init(){

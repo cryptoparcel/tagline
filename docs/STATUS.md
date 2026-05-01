@@ -37,27 +37,9 @@ Stable snapshot at commit pushed to `main`. Site is functional end-to-end and sa
 
 ---
 
-## ⚠️ One-time tasks YOU need to do before some features work
+## ⚠️ Tasks that require YOU
 
-These are settings on third-party services, not code changes:
-
-1. **Supabase SQL migration** — open Supabase Dashboard → SQL Editor → paste and run:
-   ```sql
-   create table if not exists processed_webhook_events (
-     event_id text primary key,
-     event_type text not null,
-     processed_at timestamptz default now()
-   );
-   create index if not exists idx_processed_events_at on processed_webhook_events(processed_at);
-   alter table processed_webhook_events enable row level security;
-   ```
-   Without this, the Stripe webhook returns 500 on every event and Stripe retries forever.
-
-2. **Supabase redirect URL** — Authentication → URL Configuration → Redirect URLs → add `https://YOUR_DOMAIN/reset-password`. Without this, password-reset links won't work.
-
-3. **Vercel env var `SITE_URL`** — must be set to the actual production URL (no trailing slash). The CSRF protection and Stripe checkout success/cancel URLs depend on it.
-
-4. **Optional: Supabase email confirmation** — Authentication → Email Auth → enable. Already done if you followed SETUP.md.
+The single running list of things you need to do (configure third-party services, drop in image files, etc.) lives in [`/USER_TODOS.md`](../USER_TODOS.md). That's the source of truth — check there first if a feature seems broken.
 
 ---
 

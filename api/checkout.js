@@ -148,6 +148,9 @@ export default async function handler(req, res) {
         allowed_countries: ['US', 'CA']
       },
       automatic_tax: { enabled: false }, // turn on once you set up tax in Stripe
+      // Lets customers enter a Stripe Promotion Code on the Checkout page.
+      // You create the codes in Stripe Dashboard → Products → Coupons → Promotion codes.
+      allow_promotion_codes: true,
       success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       customer_email: customerEmail,

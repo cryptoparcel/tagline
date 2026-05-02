@@ -25,6 +25,16 @@ export default async function handler(req, res) {
   return ok(res, {
     supabaseUrl: url,
     supabaseAnonKey: anonKey,
-    stripeKey: stripeKey || null
+    stripeKey: stripeKey || null,
+    // Optional military / first-responder verification URLs. If set,
+    // the cart shows a "Verify for X% off" link that opens the
+    // verification provider's hosted page. The provider returns a
+    // one-time discount code that matches a Stripe coupon you've
+    // created — customer pastes it into Stripe Checkout's promo
+    // code field (already enabled).
+    veteranVerifyUrl: process.env.GOVX_VERIFY_URL || null,
+    veteranDiscountPercent: process.env.VETERAN_DISCOUNT_PERCENT
+      ? parseInt(process.env.VETERAN_DISCOUNT_PERCENT, 10) || 10
+      : 10
   });
 }

@@ -115,25 +115,69 @@ You can do this one at a time — the placeholder stays for products without an 
 
 ---
 
-### 7b. Crypto payments via NowPayments (separate integration — ask Claude to build when ready)
+### 7b. Crypto payments via NowPayments — code is built, needs activation
 
-**Why:** crypto is a separate processor — different webhooks, different reconciliation, different refund flow. Worth the integration if it brings real customers, but should NOT be built before the Stripe flow has handled real production traffic for 2-4 weeks.
+**Why:** crypto is a separate processor — different webhooks, different reconciliation. The full scaffold is in the repo (`api/checkout-crypto.js`, `api/nowpayments-webhook.js`, `lib/nowpayments.js`, cart UI). It's currently inert because the env vars aren't set — the cart's "Pay with crypto" button stays hidden until you flip it on. Recommended to wait until Stripe has handled real production traffic for 2-4 weeks before activating.
 
-**How (when ready):**
-1. Sign up at nowpayments.io → get API key + IPN (webhook) secret
-2. Tell Claude to build the integration. It'll add a "Pay with Crypto" option on the cart, a `/api/checkout-crypto` endpoint, and a `/api/nowpayments-webhook` handler with the same idempotency pattern Stripe uses.
-3. **Always enable auto-conversion to USD** in NowPayments settings — avoids holding crypto, avoids US state money-transmitter regulations.
+**How to activate (when ready):**
+
+1. **Run this SQL migration** in Supabase → SQL Editor (one-time):
+   ```sql
+   alter table orders add column if not exists nowpayments_invoice_id text unique;
+   create index if not exists idx_orders_np_invoice on orders(nowpayments_invoice_id);
+   ```
+   (Or re-run all of `sql/schema.sql` — it's idempotent.)
+
+2. **Sign up** at https://nowpayments.io → Account → **Store Settings**:
+   - Copy the **API Key**
+   - Copy the **IPN Secret** (Settings → IPN)
+   - Enable **Auto-conversion to USD** ⚠️ critical — avoids holding crypto + US state money-transmitter rules
+
+3. **Set the IPN URL** in NowPayments dashboard → Settings → IPN:
+   ```
+   https://YOUR_DOMAIN/api/nowpayments-webhook
+   ```
+
+4. **Add Vercel env vars** (Settings → Environment Variables):
+   - `NOWPAYMENTS_API_KEY` = the API key from step 2
+   - `NOWPAYMENTS_IPN_SECRET` = the IPN secret from step 2
+
+5. **Redeploy.** The "Pay with crypto" button will now appear on the cart page.
+
+6. **Test** with a small order — NowPayments has a sandbox; use it before going live.
 
 ---
 
-### 7c. Veteran discount via GovX (separate integration — ask Claude to build when ready)
+### 7c. Veteran discount via GovX — code is built, needs activation
 
-**Why:** retail-grade veteran verification (used by Under Armour, Yeti, North Face, Adidas). Free to integrate, ~$0.50 per redemption. Strong brand fit for athletic wear. ID.me is the alternative but heavier UX (designed for IRS/VA, not retail).
+**Why:** retail-grade veteran verification (used by Under Armour, Yeti, North Face). Free to integrate, ~$0.50 per redemption. Strong brand fit for athletic wear.
 
-**How (when ready):**
-1. Sign up at govx.com/merchants → get API credentials
-2. Create a `VETERANS10` coupon in Stripe Dashboard (10% off)
-3. Tell Claude to build the integration. It'll add a "Verify with GovX" button on the cart, a `/api/verify-veteran` endpoint, and pass `discounts: [{ coupon: 'VETERANS10' }]` to Stripe Checkout server-side after verification.
+The integration uses GovX's recommended pattern: GovX issues a one-time discount code to verified veterans, customer pastes it into Stripe Checkout's promo code field. **No backend integration needed beyond exposing the verification URL.** When `GOVX_VERIFY_URL` is set in env, the cart shows a "Verify with GovX → 10% off" banner.
+
+**How to activate (when ready):**
+
+1. **Sign up** at https://www.govx.com/merchants → onboarding flow
+
+2. **In Stripe Dashboard** → Products → Coupons → Create coupon:
+   - Name: `Veterans 10% off`
+   - Discount: 10% off
+   - Then create a **Promotion Code** with code `VETERANS10` linked to that coupon
+   - (Substitute your own code if you prefer — just match it in step 3)
+
+3. **In GovX merchant dashboard** → configure the discount:
+   - Set the discount type to "Custom code" or "Promotion code"
+   - Set the code value to `VETERANS10` (or whatever you used in step 2)
+   - GovX will hand this code to verified veterans on success
+
+4. **Get your verification URL** from GovX dashboard (looks like `https://app.govx.com/verify/YOUR_VENDOR_ID`)
+
+5. **Add Vercel env vars:**
+   - `GOVX_VERIFY_URL` = the URL from step 4
+   - `VETERAN_DISCOUNT_PERCENT` = `10` (or whatever percentage matches your Stripe coupon — used for display only)
+
+6. **Redeploy.** The veteran banner appears on the cart page automatically.
+
+**Customer flow:** click banner → verify on GovX (opens new tab) → GovX shows them the code → they paste it on Stripe Checkout → discount auto-applies.
 
 ---
 

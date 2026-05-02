@@ -163,6 +163,28 @@
     100%{ transform:translateX(100%); }
   }
 
+  /* ============ VETERAN DISCOUNT BANNER ============ */
+  .vet-banner{
+    margin-top:14px;
+    padding:12px 14px;
+    border:1px solid rgba(184,137,61,.3);
+    background:linear-gradient(160deg, rgba(184,137,61,.08), rgba(184,137,61,.02));
+    display:flex; align-items:center; gap:12px;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.5;
+  }
+  .vet-banner svg{ width:18px; height:18px; flex-shrink:0; color:var(--gold); }
+  .vet-banner strong{ color:var(--ink); font-weight:600; }
+  .vet-banner a{
+    color:var(--gold-soft);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .vet-banner a:hover{ color:var(--gold); }
+
   /* ============ UNDO TOAST ============
      Shown briefly after a cart-item removal — gives the user a 5-second
      window to undo. NN/g: "undo > confirm" for reversible actions. */
@@ -333,6 +355,16 @@
           <button type="button" class="btn btn-ghost btn-block" id="checkoutCryptoBtn" hidden style="margin-top:8px;font-size:12px">
             Pay with crypto
           </button>
+          <div class="vet-banner" id="vetBanner" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <path d="M12 2 L4 5 V11 C4 16 7.5 20.5 12 22 C16.5 20.5 20 16 20 11 V5 Z"/>
+              <path d="M9 12 L11 14 L15 10"/>
+            </svg>
+            <span id="vetBannerText">
+              <strong>Veterans &amp; military:</strong> get 10% off.
+              <a id="vetVerifyLink" href="#" target="_blank" rel="noopener noreferrer">Verify with GovX →</a>
+            </span>
+          </div>
           <p style="font-size:11px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.6">
             Secure checkout via Stripe.<br/>
             Free returns within 30 days · <a href="/help" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:2px">Return policy</a>
@@ -562,11 +594,54 @@
     }
   }
 
-  // Run the probe once cart-app is ready
+  // ============ VETERAN DISCOUNT BANNER ============
+  // Reveal only if /api/config returns veteranVerifyUrl. Caches per-session.
+  async function probeVeteranDiscount() {
+    let cfg = null;
+    try {
+      const cached = sessionStorage.getItem('tagline_config');
+      if (cached) cfg = JSON.parse(cached);
+    } catch {}
+    if (!cfg) {
+      try {
+        const res = await fetch('/api/config');
+        if (!res.ok) return;
+        cfg = await res.json();
+        try { sessionStorage.setItem('tagline_config', JSON.stringify(cfg)); } catch {}
+      } catch { return; }
+    }
+    if (!cfg || !cfg.veteranVerifyUrl) return;
+
+    const banner = document.getElementById('vetBanner');
+    const link = document.getElementById('vetVerifyLink');
+    const text = document.getElementById('vetBannerText');
+    if (!banner || !link || !text) return;
+
+    // Validate the URL is http(s) before injecting (defense vs malformed env var)
+    let safeUrl;
+    try {
+      const u = new URL(cfg.veteranVerifyUrl);
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return;
+      safeUrl = u.toString();
+    } catch { return; }
+
+    link.href = safeUrl;
+    const pct = Number.isInteger(cfg.veteranDiscountPercent) ? cfg.veteranDiscountPercent : 10;
+    text.firstChild.textContent = ''; // clear, then rebuild safely
+    text.innerHTML = `<strong>Veterans &amp; military:</strong> get ${pct}% off. `;
+    text.appendChild(link);
+    banner.hidden = false;
+  }
+
+  // Run the probes once cart-app is ready
   if (window.Tagline) {
     probeCryptoAvailability();
+    probeVeteranDiscount();
   } else {
-    document.addEventListener('DOMContentLoaded', probeCryptoAvailability);
+    document.addEventListener('DOMContentLoaded', () => {
+      probeCryptoAvailability();
+      probeVeteranDiscount();
+    });
   }
 
   if (document.readyState === 'loading') {

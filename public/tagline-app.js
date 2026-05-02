@@ -1103,9 +1103,13 @@
       }).then(r => r.ok ? r.json() : null).then(user => {
         if (!user || !user.id) return;
         Auth.setSession(params.access_token, { id: user.id, email: user.email });
-        showConfirmBanner(params.type === 'signup'
-          ? 'Email confirmed — you\'re signed in.'
-          : 'Email updated.');
+        const messages = {
+          signup: 'Email confirmed — you\'re signed in.',
+          magiclink: 'Signed in via email link.',
+          email_change: 'Email updated.',
+          invite: 'You\'re in — welcome.'
+        };
+        showConfirmBanner(messages[params.type] || 'You\'re signed in.');
       });
     }).catch(() => {});
   }

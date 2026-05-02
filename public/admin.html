@@ -111,6 +111,31 @@
     margin-bottom:12px;letter-spacing:-0.025em;
   }
   .auth-prompt p{color:var(--ink-soft);margin-bottom:24px;font-size:14px}
+
+  /* Export buttons row above the data tables */
+  .table-actions{
+    display:flex;justify-content:flex-end;gap:8px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .export-btn{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--line-strong);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    cursor:pointer;
+    transition:background .2s, color .2s, border-color .2s;
+  }
+  .export-btn:hover{
+    background:rgba(255,255,250,.04);
+    color:var(--ink);
+    border-color:var(--ink-soft);
+  }
+  .export-btn:disabled{opacity:.5;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -265,6 +290,9 @@
         `;
       }).join('');
       target.innerHTML = `
+        <div class="table-actions">
+          <button type="button" class="export-btn" data-export="orders" ${!result.orders?.length ? 'disabled' : ''}>Export CSV</button>
+        </div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Order</th><th>Date</th><th>Email</th><th>Status</th><th>Total</th><th>Items</th></tr></thead>
@@ -284,6 +312,9 @@
         </tr>
       `).join('');
       target.innerHTML = `
+        <div class="table-actions">
+          <button type="button" class="export-btn" data-export="subscribers" ${!result.subscribers?.length ? 'disabled' : ''}>Export CSV</button>
+        </div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Email</th><th>Source</th><th>Status</th><th>Joined</th></tr></thead>
@@ -309,6 +340,9 @@
         `;
       }).join('');
       target.innerHTML = `
+        <div class="table-actions">
+          <button type="button" class="export-btn" data-export="messages" ${!result.messages?.length ? 'disabled' : ''}>Export CSV</button>
+        </div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Status</th></tr></thead>
@@ -316,6 +350,85 @@
           </table>
         </div>
       `;
+    }
+
+    // Wire any export buttons rendered above
+    const exportBtn = target.querySelector('[data-export]');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        if (exportBtn.dataset.export === 'orders') exportCsv('orders', result.orders || []);
+        if (exportBtn.dataset.export === 'subscribers') exportCsv('subscribers', result.subscribers || []);
+        if (exportBtn.dataset.export === 'messages') exportCsv('messages', result.messages || []);
+      });
+    }
+  }
+
+  // ============ CSV EXPORT ============
+  // Builds an RFC 4180-compliant CSV from a row array. We always quote
+  // every field — simpler than deciding when to quote and bullet-proof
+  // against commas/quotes/newlines hiding inside customer names, messages,
+  // or item lists. Internal double-quotes are escaped by doubling.
+  function csvField(v) {
+    const s = (v == null) ? '' : String(v);
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  function buildCsv(headers, rows) {
+    const head = headers.map(csvField).join(',');
+    const body = rows.map(r => r.map(csvField).join(',')).join('\r\n');
+    // BOM so Excel opens UTF-8 correctly without garbling accented characters
+    return '﻿' + head + '\r\n' + body + '\r\n';
+  }
+  function downloadCsv(filename, csv) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 0);
+  }
+  function exportCsv(kind, rows) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (kind === 'orders') {
+      const headers = ['Order ID', 'Created', 'Email', 'Status', 'Subtotal', 'Shipping', 'Total', 'Items', 'Tracking'];
+      const data = rows.map(o => [
+        o.id,
+        new Date(o.created_at).toISOString(),
+        o.email,
+        o.status,
+        ((o.subtotal_cents || 0) / 100).toFixed(2),
+        ((o.shipping_cents || 0) / 100).toFixed(2),
+        ((o.total_cents || 0) / 100).toFixed(2),
+        (o.items || []).map(i => `${i.name}${i.color ? ' / ' + i.color : ''}${i.size ? ' / ' + i.size : ''} x${i.quantity}`).join('; '),
+        o.tracking_number || ''
+      ]);
+      downloadCsv(`tagline-orders-${stamp}.csv`, buildCsv(headers, data));
+    }
+    if (kind === 'subscribers') {
+      const headers = ['Email', 'Source', 'Active', 'Joined'];
+      const data = rows.map(s => [
+        s.email,
+        s.source || '',
+        s.active ? 'yes' : 'no',
+        new Date(s.created_at).toISOString()
+      ]);
+      downloadCsv(`tagline-subscribers-${stamp}.csv`, buildCsv(headers, data));
+    }
+    if (kind === 'messages') {
+      const headers = ['Date', 'Name', 'Email', 'Subject', 'Message', 'Status'];
+      const data = rows.map(m => [
+        new Date(m.created_at).toISOString(),
+        m.name,
+        m.email,
+        m.subject || '',
+        m.message || '',
+        m.status
+      ]);
+      downloadCsv(`tagline-messages-${stamp}.csv`, buildCsv(headers, data));
     }
   }
 

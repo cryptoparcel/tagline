@@ -79,7 +79,8 @@
         <input class="form-input" type="password" id="signinPassword" name="password" required autocomplete="current-password" minlength="6" />
       </div>
       <button type="submit" class="btn btn-primary btn-block">Sign in</button>
-      <div style="text-align:center;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13px;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn-link" id="magicLinkLink" style="background:none;border:none;color:var(--gold-soft);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Sign in with email link</button>
         <button type="button" class="btn-link" id="forgotLink" style="background:none;border:none;color:var(--gold-soft);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Forgot password?</button>
       </div>
     </form>
@@ -99,6 +100,21 @@
         <input class="form-input" type="password" id="signupPassword" name="password" required autocomplete="new-password" minlength="8" />
       </div>
       <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+
+    <!-- Magic-link sign in form -->
+    <form class="auth-form" id="magicForm">
+      <p style="color:var(--ink-soft);font-size:14px;margin-bottom:18px;line-height:1.5">
+        We'll email you a one-time link. Click it and you're in — no password needed.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="magicEmail">Email</label>
+        <input class="form-input" type="email" id="magicEmail" name="email" required autocomplete="email" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Send sign-in link</button>
+      <div style="text-align:center;margin-top:14px">
+        <button type="button" class="btn-link magic-back" style="background:none;border:none;color:var(--gold-soft);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Back to sign in</button>
+      </div>
     </form>
 
     <!-- Reset password (forgot) form -->
@@ -173,11 +189,18 @@
   document.getElementById('forgotLink').addEventListener('click', () => {
     switchToForm('reset');
   });
-  document.getElementById('backToSigninLink').addEventListener('click', () => {
+  // "Sign in with email link" → reveal magic-link form
+  document.getElementById('magicLinkLink').addEventListener('click', () => {
+    switchToForm('magic');
+  });
+  // Both reset + magic forms have a "Back to sign in" button
+  function backToSignin() {
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.auth-tab[data-tab="signin"]').classList.add('active');
     switchToForm('signin');
-  });
+  }
+  document.getElementById('backToSigninLink').addEventListener('click', backToSignin);
+  document.querySelectorAll('.magic-back').forEach(el => el.addEventListener('click', backToSignin));
 
   function showAlert(message, type = 'error') {
     const container = document.getElementById('alertContainer');
@@ -331,6 +354,45 @@
       showAlert('Network error. Please try again.');
       btn.disabled = false;
       btn.textContent = 'Send reset link';
+    }
+  });
+
+  // Magic-link sign-in (Supabase calls this "OTP" with email; type=magiclink
+  // when the link is clicked). Same anti-enumeration message regardless of
+  // whether the email exists in our system.
+  document.getElementById('magicForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!authConfig) {
+      showAlert('Page is still loading. One moment.');
+      return;
+    }
+    const email = document.getElementById('magicEmail').value.trim();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch(authConfig.supabaseUrl + '/auth/v1/otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': authConfig.supabaseAnonKey
+        },
+        body: JSON.stringify({
+          email,
+          create_user: true, // also creates account if email is new
+          options: { emailRedirectTo: window.location.origin + '/' }
+        })
+      });
+      // Show the same message either way to avoid email enumeration
+      // (per OWASP ASVS V2.1.12 — same as the password-reset path)
+      showAlert('If that email is valid, a sign-in link is on its way.', 'success');
+      btn.disabled = false;
+      btn.textContent = 'Send sign-in link';
+      document.getElementById('magicEmail').value = '';
+    } catch (err) {
+      showAlert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send sign-in link';
     }
   });
 

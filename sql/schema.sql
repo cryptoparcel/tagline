@@ -85,6 +85,12 @@ create index if not exists idx_orders_email on orders(email);
 create index if not exists idx_orders_status on orders(status);
 create index if not exists idx_orders_created on orders(created_at desc);
 
+-- NowPayments (crypto) invoice support — orders paid via crypto get a
+-- nowpayments_invoice_id instead of stripe_session_id. Webhook lookups
+-- use this column. Safe to run on existing DB (uses if not exists).
+alter table orders add column if not exists nowpayments_invoice_id text unique;
+create index if not exists idx_orders_np_invoice on orders(nowpayments_invoice_id);
+
 -- ============================================================
 -- NEWSLETTER SUBSCRIBERS
 -- ============================================================

@@ -330,6 +330,9 @@
           <button type="button" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:24px">
             Checkout
           </button>
+          <button type="button" class="btn btn-ghost btn-block" id="checkoutCryptoBtn" hidden style="margin-top:8px;font-size:12px">
+            Pay with crypto
+          </button>
           <p style="font-size:11px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.6">
             Secure checkout via Stripe.<br/>
             Free returns within 30 days · <a href="/help" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:2px">Return policy</a>
@@ -471,9 +474,99 @@
         handleCheckout();
         return;
       }
+      if (e.target.id === 'checkoutCryptoBtn') {
+        handleCryptoCheckout();
+        return;
+      }
       handleClick(e);
     });
     render();
+  }
+
+  // Reveal the crypto button only if NowPayments is configured server-side.
+  // We probe with a HEAD-style POST that's expected to reject (cart is the
+  // client cart, but the endpoint will return either:
+  //   503 + not_configured:true  → crypto unavailable, hide button
+  //   400 (validation)           → endpoint exists, button stays visible
+  // Cached per-session so we don't probe on every render.
+  let cryptoProbeDone = false;
+  async function probeCryptoAvailability() {
+    if (cryptoProbeDone) return;
+    cryptoProbeDone = true;
+    try {
+      const cached = sessionStorage.getItem('tagline_crypto_avail');
+      if (cached === 'on') {
+        showCryptoBtn();
+        return;
+      }
+      if (cached === 'off') return;
+    } catch {}
+
+    try {
+      const res = await fetch('/api/checkout-crypto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [] })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 503 && data.not_configured) {
+        try { sessionStorage.setItem('tagline_crypto_avail', 'off'); } catch {}
+        return;
+      }
+      // Any other response (400 = empty cart validation, etc.) means the
+      // endpoint exists and is configured — show the button.
+      try { sessionStorage.setItem('tagline_crypto_avail', 'on'); } catch {}
+      showCryptoBtn();
+    } catch {
+      // Network failure — leave hidden, retry next session
+    }
+  }
+  function showCryptoBtn() {
+    const btn = document.getElementById('checkoutCryptoBtn');
+    if (btn) btn.hidden = false;
+  }
+
+  async function handleCryptoCheckout() {
+    const btn = document.getElementById('checkoutCryptoBtn');
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    // Crypto path needs an email since NowPayments doesn't collect one
+    let email = window.Tagline?.Auth?.getUser()?.email || '';
+    if (!email) {
+      email = prompt('Enter your email for order updates:') || '';
+      email = email.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        btn.disabled = false;
+        btn.textContent = 'Pay with crypto';
+        return;
+      }
+    }
+
+    const items = window.Tagline.Cart.get();
+    const result = await window.Tagline.API.request('/api/checkout-crypto', {
+      method: 'POST',
+      body: { items, email },
+      auth: true
+    });
+
+    if (result.ok && result.url) {
+      window.location.href = result.url;
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Pay with crypto';
+      window.Tagline.Modal.alert({
+        title: 'Crypto checkout',
+        message: result.error || 'Could not start crypto checkout. Please try again.'
+      });
+    }
+  }
+
+  // Run the probe once cart-app is ready
+  if (window.Tagline) {
+    probeCryptoAvailability();
+  } else {
+    document.addEventListener('DOMContentLoaded', probeCryptoAvailability);
   }
 
   if (document.readyState === 'loading') {

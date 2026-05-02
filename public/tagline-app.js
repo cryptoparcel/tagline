@@ -453,32 +453,89 @@
   }
 
   // ============ PRODUCT DATA ============
-  // Full data for each product, used by quick-view drawer
+  // Full data for each product, used by quick-view drawer.
+  // `description` is the editorial brand-voice copy — also flows into
+  // JSON-LD product schema, so it doubles as SEO surface.
   const PRODUCTS = {
-    'ascend-hoodie':  { name:'Ascend Hoodie',   color:'Cream',         price:148, stock:50,  category:'Outerwear',   tag:'New',     description:'Pullover hoodie in heavyweight cream cotton. Cut for everyday wear with a relaxed shoulder and ribbed cuffs.' },
-    'halo-zip':       { name:'Halo Zip',        color:'Bone',          price:165, stock:40,  category:'Outerwear',   tag:'',        description:'Full-zip hoodie with metal hardware and brushed cotton interior. Made to layer.' },
-    'origin-tee':     { name:'Origin Tee',      color:'Ivory',         price:58,  stock:100, category:'Tops',        tag:'',        description:'Heavyweight tee in soft ivory. Pre-shrunk, garment-dyed, made to break in over time.' },
-    'sigil-tank':     { name:'Sigil Tank',      color:'White',         price:78,  stock:80,  category:'Tops',        tag:'',        description:'Performance tank with embroidered cross detail. Mesh-back panel for breathability.' },
-    'vesper-long':    { name:'Vesper Long',     color:'Pearl',         price:92,  stock:60,  category:'Tops',        tag:'Restock', description:'Long-sleeve top in pearl white. Modal-cotton blend with a clean drape.' },
-    'path-jogger':    { name:'Path Jogger',     color:'Bone',          price:118, stock:45,  category:'Bottoms',     tag:'',        description:'Tapered jogger with side pockets. Mid-rise fit, elastic waist with drawcord.' },
-    'trial-short':    { name:'Trial Short',     color:'Ivory',         price:72,  stock:70,  category:'Bottoms',     tag:'',        description:'Lined training short with built-in liner. 7-inch inseam, hidden zip pocket.' },
-    'cloud-crew':     { name:'Cloud Crew',      color:'Fog',           price:128, stock:50,  category:'Outerwear',   tag:'',        description:'Crew-neck sweater in fog white. Heavy french terry, ribbed collar and cuffs.' },
-    'crown-cap':      { name:'Crown Cap',       color:'White',         price:48,  stock:120, category:'Accessories', tag:'',        description:'Six-panel cap with embroidered logo. Adjustable strap, cotton twill.' },
-    'halo-runner':    { name:'Halo Runner',     color:'Triple White',  price:215, stock:25,  category:'Footwear',    tag:'Limited', description:'Limited-edition runner in triple white. Mesh upper, cushioned midsole, leather heel counter.' },
-    'aether-bra':     { name:'Aether Bra',      color:'Pearl',         price:68,  stock:75,  category:'Tops',        tag:'',        description:'Medium-support sports bra. Removable pads, racerback design, moisture-wicking fabric.' },
-    'aether-legging': { name:'Aether Legging',  color:'White',         price:98,  stock:60,  category:'Bottoms',     tag:'',        description:'High-rise legging with side pockets. Compression fit, four-way stretch.' },
-    'reign-bomber':   { name:'Reign Bomber',    color:'Bone',          price:245, stock:30,  category:'Outerwear',   tag:'New',     description:'Lightweight bomber with elastic trim. Satin lining, hidden inner pocket.' },
-    'velocity-track': { name:'Velocity Track',  color:'Ivory',         price:185, stock:35,  category:'Outerwear',   tag:'',        description:'Track jacket with side stripes. Quarter-zip, athletic cut, ribbed hem.' },
-    'vow-beanie':     { name:'Vow Beanie',      color:'Cream',         price:42,  stock:150, category:'Accessories', tag:'',        description:'Ribbed knit beanie. Wool-cotton blend, embroidered cross at front.' },
-    'anthem-polo':    { name:'Anthem Polo',     color:'White',         price:88,  stock:55,  category:'Tops',        tag:'',        description:'Knit polo with three-button placket. Pima cotton, classic collar.' },
-    'lumen-crop':     { name:'Lumen Crop',      color:'Pearl',         price:54,  stock:70,  category:'Tops',        tag:'',        description:'Cropped fit tee. Soft jersey, slightly boxy cut, raw hem detail.' },
-    'pilgrim-pant':   { name:'Pilgrim Pant',    color:'Ivory',         price:128, stock:40,  category:'Bottoms',     tag:'',        description:'Wide-leg track pant. Cotton-poly blend, side pockets, drawcord waist.' },
-    'spirit-shell':   { name:'Spirit Shell',    color:'White',         price:198, stock:30,  category:'Outerwear',   tag:'',        description:'Lightweight windbreaker. Water-resistant, packable, reflective accents.' },
-    'echo-vest':      { name:'Echo Vest',       color:'Bone',          price:155, stock:35,  category:'Outerwear',   tag:'',        description:'Quilted vest with snap closure. Down-alternative fill, deep zip pockets.' },
-    'verse-henley':   { name:'Verse Henley',    color:'Cream',         price:84,  stock:55,  category:'Tops',        tag:'',        description:'Three-button henley in cream. Slub jersey, vintage-feel cotton.' },
-    'sole-sock':      { name:'Sole Sock',       color:'White Pair',    price:24,  stock:200, category:'Accessories', tag:'',        description:'Crew sock, pack of one pair. Cushioned footbed, ribbed shaft, embroidered logo at ankle.' },
-    'pulse-band':     { name:'Pulse Band',      color:'White',         price:22,  stock:180, category:'Accessories', tag:'',        description:'Sweat headband. Stretch terry cotton, comfortable for long workouts.' },
-    'quill-tote':     { name:'Quill Tote',      color:'Canvas White',  price:38,  stock:0,   category:'Accessories', tag:'Sold Out', description:'Heavy canvas tote with embroidered logo. Reinforced bottom, leather handles.' }
+    'ascend-hoodie':  { name:'Ascend Hoodie',   color:'Cream',         price:148, stock:50,  category:'Outerwear',   tag:'New',
+      description:'Heavyweight cotton that gets better with every wash. Cut for relaxed everyday wear — not too long, not too cropped.' },
+    'halo-zip':       { name:'Halo Zip',        color:'Bone',          price:165, stock:40,  category:'Outerwear',   tag:'',
+      description:'The full-zip we’d reach for first when the temperature drops. Brushed interior, real metal hardware, made to layer.' },
+    'origin-tee':     { name:'Origin Tee',      color:'Ivory',         price:58,  stock:100, category:'Tops',        tag:'',
+      description:'Our flagship tee. Heavy enough to be substantial, soft enough to forget you’re wearing it. Pre-shrunk, garment-dyed.' },
+    'sigil-tank':     { name:'Sigil Tank',      color:'White',         price:78,  stock:80,  category:'Tops',        tag:'',
+      description:'Built for the gym but cut to wear out of it. Embroidered cross detail, mesh-back panel, doesn’t ride up under a vest.' },
+    'vesper-long':    { name:'Vesper Long',     color:'Pearl',         price:92,  stock:60,  category:'Tops',        tag:'Restock',
+      description:'Long-sleeve in a modal-cotton blend with a clean drape. Layers under outerwear; stands alone on cooler evenings.' },
+    'path-jogger':    { name:'Path Jogger',     color:'Bone',          price:118, stock:45,  category:'Bottoms',     tag:'',
+      description:'The jogger we wear most. Tapered through the leg, mid-rise, drawcord waist. Pairs with nearly everything in the line.' },
+    'trial-short':    { name:'Trial Short',     color:'Ivory',         price:72,  stock:70,  category:'Bottoms',     tag:'',
+      description:'7-inch inseam with a built-in liner. Designed for runs and lifts, works for weekends. Hidden zip pocket for keys.' },
+    'cloud-crew':     { name:'Cloud Crew',      color:'Fog',           price:128, stock:50,  category:'Outerwear',   tag:'',
+      description:'Heavy french-terry sweater in fog white. The crew you’ll come back to all season — soft inside, structured outside.' },
+    'crown-cap':      { name:'Crown Cap',       color:'White',         price:48,  stock:120, category:'Accessories', tag:'',
+      description:'Six-panel cotton-twill cap. Curved brim, clean embroidered logo, adjustable for any head shape.' },
+    'halo-runner':    { name:'Halo Runner',     color:'Triple White',  price:215, stock:25,  category:'Footwear',    tag:'Limited',
+      description:'Limited edition. Mesh upper, cushioned midsole, leather heel counter. Made in small numbers, never restocked.' },
+    'aether-bra':     { name:'Aether Bra',      color:'Pearl',         price:68,  stock:75,  category:'Tops',        tag:'',
+      description:'Medium support, racerback design, removable pads. Moisture-wicking fabric — works as hard as you do.' },
+    'aether-legging': { name:'Aether Legging',  color:'White',         price:98,  stock:60,  category:'Bottoms',     tag:'',
+      description:'High-rise compression with side pockets you can actually use. Four-way stretch, opaque from every angle.' },
+    'reign-bomber':   { name:'Reign Bomber',    color:'Bone',          price:245, stock:30,  category:'Outerwear',   tag:'New',
+      description:'Lightweight bomber with satin lining and a hidden inner pocket. Quietly elegant — the jacket that finishes an outfit.' },
+    'velocity-track': { name:'Velocity Track',  color:'Ivory',         price:185, stock:35,  category:'Outerwear',   tag:'',
+      description:'Quarter-zip track jacket with side stripes and ribbed hem. Athletic cut, off-duty energy.' },
+    'vow-beanie':     { name:'Vow Beanie',      color:'Cream',         price:42,  stock:150, category:'Accessories', tag:'',
+      description:'Ribbed wool-cotton blend with our embroidered cross. Snug fit, holds its shape, made for cold mornings.' },
+    'anthem-polo':    { name:'Anthem Polo',     color:'White',         price:88,  stock:55,  category:'Tops',        tag:'',
+      description:'Knit polo in pima cotton with a three-button placket. Smart enough to dress up, soft enough to live in.' },
+    'lumen-crop':     { name:'Lumen Crop',      color:'Pearl',         price:54,  stock:70,  category:'Tops',        tag:'',
+      description:'Cropped tee with raw hem detail. Slightly boxy cut — wear with high-rise bottoms for the right proportions.' },
+    'pilgrim-pant':   { name:'Pilgrim Pant',    color:'Ivory',         price:128, stock:40,  category:'Bottoms',     tag:'',
+      description:'Wide-leg track pant in a cotton-poly blend. Side pockets, drawcord waist, drapes well over sneakers.' },
+    'spirit-shell':   { name:'Spirit Shell',    color:'White',         price:198, stock:30,  category:'Outerwear',   tag:'',
+      description:'Lightweight water-resistant windbreaker that packs into its own pocket. Reflective accents for early runs.' },
+    'echo-vest':      { name:'Echo Vest',       color:'Bone',          price:155, stock:35,  category:'Outerwear',   tag:'',
+      description:'Quilted vest with down-alternative fill and deep zip pockets. The layer that turns one outfit into three seasons.' },
+    'verse-henley':   { name:'Verse Henley',    color:'Cream',         price:84,  stock:55,  category:'Tops',        tag:'',
+      description:'Three-button henley in slub jersey. Vintage-feel cotton, gets character with wear. Pairs with everything we make.' },
+    'sole-sock':      { name:'Sole Sock',       color:'White Pair',    price:24,  stock:200, category:'Accessories', tag:'',
+      description:'Single pair of crew socks. Cushioned footbed, ribbed shaft, embroidered logo at the ankle. Never the afterthought.' },
+    'pulse-band':     { name:'Pulse Band',      color:'White',         price:22,  stock:180, category:'Accessories', tag:'',
+      description:'Stretch terry-cotton sweat headband. Comfortable for long workouts, holds its shape all season.' },
+    'quill-tote':     { name:'Quill Tote',      color:'Canvas White',  price:38,  stock:0,   category:'Accessories', tag:'Sold Out',
+      description:'Heavy canvas tote with embroidered logo and reinforced bottom. Leather handles. Currently sold out — back next drop.' }
+  };
+
+  // Hand-curated outfit pairings — what to wear with each piece.
+  // Shown in the quick-view drawer as a "Style this with" carousel.
+  // Curate-don't-compute: at 24 products, hand-picking beats any
+  // recommendation algorithm. Edit freely as the catalog evolves.
+  const PRODUCT_PAIRINGS = {
+    'ascend-hoodie':  ['path-jogger',    'crown-cap',     'sole-sock'],
+    'halo-zip':       ['origin-tee',     'path-jogger',   'crown-cap'],
+    'origin-tee':     ['path-jogger',    'crown-cap',     'sole-sock'],
+    'sigil-tank':     ['trial-short',    'pulse-band',    'sole-sock'],
+    'vesper-long':    ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
+    'path-jogger':    ['origin-tee',     'halo-zip',      'sole-sock'],
+    'trial-short':    ['sigil-tank',     'pulse-band',    'sole-sock'],
+    'cloud-crew':     ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
+    'crown-cap':      ['ascend-hoodie',  'origin-tee',    'path-jogger'],
+    'halo-runner':    ['sole-sock',      'trial-short',   'sigil-tank'],
+    'aether-bra':     ['aether-legging', 'pulse-band',    'sole-sock'],
+    'aether-legging': ['aether-bra',     'sigil-tank',    'sole-sock'],
+    'reign-bomber':   ['origin-tee',     'pilgrim-pant',  'vow-beanie'],
+    'velocity-track': ['path-jogger',    'origin-tee',    'crown-cap'],
+    'vow-beanie':     ['cloud-crew',     'vesper-long',   'pilgrim-pant'],
+    'anthem-polo':    ['pilgrim-pant',   'crown-cap',     'sole-sock'],
+    'lumen-crop':     ['aether-legging', 'crown-cap',     'sole-sock'],
+    'pilgrim-pant':   ['vesper-long',    'vow-beanie',    'crown-cap'],
+    'spirit-shell':   ['origin-tee',     'path-jogger',   'sole-sock'],
+    'echo-vest':      ['verse-henley',   'pilgrim-pant',  'vow-beanie'],
+    'verse-henley':   ['pilgrim-pant',   'vow-beanie',    'sole-sock'],
+    'sole-sock':      ['trial-short',    'halo-runner',   'pulse-band'],
+    'pulse-band':     ['sigil-tank',     'trial-short',   'sole-sock'],
+    'quill-tote':     ['origin-tee',     'crown-cap',     'sole-sock']
   };
 
   // Maps product name to DB product ID
@@ -569,8 +626,68 @@
       qtyMinus: document.getElementById('qvQtyMinus'),
       qtyPlus: document.getElementById('qvQtyPlus'),
       stock: document.getElementById('qvStock'),
-      addBtn: document.getElementById('qvAddBtn')
+      addBtn: document.getElementById('qvAddBtn'),
+      pairings: document.getElementById('qvPairings'),
+      pairingsRow: document.getElementById('qvPairingsRow')
     };
+  }
+
+  // Build the "Style this with" carousel for the open product. Hides the
+  // section if no pairings exist or all paired products are sold out.
+  function renderQvPairings(productId, els) {
+    if (!els.pairings || !els.pairingsRow) return;
+    const pairs = (PRODUCT_PAIRINGS[productId] || [])
+      .map(id => ({ id, p: PRODUCTS[id] }))
+      .filter(x => x.p);
+    if (pairs.length === 0) {
+      els.pairings.hidden = true;
+      return;
+    }
+    // Build cards via DOM API (XSS-safe — no string interpolation into HTML)
+    els.pairingsRow.innerHTML = '';
+    for (const { id, p } of pairs) {
+      const card = document.createElement('a');
+      card.className = 'qv-pair-card';
+      card.href = '#shop';
+      card.setAttribute('aria-label', `View ${p.name}`);
+      card.dataset.pairId = id;
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'qv-pair-img';
+      imgWrap.textContent = p.name.charAt(0).toUpperCase();
+      card.appendChild(imgWrap);
+
+      // Try real image — uses session-cached probe
+      probeProductImage(id, () => {
+        imgWrap.textContent = '';
+        const img = document.createElement('img');
+        img.src = `/images/products/${id}.jpg`;
+        img.alt = p.name;
+        img.loading = 'lazy';
+        imgWrap.appendChild(img);
+      });
+
+      const info = document.createElement('div');
+      info.className = 'qv-pair-info';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'qv-pair-name';
+      nameEl.textContent = p.name;
+      const priceEl = document.createElement('div');
+      priceEl.className = 'qv-pair-price';
+      priceEl.textContent = '$' + p.price;
+      info.appendChild(nameEl);
+      info.appendChild(priceEl);
+      card.appendChild(info);
+
+      // Clicking a pair swaps the drawer's product without closing it
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        openQuickView(id);
+      });
+
+      els.pairingsRow.appendChild(card);
+    }
+    els.pairings.hidden = false;
   }
 
   function openQuickView(productId) {
@@ -653,6 +770,9 @@
       els.addBtn.disabled = true;
       els.addBtn.classList.remove('added');
     }
+
+    // Style-this-with pairings
+    renderQvPairings(productId, els);
 
     // Remember where focus was before the drawer opened (we'll restore on close)
     qvLastFocus = document.activeElement;

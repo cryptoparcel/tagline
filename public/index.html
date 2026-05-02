@@ -1402,6 +1402,73 @@
   }
   .qv-stock.low{ color:var(--gold-soft); }
 
+  /* ============ "Style this with" pairings ============ */
+  .qv-pairings{
+    margin-top:28px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .qv-pairings[hidden]{display:none}
+  .qv-pairings-eyebrow{
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  .qv-pairings-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .qv-pair-card{
+    background:linear-gradient(160deg, #14110c 0%, #0d0c0a 100%);
+    border:1px solid var(--line);
+    cursor:pointer;
+    text-decoration:none;
+    color:inherit;
+    transition:border-color .25s, transform .25s;
+    display:block;
+  }
+  .qv-pair-card:hover{
+    border-color:var(--line-strong);
+    transform:translateY(-2px);
+  }
+  .qv-pair-img{
+    aspect-ratio:1/1.1;
+    display:grid; place-items:center;
+    background:linear-gradient(160deg, #1a1814 0%, #0d0c0a 100%);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:32px; font-weight:600;
+    color:rgba(255,255,250,.06);
+    letter-spacing:-0.04em;
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+  }
+  .qv-pair-img img{ width:100%; height:100%; object-fit:cover; }
+  .qv-pair-info{ padding:8px 10px 10px; }
+  .qv-pair-name{
+    font-size:11px;
+    font-weight:500;
+    color:var(--ink);
+    letter-spacing:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .qv-pair-price{
+    font-size:11px;
+    font-weight:600;
+    color:var(--gold-soft);
+    margin-top:2px;
+  }
+  @media (max-width:480px){
+    .qv-pair-img{font-size:24px}
+    .qv-pair-name{font-size:10px}
+    .qv-pair-price{font-size:10px}
+  }
+
   /* Footer (sticky add-to-cart button) */
   .qv-foot{
     position:sticky;
@@ -2214,6 +2281,13 @@
         <button type="button" class="qv-qty-btn" id="qvQtyPlus" aria-label="Increase quantity">+</button>
       </div>
       <span class="qv-stock" id="qvStock"></span>
+    </div>
+
+    <!-- Style this with — populated by tagline-app.js from PRODUCT_PAIRINGS.
+         Hidden if there are no pairings or the product isn't in the map. -->
+    <div class="qv-pairings" id="qvPairings" hidden>
+      <div class="qv-pairings-eyebrow">Style this with</div>
+      <div class="qv-pairings-row" id="qvPairingsRow"></div>
     </div>
   </div>
 

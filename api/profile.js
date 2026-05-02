@@ -67,7 +67,7 @@ function sanitizeAddress(input) {
 }
 
 export default async function handler(req, res) {
-  if (!requireMethod(req, res, 'GET', 'PATCH')) return;
+  if (!requireMethod(req, res, 'GET', 'PATCH', 'DELETE')) return;
   if (!requireSameOrigin(req, res)) return;
 
   const user = await getUserFromRequest(req);
@@ -101,6 +101,56 @@ export default async function handler(req, res) {
       return ok(res, { profile: data });
     } catch (err) {
       console.error('Profile GET error:', err);
+      return serverError(res);
+    }
+  }
+
+  // ========== DELETE — self-service account deletion (GDPR Art. 17) ==========
+  // Strategy:
+  //   1. Anonymize this user's order rows — keep them for tax / accounting
+  //      records, but null out PII (shipping_address) and replace email
+  //      with a deleted-marker. user_id naturally goes to null via the
+  //      existing FK ON DELETE SET NULL.
+  //   2. Mark newsletter subscription inactive (best effort, by email).
+  //   3. Delete the auth user — cascades to profiles via FK.
+  // Returns 204 on success. Client should clear localStorage session and
+  // redirect away.
+  if (req.method === 'DELETE') {
+    try {
+      // Anonymize orders (kept for accounting; PII removed)
+      const { error: anonErr } = await supabase
+        .from('orders')
+        .update({
+          email: 'deleted@deleted.local',
+          shipping_address: null
+        })
+        .eq('user_id', user.id);
+      if (anonErr) {
+        console.error('Order anonymization failed:', anonErr);
+        // Don't bail — better to delete the user than leave a half-state
+      }
+
+      // Best-effort newsletter unsubscribe (matches the original lower-case email)
+      if (user.email) {
+        await supabase
+          .from('subscribers')
+          .update({ active: false, unsubscribed_at: new Date().toISOString() })
+          .eq('email', user.email.toLowerCase())
+          .then(() => {}, () => {});
+      }
+
+      // Delete the auth user. Profiles row cascades via FK (on delete cascade).
+      const { error: deleteErr } = await supabase.auth.admin.deleteUser(user.id);
+      if (deleteErr) {
+        console.error('Auth user delete failed:', deleteErr);
+        return serverError(res, 'Could not complete deletion. Please contact support.');
+      }
+
+      // 204 no-content
+      res.status(204).end();
+      return;
+    } catch (err) {
+      console.error('Account deletion error:', err);
       return serverError(res);
     }
   }

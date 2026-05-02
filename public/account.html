@@ -320,6 +320,17 @@
 
       <button type="submit" class="btn btn-primary" id="saveSettingsBtn">Save changes</button>
     </form>
+
+    <!-- Danger zone — self-service account deletion (GDPR Art. 17 erasure). -->
+    <div class="settings-card" style="margin-top:32px;border-color:rgba(229,115,115,.25);background:linear-gradient(160deg,#1a0f0f 0%,#0d0c0a 100%)">
+      <h3 style="color:var(--error)">Delete my account</h3>
+      <p style="color:var(--ink-soft);font-size:13px;line-height:1.6;margin-bottom:18px">
+        This permanently deletes your account, profile, and saved address.
+        Past orders are kept for tax records but stripped of personal info.
+        This cannot be undone.
+      </p>
+      <button type="button" class="signout-btn" id="deleteAccountBtn" style="border-color:rgba(229,115,115,.4);color:var(--error)">Delete my account</button>
+    </div>
   </section>
 </main>
 
@@ -531,6 +542,44 @@
     fillProfileForm(result.profile);
     window.__profileLoaded = true;
   }
+
+  // ============ ACCOUNT DELETION ============
+  document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+    const ok = await window.Tagline.Modal.confirm({
+      title: 'Delete your account?',
+      message: 'This permanently deletes your account, profile, and saved address. Past orders are retained but stripped of personal info. You will be signed out immediately. This cannot be undone.',
+      confirmLabel: 'Delete forever',
+      cancelLabel: 'Keep account',
+      danger: true
+    });
+    if (!ok) return;
+
+    const btn = document.getElementById('deleteAccountBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+
+    const result = await window.Tagline.API.request('/api/profile', {
+      method: 'DELETE',
+      auth: true
+    });
+
+    // 204 No-content responses come back as { ok: true } from API.request.
+    // Anything else means something went wrong server-side.
+    if (!result.ok && !result.preview) {
+      btn.disabled = false;
+      btn.textContent = 'Delete my account';
+      window.Tagline.Modal.alert({
+        title: 'Could not delete account',
+        message: result.error || 'Something went wrong. Try again or contact support.'
+      });
+      return;
+    }
+
+    // Success — clear local session and bounce to home with a goodbye message
+    window.Tagline.Auth.clear();
+    try { sessionStorage.clear(); } catch {}
+    window.location.href = '/?deleted=1';
+  });
 
   document.getElementById('profileForm').addEventListener('submit', async (e) => {
     e.preventDefault();

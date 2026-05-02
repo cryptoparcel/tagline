@@ -176,17 +176,30 @@ alter table processed_webhook_events enable row level security;
 -- ============================================================
 -- ATOMIC STOCK DECREMENT
 -- ============================================================
--- Decrements stock atomically. Used by Stripe webhook on order paid.
+-- Decrements stock if sufficient is available. Returns true on success,
+-- false if stock was insufficient (oversold case — webhook should log).
+--
+-- The single UPDATE statement is the atomicity guarantee — Postgres
+-- holds a row lock for the duration, so two concurrent decrements
+-- can't both succeed when there's only stock for one. This replaces
+-- the old `greatest(0, stock - qty)` version which silently clamped
+-- to zero and gave the caller no signal that they oversold.
+--
+-- Safe to re-run; replaces any existing definition.
 create or replace function decrement_stock(product_id text, qty integer)
-returns void
+returns boolean
 language plpgsql
 security definer
 as $$
+declare
+  rows_affected integer;
 begin
   update products
-  set stock = greatest(0, stock - qty),
+  set stock = stock - qty,
       updated_at = now()
-  where id = product_id;
+  where id = product_id and stock >= qty;
+  get diagnostics rows_affected = row_count;
+  return rows_affected > 0;
 end;
 $$;
 

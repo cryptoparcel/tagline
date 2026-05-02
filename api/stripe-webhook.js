@@ -167,25 +167,43 @@ async function handleCheckoutCompleted(session, supabase) {
     return;
   }
 
-  // Decrement stock for each item
+  // Decrement stock for each item using the atomic RPC. The RPC returns
+  // boolean — true if it decremented, false if stock was insufficient
+  // (oversold case). When oversold, log loudly and notify admin so they
+  // can refund + email the customer manually. Don't try to refund here:
+  // partial refunds for partial overdraws need human judgment, and we
+  // don't want to mishandle a successful payment in webhook code.
+  const oversold = [];
   for (const item of order.items) {
-    const { error: stockError } = await supabase.rpc('decrement_stock', {
+    const { data: ok, error: stockError } = await supabase.rpc('decrement_stock', {
       product_id: item.product_id,
       qty: item.quantity
     });
     if (stockError) {
-      // Fallback if RPC doesn't exist - direct update
-      const { data: prod } = await supabase
-        .from('products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single();
-      if (prod) {
-        await supabase
-          .from('products')
-          .update({ stock: Math.max(0, prod.stock - item.quantity) })
-          .eq('id', item.product_id);
-      }
+      console.error('decrement_stock RPC error', { product_id: item.product_id, qty: item.quantity, err: stockError });
+      oversold.push({ product_id: item.product_id, qty: item.quantity, reason: 'rpc_error' });
+      continue;
+    }
+    if (ok === false) {
+      console.error('OVERSOLD', { order_id: order.id, product_id: item.product_id, qty: item.quantity });
+      oversold.push({ product_id: item.product_id, qty: item.quantity, reason: 'insufficient_stock' });
+    }
+  }
+  if (oversold.length > 0) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      const lines = oversold.map(o => `- ${escapeHtml(o.product_id)} x${o.qty} (${o.reason})`).join('<br/>');
+      sendEmail({
+        to: adminEmail,
+        subject: `[TAGLINE] OVERSOLD — order ${escapeHtml(order.id)}`,
+        html: `
+          <p><strong>Manual action required.</strong> One or more line items in a paid order could not be decremented from stock.</p>
+          <p>Order: ${escapeHtml(order.id)}</p>
+          <p>Customer: ${escapeHtml(customerEmail || order.email)}</p>
+          <p>Affected items:<br/>${lines}</p>
+          <p>You'll likely want to refund the affected items and email the customer.</p>
+        `
+      }).catch(err => console.error('Oversell notification failed:', err));
     }
   }
 

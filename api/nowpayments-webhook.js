@@ -147,24 +147,38 @@ async function handlePaid(payload, supabase) {
     return;
   }
 
-  // Decrement stock atomically (same RPC the Stripe webhook uses)
+  // Decrement stock atomically (same RPC the Stripe webhook uses).
+  // RPC returns boolean — flag oversold cases for manual handling.
+  const oversold = [];
   for (const item of order.items) {
-    const { error: stockError } = await supabase.rpc('decrement_stock', {
+    const { data: ok, error: stockError } = await supabase.rpc('decrement_stock', {
       product_id: item.product_id,
       qty: item.quantity
     });
     if (stockError) {
-      const { data: prod } = await supabase
-        .from('products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single();
-      if (prod) {
-        await supabase
-          .from('products')
-          .update({ stock: Math.max(0, prod.stock - item.quantity) })
-          .eq('id', item.product_id);
-      }
+      console.error('decrement_stock RPC error', { product_id: item.product_id, qty: item.quantity, err: stockError });
+      oversold.push({ product_id: item.product_id, qty: item.quantity, reason: 'rpc_error' });
+      continue;
+    }
+    if (ok === false) {
+      console.error('OVERSOLD (crypto)', { order_id: order.id, product_id: item.product_id, qty: item.quantity });
+      oversold.push({ product_id: item.product_id, qty: item.quantity, reason: 'insufficient_stock' });
+    }
+  }
+  if (oversold.length > 0) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      const lines = oversold.map(o => `- ${escapeHtml(o.product_id)} x${o.qty} (${o.reason})`).join('<br/>');
+      sendEmail({
+        to: adminEmail,
+        subject: `[TAGLINE] OVERSOLD (crypto) — order ${escapeHtml(order.id)}`,
+        html: `
+          <p><strong>Manual action required.</strong> One or more items in a paid crypto order could not be decremented from stock.</p>
+          <p>Order: ${escapeHtml(order.id)}</p>
+          <p>Customer: ${escapeHtml(order.email || '')}</p>
+          <p>Affected items:<br/>${lines}</p>
+        `
+      }).catch(err => console.error('Oversell notification failed:', err));
     }
   }
 

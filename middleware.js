@@ -22,15 +22,24 @@
 // the soft launch.
 
 const PUBLIC_PATHS = new Set([
+  // The gate page itself — must always be reachable
   '/launch',
   '/launch.html',
+  // Crawler / social-preview surfaces (also excluded by the matcher
+  // extension list, but listed here as defense-in-depth)
   '/sitemap.xml',
   '/robots.txt',
   '/og-image.svg',
+  // Legal — must be reachable for compliance
   '/privacy',
   '/privacy.html',
   '/terms',
-  '/terms.html'
+  '/terms.html',
+  // Contact — needed so people who lost their code can ask for a new one.
+  // Without this, the "Need a code? Get in touch" link on /launch would
+  // loop back to /launch, blocking the only support channel.
+  '/contact',
+  '/contact.html'
 ]);
 
 // Conservative allow-list of well-known good crawlers. We let them in so
@@ -43,8 +52,13 @@ export const config = {
   //  - /_next/*, /_vercel/* (Vercel internals)
   //  - /api/* (handled by us — webhooks must pass through)
   //  - /.well-known/* (Apple Pay etc.)
-  //  - any path with a dot (static assets: .css, .js, .svg, .ico, fonts, images)
-  matcher: '/((?!_next|_vercel|api|\\.well-known|.*\\.[^/]+$).*)'
+  //  - Specific static-asset extensions (css, js, images, fonts, sitemap.xml, etc.)
+  //
+  // Critically does NOT exclude .html — earlier draft used a catch-all dotted
+  // path exclusion which meant /cart.html, /signin.html etc. bypassed the gate.
+  // With Vercel's cleanUrls=true those paths get 301'd to clean URLs anyway,
+  // but explicit beats implicit.
+  matcher: '/((?!_next|_vercel|api|\\.well-known|.*\\.(?:css|js|svg|png|jpg|jpeg|gif|webp|avif|ico|woff|woff2|ttf|otf|eot|map|json|webmanifest|mp4|webm|pdf|wasm|xml|txt)$).*)'
 };
 
 export default function middleware(req) {

@@ -1409,13 +1409,35 @@
     border-top:1px solid var(--line);
   }
   .qv-pairings[hidden]{display:none}
+  .qv-pairings-head{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; margin-bottom:14px; flex-wrap:wrap;
+  }
   .qv-pairings-eyebrow{
     font-size:10px;
     font-weight:600;
     letter-spacing:.18em;
     text-transform:uppercase;
     color:var(--gold);
-    margin-bottom:14px;
+  }
+  .qv-kit-btn{
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--gold-soft);
+    font-family:'Inter',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:8px 14px;
+    cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:background .25s, color .25s;
+  }
+  .qv-kit-btn:hover{ background:var(--gold); color:var(--bg); }
+  .qv-kit-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .qv-kit-btn.added{ background:var(--gold); color:var(--bg); }
+  .qv-kit-price{
+    font-size:10px; opacity:.85; font-weight:500;
+    letter-spacing:.04em;
   }
   .qv-pairings-row{
     display:grid;
@@ -2286,7 +2308,13 @@
     <!-- Style this with — populated by tagline-app.js from PRODUCT_PAIRINGS.
          Hidden if there are no pairings or the product isn't in the map. -->
     <div class="qv-pairings" id="qvPairings" hidden>
-      <div class="qv-pairings-eyebrow">Style this with</div>
+      <div class="qv-pairings-head">
+        <div class="qv-pairings-eyebrow">Style this with</div>
+        <button type="button" class="qv-kit-btn" id="qvKitBtn">
+          <span id="qvKitLabel">Add the kit</span>
+          <span class="qv-kit-price" id="qvKitPrice"></span>
+        </button>
+      </div>
       <div class="qv-pairings-row" id="qvPairingsRow"></div>
     </div>
   </div>
@@ -2916,6 +2944,8 @@
       <a href="/help#shipping">Shipping</a>
       <a href="/help#returns">Returns</a>
       <a href="/help#faq">FAQ</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
     </div>
     <div class="foot-col">
       <h4>Account</h4>

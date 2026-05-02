@@ -628,7 +628,10 @@
       stock: document.getElementById('qvStock'),
       addBtn: document.getElementById('qvAddBtn'),
       pairings: document.getElementById('qvPairings'),
-      pairingsRow: document.getElementById('qvPairingsRow')
+      pairingsRow: document.getElementById('qvPairingsRow'),
+      kitBtn: document.getElementById('qvKitBtn'),
+      kitLabel: document.getElementById('qvKitLabel'),
+      kitPrice: document.getElementById('qvKitPrice')
     };
   }
 
@@ -642,6 +645,28 @@
     if (pairs.length === 0) {
       els.pairings.hidden = true;
       return;
+    }
+
+    // "Add the kit" button — current product + all in-stock pairings.
+    // We only count in-stock pairings in the kit price; sold-out items
+    // are still shown as cards but excluded from the bundle add.
+    const inStockPairs = pairs.filter(x => x.p.stock > 0);
+    const currentProduct = PRODUCTS[productId];
+    if (els.kitBtn && currentProduct) {
+      // Disable kit button if current product is sold out OR no pairings
+      // in stock (nothing meaningful to add).
+      const kitHasItems = currentProduct.stock > 0 && inStockPairs.length > 0;
+      els.kitBtn.hidden = !kitHasItems;
+      if (kitHasItems) {
+        const total = currentProduct.price + inStockPairs.reduce((s, x) => s + x.p.price, 0);
+        const count = 1 + inStockPairs.length;
+        els.kitLabel.textContent = `Add ${count}-piece kit`;
+        els.kitPrice.textContent = '$' + total;
+        els.kitBtn.disabled = false;
+        els.kitBtn.classList.remove('added');
+        // Replace the click handler each open (closure captures fresh state)
+        els.kitBtn.onclick = () => addKitToCart(productId, inStockPairs.map(x => x.id), els);
+      }
     }
     // Build cards via DOM API (XSS-safe — no string interpolation into HTML)
     els.pairingsRow.innerHTML = '';
@@ -984,6 +1009,44 @@
       });
     }
   };
+
+  // Add the current QV product + its in-stock pairings to the cart in
+  // one shot. Items without a defined size on the QV require the user
+  // to have selected one for the lead product; the pairings are added
+  // without size (most are accessories/socks/caps where size doesn't
+  // matter). If a pairing IS sized (rare for the curated kits), it's
+  // added unsized — user can adjust on the cart page.
+  function addKitToCart(leadId, pairingIds, els) {
+    if (!els.kitBtn) return;
+    let added = 0;
+
+    // Lead product respects the user's size selection if they made one.
+    const leadOpts = qvCurrentSize ? { size: qvCurrentSize } : {};
+    if (Cart.add(leadId, qvCurrentQty || 1, leadOpts)) added++;
+
+    // Pairings added one each, no size
+    for (const id of pairingIds) {
+      if (Cart.add(id, 1)) added++;
+    }
+
+    // Visual feedback — match the existing "Added ✓" pattern
+    els.kitBtn.classList.add('added');
+    els.kitBtn.disabled = true;
+    els.kitLabel.textContent = `Added ${added} ✓`;
+    els.kitPrice.textContent = '';
+
+    // Toast — reuse the existing one
+    showToast(
+      { name: PRODUCTS[leadId]?.name || 'Kit' },
+      null,
+      added // showToast formats "× n" when qty > 1
+    );
+
+    // Close drawer after a short delay so user can see the confirmation
+    setTimeout(() => {
+      closeQuickView();
+    }, 700);
+  }
 
   // ============ TOAST NOTIFICATION ============
   let toastTimeout = null;

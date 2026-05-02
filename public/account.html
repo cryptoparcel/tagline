@@ -463,8 +463,14 @@
     `;
   }
 
-  document.getElementById('signoutBtn').addEventListener('click', () => {
-    if (confirm('Sign out?')) {
+  document.getElementById('signoutBtn').addEventListener('click', async () => {
+    const ok = await window.Tagline.Modal.confirm({
+      title: 'Sign out?',
+      message: 'You’ll need to sign back in to see your orders and saved settings.',
+      confirmLabel: 'Sign out',
+      cancelLabel: 'Stay'
+    });
+    if (ok) {
       window.Tagline.Auth.clear();
       window.location.href = '/';
     }

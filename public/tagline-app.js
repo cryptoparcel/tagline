@@ -747,6 +747,124 @@
     }, 600);
   }
 
+  // ============ MODAL HELPER ============
+  // Drop-in replacement for confirm() / alert() — styled, accessible
+  // (role=dialog, aria-modal, focus-trapped, Esc-closable, restores
+  // focus on close). Build the DOM lazily on first call.
+  //
+  //   Tagline.modal.confirm({ title, message, confirmLabel, cancelLabel, danger })
+  //     → returns a Promise<boolean>
+  //   Tagline.modal.alert({ title, message, okLabel })
+  //     → returns a Promise<void>
+  let modalEl = null;
+  let modalLastFocus = null;
+  let modalEscHandler = null;
+
+  function ensureModalDom() {
+    if (modalEl) return modalEl;
+    modalEl = document.createElement('div');
+    modalEl.className = 'tg-modal';
+    modalEl.setAttribute('role', 'dialog');
+    modalEl.setAttribute('aria-modal', 'true');
+    modalEl.hidden = true;
+    modalEl.innerHTML = `
+      <div class="tg-modal-backdrop"></div>
+      <div class="tg-modal-card" role="document">
+        <h3 class="tg-modal-title" id="tgModalTitle"></h3>
+        <p class="tg-modal-message" id="tgModalMessage"></p>
+        <div class="tg-modal-actions">
+          <button type="button" class="tg-modal-cancel"></button>
+          <button type="button" class="tg-modal-confirm"></button>
+        </div>
+      </div>
+    `;
+    modalEl.setAttribute('aria-labelledby', 'tgModalTitle');
+    modalEl.setAttribute('aria-describedby', 'tgModalMessage');
+
+    // Inject CSS once
+    if (!document.getElementById('tg-modal-styles')) {
+      const style = document.createElement('style');
+      style.id = 'tg-modal-styles';
+      style.textContent = `
+        .tg-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;font-family:'Inter',-apple-system,sans-serif}
+        .tg-modal[hidden]{display:none}
+        .tg-modal-backdrop{position:absolute;inset:0;background:rgba(8,8,10,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s}
+        .tg-modal.open .tg-modal-backdrop{opacity:1}
+        .tg-modal-card{position:relative;max-width:420px;width:100%;background:linear-gradient(160deg,#16161a 0%,#0d0c0a 100%);border:1px solid rgba(255,255,250,.14);padding:28px 26px;color:#fafaf7;box-shadow:0 20px 60px -10px rgba(0,0,0,.7);transform:translateY(8px) scale(.98);opacity:0;transition:transform .25s ease,opacity .2s}
+        .tg-modal.open .tg-modal-card{transform:translateY(0) scale(1);opacity:1}
+        .tg-modal-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;letter-spacing:-0.01em;color:#fafaf7;margin:0 0 8px;padding:0}
+        .tg-modal-message{font-size:14px;line-height:1.55;color:#c8c8c0;margin:0 0 22px;padding:0}
+        .tg-modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+        .tg-modal-cancel,.tg-modal-confirm{min-height:42px;padding:12px 22px;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid transparent;background:transparent;color:#fafaf7;transition:background-color .2s,border-color .2s,color .2s}
+        .tg-modal-cancel{border-color:rgba(255,255,250,.14)}
+        .tg-modal-cancel:hover{background:rgba(255,255,250,.05)}
+        .tg-modal-confirm{background:#fafaf7;color:#08080a;border-color:#fafaf7}
+        .tg-modal-confirm:hover{background:#b8893d;border-color:#b8893d;color:#08080a}
+        .tg-modal.danger .tg-modal-confirm{background:#e57373;border-color:#e57373;color:#0c0c0e}
+        .tg-modal.danger .tg-modal-confirm:hover{background:#cb5e5e;border-color:#cb5e5e}
+        .tg-modal-cancel:focus-visible,.tg-modal-confirm:focus-visible{outline:2px solid #b8893d;outline-offset:2px}
+        @media (max-width:420px){.tg-modal-card{padding:24px 20px} .tg-modal-actions{flex-direction:column-reverse}.tg-modal-cancel,.tg-modal-confirm{width:100%}}
+      `;
+      document.head.appendChild(style);
+    }
+    document.body.appendChild(modalEl);
+    return modalEl;
+  }
+
+  function openModal({ title, message, confirmLabel = 'OK', cancelLabel, danger = false, onResolve }) {
+    const el = ensureModalDom();
+    el.querySelector('#tgModalTitle').textContent = title || '';
+    el.querySelector('#tgModalMessage').textContent = message || '';
+    const confirmBtn = el.querySelector('.tg-modal-confirm');
+    const cancelBtn = el.querySelector('.tg-modal-cancel');
+    confirmBtn.textContent = confirmLabel;
+    if (cancelLabel) {
+      cancelBtn.textContent = cancelLabel;
+      cancelBtn.style.display = '';
+    } else {
+      cancelBtn.style.display = 'none';
+    }
+    el.classList.toggle('danger', !!danger);
+
+    modalLastFocus = document.activeElement;
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('open'));
+    setTimeout(() => confirmBtn.focus(), 50);
+
+    function close(result) {
+      el.classList.remove('open');
+      setTimeout(() => { el.hidden = true; }, 200);
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      el.querySelector('.tg-modal-backdrop').onclick = null;
+      if (modalEscHandler) document.removeEventListener('keydown', modalEscHandler);
+      modalEscHandler = null;
+      if (modalLastFocus && modalLastFocus.focus) {
+        try { modalLastFocus.focus(); } catch {}
+      }
+      onResolve(result);
+    }
+
+    confirmBtn.onclick = () => close(true);
+    cancelBtn.onclick = () => close(false);
+    el.querySelector('.tg-modal-backdrop').onclick = () => cancelLabel ? close(false) : close(true);
+    modalEscHandler = (e) => { if (e.key === 'Escape') close(false); };
+    document.addEventListener('keydown', modalEscHandler);
+  }
+
+  const Modal = {
+    confirm({ title = 'Confirm', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false } = {}) {
+      return new Promise(resolve => {
+        openModal({ title, message, confirmLabel, cancelLabel, danger, onResolve: resolve });
+      });
+    },
+    alert({ title = '', message = '', okLabel = 'OK' } = {}) {
+      return new Promise(resolve => {
+        openModal({ title, message, confirmLabel: okLabel, cancelLabel: null, danger: false, onResolve: () => resolve() });
+      });
+    }
+  };
+
   // ============ TOAST NOTIFICATION ============
   let toastTimeout = null;
   function showToast(product, size, qty) {
@@ -1201,7 +1319,7 @@
   // read from this instead of maintaining their own copies. PRODUCT_NAME_TO_ID
   // is a derived map for homepage card → id resolution.
   window.Tagline = {
-    Cart, Wishlist, Auth, API, escapeHtml,
+    Cart, Wishlist, Auth, API, Modal, escapeHtml,
     PRODUCTS, PRODUCT_NAME_TO_ID,
     isPreviewMode: () => isPreviewMode,
     checkPreviewMode

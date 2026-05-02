@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>TAGLINE — Soft launch</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:#08080a;
+    --ink:#fafaf7;
+    --ink-soft:#c8c8c0;
+    --muted:#7a7a72;
+    --gold:#b8893d;
+    --gold-soft:#d4a558;
+    --gold-glow:rgba(184,137,61,.35);
+    --error:#e57373;
+    --line:rgba(255,255,250,.06);
+    --line-strong:rgba(255,255,250,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Inter',-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    min-height:100dvh;
+    position:relative;
+  }
+
+  /* Background gradient + faint engine glow at the bottom */
+  .stage{
+    position:fixed; inset:0;
+    display:grid; place-items:center;
+    padding:24px;
+    background:
+      radial-gradient(ellipse at center bottom, rgba(184,137,61,.10), transparent 55%),
+      radial-gradient(ellipse at center top, #16110b 0%, #08080a 60%);
+    overflow:hidden;
+  }
+
+  /* Subtle starfield drifting upward — like ash from a launch */
+  .particles{
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .particle{
+    position:absolute;
+    width:2px; height:2px;
+    background:var(--gold);
+    opacity:0;
+    border-radius:50%;
+    animation:drift linear infinite;
+    box-shadow:0 0 6px var(--gold);
+  }
+  @keyframes drift{
+    0%{ transform:translateY(110vh); opacity:0; }
+    8%{ opacity:.6; }
+    92%{ opacity:.4; }
+    100%{ transform:translateY(-10vh); opacity:0; }
+  }
+
+  /* Center column */
+  .panel{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    max-width:420px;
+    width:100%;
+  }
+
+  /* The cross — ascending, with a soft glow that pulses */
+  .cross{
+    width:64px; height:108px;
+    margin:0 auto 32px;
+    color:var(--gold-soft);
+    filter:
+      drop-shadow(0 0 14px rgba(255,235,180,.35))
+      drop-shadow(0 0 36px rgba(184,137,61,.30));
+    animation:rise 6s ease-in-out infinite, glow 3.5s ease-in-out infinite;
+  }
+  .cross svg{ width:100%; height:100%; display:block; }
+  @keyframes rise{
+    0%,100%{ transform:translateY(2px); }
+    50%   { transform:translateY(-4px); }
+  }
+  @keyframes glow{
+    0%,100%{ filter:drop-shadow(0 0 14px rgba(255,235,180,.35)) drop-shadow(0 0 36px rgba(184,137,61,.30)); }
+    50%   { filter:drop-shadow(0 0 22px rgba(255,235,180,.55)) drop-shadow(0 0 48px rgba(184,137,61,.45)); }
+  }
+
+  .eyebrow{
+    font-size:11px; font-weight:600;
+    letter-spacing:.3em; text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  .wordmark{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(36px,7vw,48px);
+    font-weight:600;
+    letter-spacing:.16em;
+    color:var(--ink);
+    margin-bottom:16px;
+    line-height:1;
+  }
+  .lead{
+    font-size:14px;
+    color:var(--ink-soft);
+    line-height:1.7;
+    margin-bottom:32px;
+    max-width:340px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  form{
+    display:flex; flex-direction:column; gap:10px;
+    margin:0 auto;
+    max-width:320px;
+  }
+  .code-input{
+    width:100%;
+    padding:14px 16px;
+    background:rgba(255,255,250,.04);
+    border:1px solid var(--line-strong);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:16px;
+    text-align:center;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    transition:border-color .2s, background .2s;
+    outline:none;
+  }
+  .code-input:focus{
+    border-color:var(--gold);
+    background:rgba(184,137,61,.06);
+  }
+  .code-input::placeholder{
+    color:var(--muted);
+    letter-spacing:.18em;
+  }
+  .enter-btn{
+    width:100%;
+    padding:14px;
+    background:var(--ink);
+    color:var(--bg);
+    border:1px solid var(--ink);
+    font-family:inherit;
+    font-size:13px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer;
+    transition:background .25s, color .25s, border-color .25s;
+  }
+  .enter-btn:hover:not(:disabled){
+    background:var(--gold);
+    border-color:var(--gold);
+    color:var(--bg);
+  }
+  .enter-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .alert{
+    margin-top:14px;
+    padding:10px 14px;
+    border:1px solid rgba(229,115,115,.3);
+    color:var(--error);
+    font-size:13px;
+    min-height:20px;
+  }
+  .alert.success{
+    border-color:rgba(184,137,61,.3);
+    color:var(--gold-soft);
+  }
+  .alert:empty{display:none}
+
+  .foot{
+    position:absolute;
+    bottom:24px; left:0; right:0;
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.1em;
+  }
+  .foot a{ color:var(--muted); text-decoration:underline; text-underline-offset:3px; }
+  .foot a:hover{ color:var(--ink-soft); }
+
+  @media (prefers-reduced-motion: reduce){
+    .cross{ animation:none; }
+    .particle{ animation:none; opacity:0; }
+  }
+  @media (max-width: 380px){
+    .cross{ width:54px; height:92px; margin-bottom:24px; }
+    .lead{ font-size:13px; margin-bottom:24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <!-- Drifting particles — generated by JS for performance/random spacing -->
+  <div class="particles" id="particles" aria-hidden="true"></div>
+
+  <div class="panel">
+    <div class="cross" aria-hidden="true">
+      <svg viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cg" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stop-color="#fafaf7" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#b8893d" stop-opacity="0.95"/>
+          </linearGradient>
+        </defs>
+        <path d="M88 0 L112 0 L112 100 L180 100 L180 128 L112 128 L112 340 L88 340 L88 128 L20 128 L20 100 L88 100 Z" fill="url(#cg)"/>
+      </svg>
+    </div>
+
+    <div class="eyebrow">Soft launch</div>
+    <h1 class="wordmark">TAGLINE</h1>
+    <p class="lead">
+      We’re inviting people in slowly. Drop your access code below and you’re in.
+    </p>
+
+    <form id="accessForm" autocomplete="off">
+      <input
+        type="text"
+        id="codeInput"
+        class="code-input"
+        placeholder="Access code"
+        aria-label="Access code"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        maxlength="64"
+        required
+      />
+      <button type="submit" class="enter-btn" id="enterBtn">Enter</button>
+      <div class="alert" id="alert" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <div class="foot">
+    Need a code? <a href="/contact">Get in touch.</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Generate particles client-side so each load has a different drift pattern.
+  // 14 particles at random horizontal positions with random delay + duration
+  // — enough to feel alive without being busy.
+  const particles = document.getElementById('particles');
+  if (particles) {
+    const N = 14;
+    for (let i = 0; i < N; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animationDuration = (8 + Math.random() * 14) + 's';
+      p.style.animationDelay = (Math.random() * -20) + 's'; // negative to stagger
+      // Slight size variance for depth feel
+      const size = 1 + Math.random() * 2;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      particles.appendChild(p);
+    }
+  }
+
+  function showAlert(msg, kind = 'error') {
+    const el = document.getElementById('alert');
+    el.textContent = msg;
+    el.classList.toggle('success', kind === 'success');
+  }
+
+  document.getElementById('accessForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('codeInput');
+    const btn = document.getElementById('enterBtn');
+    const code = input.value.trim();
+    if (!code) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+    showAlert('');
+
+    try {
+      const res = await fetch('/api/access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        showAlert(data.error || 'Invalid code.');
+        btn.disabled = false;
+        btn.textContent = 'Enter';
+        input.focus();
+        input.select();
+        return;
+      }
+      // Success — server set the access cookie; reload to land on the homepage
+      showAlert('Welcome.', 'success');
+      btn.textContent = 'Welcome';
+      setTimeout(() => { window.location.href = '/'; }, 600);
+    } catch {
+      showAlert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Enter';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

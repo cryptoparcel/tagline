@@ -8,13 +8,16 @@ This is the **one running list** of action items that depend on you (configuring
 
 ## 🔴 Blocking — features below are coded but won't activate until done
 
-### 1. Run the SQL migration in Supabase
+### 1. Run the SQL migrations in Supabase
 
-**Why:** the Stripe webhook idempotency check needs the `processed_webhook_events` table. Without it, every Stripe webhook returns 500 and Stripe retries forever.
+**Why:** several recent fixes need DB changes. Without these:
+- Stripe webhooks return 500 and Stripe retries forever (idempotency table)
+- The atomic stock-decrement function still uses the old silently-clamping version (oversell risk on limited items)
 
-**How:** Supabase Dashboard → SQL Editor → New query → paste and run:
+**How:** Supabase Dashboard → SQL Editor → New query → paste and run all three:
 
 ```sql
+-- 1. Idempotency table (Stripe + NowPayments webhooks)
 create table if not exists processed_webhook_events (
   event_id text primary key,
   event_type text not null,
@@ -22,6 +25,26 @@ create table if not exists processed_webhook_events (
 );
 create index if not exists idx_processed_events_at on processed_webhook_events(processed_at);
 alter table processed_webhook_events enable row level security;
+
+-- 2. NowPayments invoice column (only needed if you'll enable crypto)
+alter table orders add column if not exists nowpayments_invoice_id text unique;
+create index if not exists idx_orders_np_invoice on orders(nowpayments_invoice_id);
+
+-- 3. Atomic decrement_stock — replaces the old silently-clamping version
+create or replace function decrement_stock(product_id text, qty integer)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare rows_affected integer;
+begin
+  update products
+  set stock = stock - qty, updated_at = now()
+  where id = product_id and stock >= qty;
+  get diagnostics rows_affected = row_count;
+  return rows_affected > 0;
+end;
+$$;
 ```
 
 (Alternative: re-run the entire `sql/schema.sql` — it's idempotent.)
@@ -63,6 +86,34 @@ Then **redeploy** for it to take effect.
 **How:** Supabase Dashboard → Authentication → Providers → Email → toggle **"Confirm email"** on.
 
 (The email-confirm landing flow on the site already handles the click-from-email step — you just need to flip this switch.)
+
+---
+
+## 🟢 Optional — feature flag, off by default
+
+### 4a. Soft-launch access gate (rocket page) — code is in, gate stays off until you flip it
+
+**Why:** lets you launch live but keep the site invite-only. Gives you a controlled trial with a small group before going public. Hand out codes to friends, family, founding customers.
+
+**How to activate when ready:**
+
+1. **Pick your access codes** — you can use anything (e.g. `FOUNDER-001`, `BETA-002`, `VIP-CRYPTOPARCEL`). Aim for one per person so you can revoke individually by removing it from the list.
+
+2. **Set Vercel env vars:**
+   - `ACCESS_GATE_ENABLED` = `true`
+   - `ACCESS_CODES` = `CODE1,CODE2,CODE3` (comma-separated, no spaces)
+
+3. **Redeploy.** Anyone hitting the site is redirected to `/launch`. They enter their code, get an HttpOnly 30-day cookie, then land on the homepage.
+
+4. **To go fully public later:** just flip `ACCESS_GATE_ENABLED` back to `false` and redeploy. No further code changes.
+
+**What's allowed through the gate** (so SEO + payments + support don't break):
+- Known crawlers (Googlebot, Twitterbot, Slackbot, etc.) — link previews still work
+- `/api/*` — Stripe + NowPayments webhooks must reach our endpoints
+- `/privacy`, `/terms` — legal pages must be reachable
+- `/sitemap.xml`, `/robots.txt`, `/og-image.svg` — search engine and social-card crawlers
+
+**Brute-force protection:** the `/api/access` endpoint is rate-limited to 10 attempts per IP per 5 minutes. Add Cloudflare Turnstile later if you want stronger protection.
 
 ---
 

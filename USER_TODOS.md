@@ -232,6 +232,34 @@ The integration uses GovX's recommended pattern: GovX issues a one-time discount
 
 ---
 
+### 7d. Set `CRON_SECRET` env var in Vercel (10 sec)
+
+**Why:** the daily pending-order cleanup cron (`/api/cleanup-pending`) authenticates via this. Without it set, the cron either fails (auth required) or runs unprotected. Vercel automatically sends it as `Authorization: Bearer ${CRON_SECRET}` when scheduled.
+
+**How:**
+- Generate a random secret: `openssl rand -hex 32`
+- Vercel Dashboard → Project → Settings → Environment Variables → add:
+  - `CRON_SECRET` = the value you generated
+- Redeploy. The cron runs daily at 4am UTC and marks any order still `pending` after 24h as `cancelled`. Keeps the admin orders view tidy as abandoned checkouts pile up.
+
+---
+
+### 7e. Hook UptimeRobot to `/api/health` (free, 5 min setup)
+
+**Why:** the `/api/health` endpoint pings Supabase + checks Stripe/Resend env vars. UptimeRobot pings it every 5 min and emails you if it's not 200. Catches outages before customers complain.
+
+**How:**
+- Sign up at https://uptimerobot.com (free tier — 50 monitors, 5-min checks)
+- Add monitor:
+  - Type: **HTTPS keyword**
+  - URL: `https://YOUR_DOMAIN/api/health`
+  - Keyword: `"ok":true`
+  - Interval: 5 minutes
+  - Alert contacts: your email
+- Optionally add their free status page so customers can check during incidents
+
+---
+
 ### 8. Set up DKIM / DMARC for `FROM_EMAIL` in Resend
 
 **Why:** without these, ~30% of order confirmation emails land in Gmail/Yahoo spam folders. With them, deliverability is near 99%.

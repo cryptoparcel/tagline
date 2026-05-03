@@ -785,8 +785,23 @@
     if (!grid) return;
     if (grid.dataset.rendered === '1') return; // idempotent
 
+    // Sort by category, then by name. Categories in a fixed display
+    // order (Tops first, then Outerwear, etc.) — feels more shoppable
+    // than insertion-order or created_at.
+    const CATEGORY_ORDER = ['Tops', 'Outerwear', 'Bottoms', 'Footwear', 'Accessories'];
+    const orderedIds = Object.keys(PRODUCTS).sort((a, b) => {
+      const pa = PRODUCTS[a], pb = PRODUCTS[b];
+      const ca = CATEGORY_ORDER.indexOf(pa.category);
+      const cb = CATEGORY_ORDER.indexOf(pb.category);
+      // Unknown categories sort to the end
+      const aIdx = ca === -1 ? 99 : ca;
+      const bIdx = cb === -1 ? 99 : cb;
+      if (aIdx !== bIdx) return aIdx - bIdx;
+      return (pa.name || '').localeCompare(pb.name || '');
+    });
+
     const frag = document.createDocumentFragment();
-    for (const id of Object.keys(PRODUCTS)) {
+    for (const id of orderedIds) {
       const p = PRODUCTS[id];
       const card = document.createElement('article');
       card.className = 'product-card';
@@ -801,14 +816,16 @@
         card.appendChild(tagEl);
       }
 
-      // Image area — letter placeholder. autoWireProductCards probes for
-      // a real image (image_url first, then /images/products/{id}.jpg)
-      // and replaces this placeholder if it loads.
+      // Image area — letter placeholder fallback. autoWireProductCards
+      // probes the resolved image URL and, if it loads, replaces this
+      // placeholder with the real <img>. Made more visually present than
+      // the old ghost-letter so cards without images feel intentional
+      // rather than broken.
       const illu = document.createElement('div');
       illu.className = 'product-illu';
-      illu.style.cssText = 'display:grid;place-items:center';
+      illu.style.cssText = 'display:grid;place-items:center;background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%)';
       const letter = document.createElement('div');
-      letter.style.cssText = 'font-family:"Space Grotesk",sans-serif;font-size:clamp(48px,9vw,84px);font-weight:600;color:rgba(255,255,250,.06);letter-spacing:-0.04em;line-height:1';
+      letter.style.cssText = 'font-family:"Space Grotesk",sans-serif;font-size:clamp(72px,12vw,128px);font-weight:600;color:rgba(255,255,250,.10);letter-spacing:-0.04em;line-height:1';
       letter.textContent = p.name.charAt(0).toUpperCase();
       illu.appendChild(letter);
       card.appendChild(illu);

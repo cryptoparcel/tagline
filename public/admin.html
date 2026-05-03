@@ -243,6 +243,24 @@
   .pe-btn.primary:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg); }
   .pe-btn:disabled{ opacity:.5; cursor:not-allowed; }
   .pe-help{ font-size:11px; color:var(--muted); margin-top:4px; line-height:1.5; }
+  .pe-imgprev{
+    margin-top:10px;
+    padding:8px;
+    border:1px dashed var(--line-strong);
+    background:rgba(0,0,0,.18);
+    display:inline-block;
+    max-width:100%;
+  }
+  .pe-imgprev img{
+    max-width:140px; max-height:140px;
+    object-fit:cover;
+    display:block;
+    background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%);
+  }
+  .pe-imgprev .err{
+    color:var(--error); font-size:11px;
+    padding:8px 12px;
+  }
   .pe-status{
     font-size:11px;
     color:var(--gold-soft);
@@ -738,7 +756,8 @@
       <div>
         <label for="pe-image-${p.id}">Image URL</label>
         <input id="pe-image-${p.id}" type="url" maxlength="1000" placeholder="https://..." />
-        <div class="pe-help">Public http(s) URL of the product image. Use width=1000 on Shopify URLs for retina-sharp display.</div>
+        <div class="pe-help">Public http(s) URL. Use <code style="color:var(--ink-soft)">width=1000</code> on Shopify URLs for retina-sharp display.</div>
+        <div id="pe-imgprev-${p.id}" class="pe-imgprev" hidden></div>
       </div>
       <div style="margin-top:14px">
         <label for="pe-desc-${p.id}">Description</label>
@@ -776,6 +795,39 @@
     form.querySelector('[data-action="save"]').addEventListener('click', () => {
       saveProductEdit(form, p);
     });
+
+    // Live image preview — debounced so we don't spam fetches as user types
+    const imageInput = form.querySelector('#pe-image-' + p.id);
+    const previewBox = form.querySelector('#pe-imgprev-' + p.id);
+    let previewTimer = null;
+    function updatePreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        const url = imageInput.value.trim();
+        previewBox.innerHTML = '';
+        if (!url) {
+          previewBox.hidden = true;
+          return;
+        }
+        if (!/^https?:\/\//i.test(url)) {
+          previewBox.hidden = false;
+          previewBox.innerHTML = '<div class="err">URL must start with http:// or https://</div>';
+          return;
+        }
+        previewBox.hidden = false;
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'preview';
+        img.loading = 'lazy';
+        img.onerror = () => {
+          previewBox.innerHTML = '<div class="err">Couldn\'t load that image. Check the URL.</div>';
+        };
+        previewBox.appendChild(img);
+      }, 400);
+    }
+    imageInput.addEventListener('input', updatePreview);
+    // Show the existing image immediately when the form opens
+    if (imageInput.value.trim()) updatePreview();
   }
 
   async function saveProductEdit(form, p) {

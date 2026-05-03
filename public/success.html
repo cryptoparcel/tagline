@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#08080a" />
 <meta name="color-scheme" content="dark" />
+<meta name="robots" content="noindex, nofollow" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
 <title>Order confirmed — TAGLINE</title>
 
@@ -20,7 +21,7 @@
     border-radius:50%;
     display:grid;place-items:center;
     color:var(--gold);
-    margin:0 auto 32px;
+    margin:0 auto 24px;
     animation:scaleIn .5s ease both;
   }
   @keyframes scaleIn {
@@ -29,6 +30,107 @@
   }
   .success-content{text-align:center}
   .success-content h1{margin-bottom:14px}
+
+  .order-card{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:24px;
+    margin:32px 0;
+    text-align:left;
+  }
+  .order-card-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:8px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .order-num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px; letter-spacing:.08em;
+    color:var(--ink-soft);
+  }
+  .order-num strong{ color:var(--ink); font-weight:600; margin-left:8px; }
+  .order-status-pill{
+    display:inline-block;
+    padding:4px 10px;
+    font-size:10px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase;
+    border:1px solid var(--line-strong);
+    color:var(--ink-soft);
+  }
+  .order-status-pill.paid{ color:var(--gold-soft); border-color:rgba(184,137,61,.4); }
+  .order-status-pill.pending{ color:var(--ink-soft); }
+
+  .order-line{
+    display:grid;
+    grid-template-columns:54px 1fr auto;
+    gap:14px; align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .order-line:last-of-type{ border-bottom:none; }
+  .order-line-thumb{
+    width:54px; height:54px;
+    background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    color:rgba(255,255,250,.18);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:18px; font-weight:600;
+    overflow:hidden;
+  }
+  .order-line-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .order-line-info .name{
+    font-size:13px; font-weight:500; color:var(--ink);
+    margin-bottom:2px;
+  }
+  .order-line-info .meta{
+    font-size:11px; color:var(--muted);
+  }
+  .order-line-price{
+    font-size:13px; font-weight:600; color:var(--ink);
+    text-align:right;
+  }
+
+  .order-totals{
+    margin-top:14px; padding-top:14px;
+    border-top:1px solid var(--line);
+    display:flex; flex-direction:column; gap:6px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .order-totals .row{ display:flex; justify-content:space-between; }
+  .order-totals .row.total{
+    color:var(--ink); font-weight:600; font-size:14px;
+    border-top:1px solid var(--line);
+    padding-top:8px; margin-top:4px;
+  }
+
+  .skeleton-card{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    height:240px;
+    position:relative; overflow:hidden;
+    margin:32px 0;
+  }
+  .skeleton-card::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,250,.04), transparent);
+    animation:skel 1.6s ease-in-out infinite;
+  }
+  @keyframes skel{ 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
+
+  .next-steps{
+    text-align:left;
+    background:rgba(184,137,61,.06);
+    border:1px solid rgba(184,137,61,.2);
+    padding:16px 20px;
+    margin:24px 0;
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.7;
+  }
+  .next-steps strong{ color:var(--gold-soft); }
 </style>
 </head>
 <body>
@@ -48,14 +150,39 @@
 
 <main class="page-narrow" id="main" tabindex="-1">
   <div class="success-content">
-    <div class="success-icon">
+    <div class="success-icon" aria-hidden="true">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M5 12l5 5L20 7"/>
       </svg>
     </div>
     <div class="section-marker" style="justify-content:center"><span class="label">Order confirmed</span></div>
     <h1 class="page-title">Thank you.</h1>
-    <p class="page-sub">Your order is in. You'll get a confirmation email shortly with all the details. We'll send tracking info as soon as it ships.</p>
+    <p class="page-sub" id="subText">Your order is in. A confirmation email is on the way.</p>
+
+    <!-- Order detail card — populated by JS once /api/order-by-session
+         resolves. Shows skeleton during load, falls back to generic
+         text if no session_id was passed (e.g. user navigated directly). -->
+    <div id="orderDetail" hidden>
+      <div class="order-card">
+        <div class="order-card-head">
+          <div class="order-num">Order <strong id="orderShortId">—</strong></div>
+          <span class="order-status-pill" id="orderStatusPill">—</span>
+        </div>
+        <div id="orderLines"></div>
+        <div class="order-totals" id="orderTotals"></div>
+      </div>
+    </div>
+
+    <!-- Skeleton during load -->
+    <div id="orderSkeleton" class="skeleton-card" aria-live="polite" aria-busy="true" hidden>
+      <span class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Loading order details…</span>
+    </div>
+
+    <!-- "What happens next" — always shown -->
+    <div class="next-steps" id="nextSteps">
+      <strong>What happens next:</strong><br/>
+      We're packing your order now. You'll get a shipping email with a tracking link as soon as it's on its way (typically 1–2 business days).
+    </div>
 
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px">
       <a href="/" class="btn btn-primary">Continue shopping</a>
@@ -71,14 +198,159 @@
 
 <script src="/tagline-app.js" defer></script>
 <script>
-  // Clear the cart now that the order is placed
-  if (window.Tagline?.Cart) {
-    window.Tagline.Cart.clear();
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Tagline?.Cart) window.Tagline.Cart.clear();
-    });
+(function(){
+  // Clear the cart now that the order is placed (works whether tagline-app
+  // is loaded yet or not).
+  function clearCart() {
+    if (window.Tagline?.Cart) window.Tagline.Cart.clear();
   }
+  if (window.Tagline?.Cart) clearCart();
+  else document.addEventListener('DOMContentLoaded', clearCart);
+
+  // Pull session_id (Stripe) or order (NowPayments) from the URL.
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+  const orderId = params.get('order');
+
+  if (!sessionId && !orderId) {
+    // No identifier — leave the generic confirmation, skip the lookup.
+    return;
+  }
+
+  // Show skeleton while we fetch
+  document.getElementById('orderSkeleton').hidden = false;
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function fetchOrder(retries = 0) {
+    const qs = sessionId ? 'session_id=' + encodeURIComponent(sessionId)
+                         : 'order=' + encodeURIComponent(orderId);
+    fetch('/api/order-by-session?' + qs)
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => {
+        if (!data?.ok || !data.order) {
+          // Order not found YET — Stripe webhook may still be in flight.
+          // Retry up to 3 times with exponential backoff.
+          if (retries < 3) {
+            setTimeout(() => fetchOrder(retries + 1), 1500 * (retries + 1));
+            return;
+          }
+          // After retries, just show the generic page
+          document.getElementById('orderSkeleton').hidden = true;
+          return;
+        }
+        renderOrder(data.order);
+      })
+      .catch(() => {
+        if (retries < 2) {
+          setTimeout(() => fetchOrder(retries + 1), 2000);
+          return;
+        }
+        // Hide the skeleton so the generic page shows
+        document.getElementById('orderSkeleton').hidden = true;
+      });
+  }
+  fetchOrder();
+
+  function renderOrder(order) {
+    document.getElementById('orderSkeleton').hidden = true;
+    document.getElementById('orderDetail').hidden = false;
+    document.getElementById('orderShortId').textContent = '#' + order.short_id;
+
+    const statusPill = document.getElementById('orderStatusPill');
+    const status = (order.status || 'pending').toLowerCase();
+    statusPill.textContent = status === 'paid' ? 'Paid' :
+                             status === 'shipped' ? 'Shipped' :
+                             status === 'delivered' ? 'Delivered' :
+                             status === 'cancelled' ? 'Cancelled' :
+                             status === 'refunded' ? 'Refunded' :
+                             'Processing';
+    statusPill.className = 'order-status-pill ' + status;
+
+    // Items
+    const lines = document.getElementById('orderLines');
+    lines.innerHTML = '';
+    const PRODUCTS = window.Tagline?.PRODUCTS || {};
+    (order.items || []).forEach(item => {
+      const line = document.createElement('div');
+      line.className = 'order-line';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'order-line-thumb';
+      thumb.textContent = (item.name || '').charAt(0).toUpperCase();
+      // Use the live product image if we have it
+      const product = PRODUCTS[item.product_id];
+      if (product?.image_url && /^https?:\/\//i.test(product.image_url)) {
+        const img = document.createElement('img');
+        img.src = product.image_url;
+        img.alt = item.name || '';
+        img.loading = 'lazy';
+        img.onerror = () => { thumb.removeChild(img); };
+        thumb.textContent = '';
+        thumb.appendChild(img);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'order-line-info';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = item.name || 'Item';
+      const metaEl = document.createElement('div');
+      metaEl.className = 'meta';
+      const metaParts = [];
+      if (item.color) metaParts.push(item.color);
+      if (item.size) metaParts.push('Size ' + item.size);
+      metaParts.push('Qty ' + (item.quantity || 1));
+      metaEl.textContent = metaParts.join(' · ');
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+
+      const priceEl = document.createElement('div');
+      priceEl.className = 'order-line-price';
+      const lineTotal = (item.price_cents || 0) * (item.quantity || 0) / 100;
+      priceEl.textContent = '$' + lineTotal.toFixed(2);
+
+      line.appendChild(thumb);
+      line.appendChild(info);
+      line.appendChild(priceEl);
+      lines.appendChild(line);
+    });
+
+    // Totals
+    const totals = document.getElementById('orderTotals');
+    const sub = ((order.subtotal_cents || 0) / 100).toFixed(2);
+    const ship = ((order.shipping_cents || 0) / 100).toFixed(2);
+    const total = ((order.total_cents || 0) / 100).toFixed(2);
+    totals.innerHTML = '';
+    [
+      ['Subtotal', '$' + sub],
+      ['Shipping', order.shipping_cents === 0 ? 'Free' : '$' + ship],
+      ['Total', '$' + total]
+    ].forEach((pair, idx) => {
+      const row = document.createElement('div');
+      row.className = 'row' + (idx === 2 ? ' total' : '');
+      const lbl = document.createElement('span');
+      lbl.textContent = pair[0];
+      const val = document.createElement('span');
+      val.textContent = pair[1];
+      row.appendChild(lbl);
+      row.appendChild(val);
+      totals.appendChild(row);
+    });
+
+    // Update sub-text
+    const subText = document.getElementById('subText');
+    if (status === 'paid' || status === 'shipped' || status === 'delivered') {
+      subText.textContent = 'Your order is confirmed. A confirmation email is on the way.';
+    } else if (status === 'pending') {
+      subText.textContent = 'Your payment is processing. We\'ll update this page when it confirms.';
+    }
+  }
+})();
 </script>
 
 </body>

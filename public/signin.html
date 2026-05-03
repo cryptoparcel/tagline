@@ -344,9 +344,11 @@
           options: { redirectTo: window.location.origin + '/reset-password' }
         })
       });
-      // Always show the same success message — never leak whether the email
-      // exists in our system (account-enumeration mitigation per OWASP ASVS V2.1).
-      showAlert('If an account exists for that email, a reset link is on its way.', 'success');
+      // Anti-enumeration: same message regardless of whether the email
+      // exists. But naming the address back to the user is fine — we'd
+      // do that for any address.
+      const safe = email.replace(/[<>"'&]/g, '');
+      showAlert('Check ' + safe + ' for a reset link if an account exists. Link expires in an hour.', 'success');
       btn.disabled = false;
       btn.textContent = 'Send reset link';
       document.getElementById('resetEmail').value = '';
@@ -383,9 +385,13 @@
           options: { emailRedirectTo: window.location.origin + '/' }
         })
       });
-      // Show the same message either way to avoid email enumeration
-      // (per OWASP ASVS V2.1.12 — same as the password-reset path)
-      showAlert('If that email is valid, a sign-in link is on its way.', 'success');
+      // Anti-enumeration: same message regardless of whether the email
+      // exists in our system (OWASP ASVS V2.1.12). But include the email
+      // address the link was sent to (or would have been sent to) so the
+      // user knows where to look — that's not enumeration since we'd say
+      // the same thing for any submitted email.
+      const safe = email.replace(/[<>"'&]/g, '');
+      showAlert('Check ' + safe + ' for a sign-in link. It expires in an hour.', 'success');
       btn.disabled = false;
       btn.textContent = 'Send sign-in link';
       document.getElementById('magicEmail').value = '';

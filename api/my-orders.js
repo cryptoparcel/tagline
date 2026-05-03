@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('orders')
-      .select('id, status, subtotal_cents, shipping_cents, total_cents, items, created_at, tracking_number')
+      .select('id, status, subtotal_cents, shipping_cents, total_cents, items, created_at, tracking_number, shipping_address')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);

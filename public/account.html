@@ -59,6 +59,98 @@
     font-size:13px;color:var(--ink-soft);
   }
   .order-tracking strong{color:var(--ink);font-weight:500}
+  .order-tracking a{
+    color:var(--gold-soft);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    margin-left:8px;
+  }
+  .order-tracking a:hover{ color:var(--gold); }
+
+  /* ============ EXPANDABLE ORDER DETAIL ============
+     Click an order summary → row expands to show full breakdown,
+     shipping address, etc. Uses the standard summary/details pattern
+     via a button + ARIA. Defaults to collapsed; remembers state per
+     row (not persisted across loads — fresh collapsed each page). */
+  .order-row{ cursor:pointer; transition:border-color .2s; }
+  .order-row:hover{ border-color:var(--line-strong); }
+  .order-toggle{
+    margin-left:auto;
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    padding:6px 8px;
+    margin-top:-2px;
+    transition:color .2s, transform .2s;
+  }
+  .order-toggle:hover{ color:var(--ink); }
+  .order-toggle svg{
+    width:14px; height:14px;
+    transition:transform .25s ease;
+  }
+  .order-row.expanded .order-toggle svg{ transform:rotate(180deg); }
+
+  .order-detail{
+    display:none;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .order-row.expanded .order-detail{ display:block; }
+  .order-detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin-top:8px;
+  }
+  @media (max-width:640px){
+    .order-detail-grid{ grid-template-columns:1fr; gap:18px; }
+  }
+  .od-section h4{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+  .od-line-items{ display:flex; flex-direction:column; gap:10px; }
+  .od-item{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .od-item:last-child{ border-bottom:none; }
+  .od-item .od-name{ color:var(--ink); font-weight:500; }
+  .od-item .od-meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .od-item .od-line-total{ color:var(--ink); font-weight:500; }
+  .od-totals{
+    display:flex; flex-direction:column; gap:6px;
+    margin-top:14px; padding-top:14px;
+    border-top:1px solid var(--line);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .od-totals .row{ display:flex; justify-content:space-between; }
+  .od-totals .row.total{
+    color:var(--ink); font-weight:600; font-size:14px;
+    border-top:1px solid var(--line);
+    padding-top:8px; margin-top:4px;
+  }
+  .od-address{
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .od-address-empty{
+    font-size:12px;
+    color:var(--muted);
+    font-style:italic;
+  }
 
   /* ============ ORDER TIMELINE ============
      Visual progress track: Ordered → Paid → Shipped → Delivered.
@@ -382,7 +474,7 @@
       return;
     }
 
-    container.innerHTML = orders.map(o => {
+    container.innerHTML = orders.map((o, idx) => {
       const date = new Date(o.created_at).toLocaleDateString('en-US', {
         year:'numeric', month:'short', day:'numeric'
       });
@@ -391,9 +483,10 @@
       ).join('<br/>');
       const safeId = esc(o.id.slice(0,8).toUpperCase());
       const safeStatus = esc(o.status);
-      const statusClassName = statusClass(o.status); // already validated against allow-list
+      const statusClassName = statusClass(o.status);
+      const trackUrl = o.tracking_number ? trackingUrl(o.tracking_number) : null;
       return `
-        <div class="order-row">
+        <div class="order-row" data-idx="${idx}" role="button" tabindex="0" aria-expanded="false" aria-label="Order ${safeId} — click to expand">
           <div class="order-head">
             <div>
               <div class="order-id">Order #${safeId}</div>
@@ -403,13 +496,129 @@
             <div style="text-align:right">
               <div class="order-total">$${(o.total_cents/100).toFixed(2)}</div>
             </div>
+            <button type="button" class="order-toggle" aria-label="Toggle details" tabindex="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
           </div>
           ${renderTimeline(o.status)}
           <div class="order-items">${itemsList}</div>
-          ${o.tracking_number ? `<div class="order-tracking"><strong>Tracking:</strong> ${esc(o.tracking_number)}</div>` : ''}
+          ${o.tracking_number ? `<div class="order-tracking"><strong>Tracking:</strong> ${esc(o.tracking_number)}${trackUrl ? ` <a href="${esc(trackUrl)}" target="_blank" rel="noopener noreferrer">Track →</a>` : ''}</div>` : ''}
+
+          <div class="order-detail">
+            <div class="order-detail-grid">
+              <div class="od-section">
+                <h4>Items</h4>
+                <div class="od-line-items">${renderItemsDetail(o.items, esc)}</div>
+                ${renderTotals(o, esc)}
+              </div>
+              <div class="od-section">
+                <h4>Shipping address</h4>
+                ${renderShipping(o.shipping_address, esc)}
+              </div>
+            </div>
+          </div>
         </div>
       `;
     }).join('');
+
+    // Wire expand/collapse — single delegated listener on the container
+    container.addEventListener('click', onOrderRowClick);
+    container.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const row = e.target.closest('.order-row');
+      if (!row || row !== e.target) return;
+      e.preventDefault();
+      toggleOrderRow(row);
+    });
+  }
+
+  function onOrderRowClick(e) {
+    // Don't toggle when the user clicks a real link (e.g. tracking link)
+    if (e.target.closest('a')) return;
+    const row = e.target.closest('.order-row');
+    if (!row) return;
+    toggleOrderRow(row);
+  }
+  function toggleOrderRow(row) {
+    const open = row.classList.toggle('expanded');
+    row.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function renderItemsDetail(items, esc) {
+    if (!items || !items.length) {
+      return '<div style="color:var(--muted);font-size:12px;font-style:italic">No items recorded.</div>';
+    }
+    return items.map(i => {
+      const lineTotal = (i.price_cents || 0) * (i.quantity || 0) / 100;
+      const meta = [];
+      if (i.color) meta.push(esc(i.color));
+      if (i.size) meta.push('Size ' + esc(i.size));
+      meta.push('Qty ' + esc(String(i.quantity || 0)));
+      return `
+        <div class="od-item">
+          <div>
+            <div class="od-name">${esc(i.name || 'Item')}</div>
+            <div class="od-meta">${meta.join(' · ')}</div>
+          </div>
+          <div class="od-line-total">$${lineTotal.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderTotals(o, esc) {
+    const sub = ((o.subtotal_cents || 0) / 100).toFixed(2);
+    const ship = ((o.shipping_cents || 0) / 100).toFixed(2);
+    const total = ((o.total_cents || 0) / 100).toFixed(2);
+    const shipLabel = o.shipping_cents === 0 ? 'Free' : '$' + ship;
+    return `
+      <div class="od-totals">
+        <div class="row"><span>Subtotal</span><span>$${sub}</span></div>
+        <div class="row"><span>Shipping</span><span>${shipLabel}</span></div>
+        <div class="row total"><span>Total</span><span>$${total}</span></div>
+      </div>
+    `;
+  }
+
+  function renderShipping(addr, esc) {
+    if (!addr || typeof addr !== 'object') {
+      return '<div class="od-address-empty">Not provided yet — added when the order is placed.</div>';
+    }
+    const lines = [];
+    if (addr.name) lines.push(esc(addr.name));
+    if (addr.line1) lines.push(esc(addr.line1));
+    if (addr.line2) lines.push(esc(addr.line2));
+    const cityLine = [addr.city, addr.state, addr.zip].filter(Boolean).map(esc).join(', ');
+    if (cityLine) lines.push(cityLine);
+    if (addr.country) lines.push(esc(addr.country));
+    if (!lines.length) return '<div class="od-address-empty">Not provided.</div>';
+    return `<div class="od-address">${lines.join('<br/>')}</div>`;
+  }
+
+  // Best-effort tracking URL inference from the number's format.
+  // No carrier API needed — just an educated guess so the customer
+  // can click through. If the format doesn't match a known pattern,
+  // returns null and we just show the number itself.
+  function trackingUrl(num) {
+    const t = String(num || '').trim();
+    if (!t) return null;
+    // UPS — 1Z + 16 alphanumeric
+    if (/^1Z[A-Z0-9]{16}$/i.test(t)) {
+      return 'https://www.ups.com/track?loc=en_US&tracknum=' + encodeURIComponent(t);
+    }
+    // FedEx — 12 or 15 digit, or 20 digits
+    if (/^\d{12}$|^\d{15}$|^\d{20}$/.test(t)) {
+      return 'https://www.fedex.com/fedextrack/?trknbr=' + encodeURIComponent(t);
+    }
+    // USPS — 22 digits, or 20 digits starting 9, or 13 alphanumeric ending US
+    if (/^\d{22}$|^9\d{19,21}$|^[A-Z]{2}\d{9}US$/.test(t)) {
+      return 'https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=' + encodeURIComponent(t);
+    }
+    // DHL — 10 or 11 digits
+    if (/^\d{10,11}$/.test(t)) {
+      return 'https://www.dhl.com/en/express/tracking.html?AWB=' + encodeURIComponent(t);
+    }
+    return null;
   }
 
   // Build the visual timeline (Ordered → Paid → Shipped → Delivered).

@@ -236,6 +236,11 @@
   });
 
   init();
+  // Re-render when the catalog refreshes from the server (admin edits
+  // a price/name → wishlist shows the fresh data without a reload).
+  window.addEventListener('tagline:catalog-updated', () => {
+    if (window.Tagline?.PRODUCTS) render();
+  });
 })();
 </script>
 

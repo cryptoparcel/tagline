@@ -724,6 +724,13 @@
     const next = {};
     for (const p of arr) {
       if (typeof p?.id !== 'string' || !/^[a-z0-9-]{1,50}$/.test(p.id)) continue;
+      // Only accept http(s) image URLs — defense in depth even though the
+      // server validates on update_product. Direct DB writes (Supabase
+      // dashboard) bypass server validation, so we re-check here.
+      let safeImageUrl = '';
+      if (p.image_url && typeof p.image_url === 'string' && /^https?:\/\//i.test(p.image_url)) {
+        safeImageUrl = p.image_url;
+      }
       next[p.id] = {
         name: String(p.name || ''),
         color: p.color || null,
@@ -732,7 +739,7 @@
         category: String(p.category || ''),
         tag: String(p.tag || ''),
         description: String(p.description || ''),
-        image_url: p.image_url ? String(p.image_url) : ''
+        image_url: safeImageUrl
       };
     }
     // Replace PRODUCTS in place (keeps the const binding stable)
@@ -1704,29 +1711,32 @@
     const origin = window.location.origin;
     const items = Object.keys(PRODUCTS).map((id, idx) => {
       const p = PRODUCTS[id];
+      // Build the Product object skipping null/empty fields (Google's
+      // Rich Results validator flags `"color": null` etc.).
+      const product = {
+        "@type": "Product",
+        "name": p.name,
+        "sku": id,
+        "brand": { "@type": "Brand", "name": "TAGLINE" },
+        "image": p.image_url || `${origin}/images/products/${id}.jpg`,
+        "offers": {
+          "@type": "Offer",
+          "url": `${origin}/#shop`,
+          "priceCurrency": "USD",
+          "price": p.price.toFixed(2),
+          "availability": p.stock > 0
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          "itemCondition": "https://schema.org/NewCondition"
+        }
+      };
+      if (p.description) product.description = p.description;
+      if (p.category) product.category = p.category;
+      if (p.color) product.color = p.color;
       return {
         "@type": "ListItem",
         "position": idx + 1,
-        "item": {
-          "@type": "Product",
-          "name": p.name,
-          "description": p.description,
-          "sku": id,
-          "category": p.category,
-          "color": p.color,
-          "brand": { "@type": "Brand", "name": "TAGLINE" },
-          "image": `${origin}/images/products/${id}.jpg`,
-          "offers": {
-            "@type": "Offer",
-            "url": `${origin}/#shop`,
-            "priceCurrency": "USD",
-            "price": p.price.toFixed(2),
-            "availability": p.stock > 0
-              ? "https://schema.org/InStock"
-              : "https://schema.org/OutOfStock",
-            "itemCondition": "https://schema.org/NewCondition"
-          }
-        }
+        "item": product
       };
     });
     const data = {
@@ -1770,9 +1780,15 @@
     safeInit('productCards', () => autoWireProductCards());
     safeInit('refreshCatalog', () => {
       refreshCatalog().then(changed => {
-        if (changed && document.getElementById('dropsGrid')) {
+        if (!changed) return;
+        // Homepage re-render (only fires if there's a #dropsGrid)
+        if (document.getElementById('dropsGrid')) {
           rerenderHomepageAfterRefresh();
         }
+        // General notification — cart, wishlist, anywhere else that
+        // reads from PRODUCTS gets a chance to re-render with fresh
+        // prices/names.
+        window.dispatchEvent(new CustomEvent('tagline:catalog-updated'));
       });
     });
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());

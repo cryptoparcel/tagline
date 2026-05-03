@@ -397,14 +397,18 @@
     personalization: ''
   };
 
-  // Available products for customization
+  // Available products for customization. Map onto the SVG types
+  // (hoodie / tee / tank / jogger / crew) so the live preview shows
+  // a reasonable silhouette. These are real products from the catalog.
   const PRODUCTS = [
-    { id:'ascend-hoodie',  name:'Ascend Hoodie',  price:148, type:'hoodie' },
-    { id:'origin-tee',     name:'Origin Tee',     price:58,  type:'tee' },
-    { id:'sigil-tank',     name:'Sigil Tank',     price:78,  type:'tank' },
-    { id:'path-jogger',    name:'Path Jogger',    price:118, type:'jogger' },
-    { id:'crown-cap',      name:'Crown Cap',      price:48,  type:'cap' },
-    { id:'cloud-crew',     name:'Cloud Crew',     price:128, type:'crew' }
+    { id:'tl-rocket-hoodie',  name:'TL "Rocket" Hoodie', price:55, type:'hoodie' },
+    { id:'embroidery-hoodie', name:'3-D Embroidery Hoodie', price:45, type:'hoodie' },
+    { id:'everyday-shirt',    name:'"Everyday" Shirt',   price:25, type:'tee' },
+    { id:'embroidery-tee',    name:'3-D Embroidery Tee', price:30, type:'tee' },
+    { id:'gym-shirt',         name:'Gym Shirt',          price:25, type:'tank' },
+    { id:'cargo-sweatpants',  name:'Cargo Sweatpants',   price:55, type:'jogger' },
+    { id:'sport-pants',       name:'Sport Pants',        price:55, type:'jogger' },
+    { id:'slim-sweatshirt',   name:'Slim Sweatshirt',    price:50, type:'crew' }
   ];
 
   // Available colors

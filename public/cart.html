@@ -682,6 +682,9 @@
     init();
   }
   window.addEventListener('cart:updated', render);
+  // Re-render when the catalog refreshes from the server (admin edits a
+  // price/name → cart shows the fresh data without a manual reload).
+  window.addEventListener('tagline:catalog-updated', render);
 })();
 </script>
 

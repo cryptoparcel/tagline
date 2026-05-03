@@ -30,8 +30,11 @@ alter table processed_webhook_events enable row level security;
 alter table orders add column if not exists nowpayments_invoice_id text unique;
 create index if not exists idx_orders_np_invoice on orders(nowpayments_invoice_id);
 
--- 3. Atomic decrement_stock — replaces the old silently-clamping version
-create or replace function decrement_stock(product_id text, qty integer)
+-- 3. Atomic decrement_stock — replaces the old silently-clamping version.
+--    Drop is required because we changed the return type (void → boolean)
+--    and Postgres won't let CREATE OR REPLACE change return types.
+drop function if exists decrement_stock(text, integer);
+create function decrement_stock(product_id text, qty integer)
 returns boolean
 language plpgsql
 security definer

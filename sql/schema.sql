@@ -185,8 +185,12 @@ alter table processed_webhook_events enable row level security;
 -- the old `greatest(0, stock - qty)` version which silently clamped
 -- to zero and gave the caller no signal that they oversold.
 --
--- Safe to re-run; replaces any existing definition.
-create or replace function decrement_stock(product_id text, qty integer)
+-- Drop the old void-returning version first if it exists. Postgres won't
+-- let `create or replace` change the return type, so a fresh schema run
+-- on a DB that has the old function would fail without this.
+drop function if exists decrement_stock(text, integer);
+
+create function decrement_stock(product_id text, qty integer)
 returns boolean
 language plpgsql
 security definer

@@ -76,7 +76,11 @@
       </div>
       <div class="form-group">
         <label class="form-label" for="signinPassword">Password</label>
-        <input class="form-input" type="password" id="signinPassword" name="password" required autocomplete="current-password" minlength="6" />
+        <input class="form-input" type="password" id="signinPassword" name="password" required autocomplete="current-password" minlength="6" data-pw-toggle />
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-soft);margin-bottom:18px">
+        <input type="checkbox" id="rememberMe" checked style="width:16px;height:16px;accent-color:var(--gold-soft);cursor:pointer" />
+        <label for="rememberMe" style="cursor:pointer;letter-spacing:0;text-transform:none;font-weight:400;font-size:13px;color:var(--ink-soft)">Remember me on this device</label>
       </div>
       <button type="submit" class="btn btn-primary btn-block">Sign in</button>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13px;flex-wrap:wrap;gap:8px">
@@ -97,7 +101,7 @@
       </div>
       <div class="form-group">
         <label class="form-label" for="signupPassword">Password (8+ characters)</label>
-        <input class="form-input" type="password" id="signupPassword" name="password" required autocomplete="new-password" minlength="8" />
+        <input class="form-input" type="password" id="signupPassword" name="password" required autocomplete="new-password" minlength="8" data-pw-toggle />
       </div>
       <button type="submit" class="btn btn-primary btn-block">Create account</button>
     </form>
@@ -242,7 +246,11 @@
         btn.textContent = 'Sign in';
         return;
       }
-      window.Tagline.Auth.setSession(data.access_token, data.user);
+      // Honor the "Remember me" checkbox: when unchecked, store the
+      // session in sessionStorage (cleared on browser close); when
+      // checked (default), use localStorage so the user stays signed in.
+      const rememberMe = document.getElementById('rememberMe')?.checked !== false;
+      window.Tagline.Auth.setSession(data.access_token, data.user, { sessionOnly: !rememberMe });
       window.location.href = '/account';
     } catch (err) {
       showAlert('Network error. Please try again.');

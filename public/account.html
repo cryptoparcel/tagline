@@ -313,6 +313,88 @@
   @media (max-width:520px){
     .grid-2{grid-template-columns:1fr}
   }
+
+  /* ============ ACCOUNT STATS HEADER ============ */
+  .acct-stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:32px;
+  }
+  @media (max-width:520px){ .acct-stats{ grid-template-columns:1fr; } }
+  .stat-pill{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:18px 20px;
+  }
+  .stat-pill .label{
+    font-size:10px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:6px;
+  }
+  .stat-pill .value{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px; font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.02em;
+  }
+  .stat-pill .sub{
+    font-size:12px; color:var(--muted); margin-top:2px;
+  }
+
+  /* ============ TOGGLE SWITCH ============ */
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px;
+    padding:14px 0;
+  }
+  .toggle-row + .toggle-row{ border-top:1px solid var(--line); }
+  .toggle-row .text{ flex:1; }
+  .toggle-row .text strong{
+    display:block;
+    font-size:14px; font-weight:500;
+    color:var(--ink); margin-bottom:2px;
+  }
+  .toggle-row .text span{
+    font-size:12px; color:var(--muted); line-height:1.5;
+  }
+  .toggle-switch{
+    position:relative; display:inline-block;
+    width:42px; height:24px;
+    flex-shrink:0;
+  }
+  .toggle-switch input{ opacity:0; width:0; height:0; }
+  .toggle-slider{
+    position:absolute; cursor:pointer; inset:0;
+    background:rgba(255,255,250,.1);
+    border:1px solid var(--line-strong);
+    transition:.25s;
+    border-radius:24px;
+  }
+  .toggle-slider:before{
+    content:''; position:absolute;
+    height:16px; width:16px;
+    left:3px; top:2px;
+    background:var(--ink-soft);
+    transition:.25s;
+    border-radius:50%;
+  }
+  .toggle-switch input:checked + .toggle-slider{
+    background:rgba(184,137,61,.3);
+    border-color:var(--gold);
+  }
+  .toggle-switch input:checked + .toggle-slider:before{
+    transform:translateX(18px);
+    background:var(--gold-soft);
+  }
+  .toggle-switch input:focus-visible + .toggle-slider{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+  .toggle-switch input:disabled + .toggle-slider{
+    opacity:.5; cursor:not-allowed;
+  }
 </style>
 </head>
 <body>
@@ -336,6 +418,25 @@
 
   <div style="display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap">
     <button class="signout-btn" id="signoutBtn">Sign out</button>
+  </div>
+
+  <!-- Stats header — populated by JS once orders + profile load -->
+  <div class="acct-stats" id="acctStats" hidden>
+    <div class="stat-pill">
+      <div class="label">Orders</div>
+      <div class="value" id="statOrders">—</div>
+      <div class="sub" id="statOrdersSub">All-time</div>
+    </div>
+    <div class="stat-pill">
+      <div class="label">Total spent</div>
+      <div class="value" id="statSpent">—</div>
+      <div class="sub">Lifetime value</div>
+    </div>
+    <div class="stat-pill">
+      <div class="label">Member since</div>
+      <div class="value" id="statMember">—</div>
+      <div class="sub" id="statMemberSub">Welcome</div>
+    </div>
   </div>
 
   <div class="acct-tabs" role="tablist">
@@ -413,6 +514,42 @@
       <button type="submit" class="btn btn-primary" id="saveSettingsBtn">Save changes</button>
     </form>
 
+    <!-- Communication preferences — newsletter toggle. Live-saves on flip. -->
+    <div class="settings-card" style="margin-top:32px">
+      <h3>Email preferences</h3>
+      <div class="toggle-row">
+        <div class="text">
+          <strong>Newsletter</strong>
+          <span>New drops, restocks, and the occasional behind-the-scenes. No spam — unsubscribe anytime.</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="newsletterToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Change password — re-verifies the current password before update. -->
+    <div class="settings-card" style="margin-top:14px">
+      <h3>Change password</h3>
+      <div id="pwChangeAlert" role="status" aria-live="polite" aria-atomic="true"></div>
+      <form id="pwChangeForm" autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="pw-current">Current password</label>
+          <input class="form-input" type="password" id="pw-current" name="current_password" required autocomplete="current-password" data-pw-toggle />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pw-new">New password (8+ characters)</label>
+          <input class="form-input" type="password" id="pw-new" name="new_password" required autocomplete="new-password" minlength="8" data-pw-toggle />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pw-confirm">Confirm new password</label>
+          <input class="form-input" type="password" id="pw-confirm" name="confirm" required autocomplete="new-password" minlength="8" data-pw-toggle />
+        </div>
+        <button type="submit" class="btn btn-primary" id="pwChangeBtn">Update password</button>
+      </form>
+    </div>
+
     <!-- Danger zone — self-service account deletion (GDPR Art. 17 erasure). -->
     <div class="settings-card" style="margin-top:32px;border-color:rgba(229,115,115,.25);background:linear-gradient(160deg,#1a0f0f 0%,#0d0c0a 100%)">
       <h3 style="color:var(--error)">Delete my account</h3>
@@ -452,6 +589,11 @@
 
     const result = await window.Tagline.API.request('/api/my-orders', { auth:true });
     const esc = window.Tagline.escapeHtml;
+
+    if (result.ok) {
+      // Update stats header from the data we just loaded
+      renderAcctStats(result.orders || []);
+    }
 
     if (!result.ok) {
       container.innerHTML = '';
@@ -647,26 +789,24 @@
       showPreview();
       return;
     }
-    // Try to check
     if (window.Tagline?.checkPreviewMode) {
       window.Tagline.checkPreviewMode().then(preview => {
-        if (preview) {
-          showPreview();
-          return;
-        }
+        if (preview) { showPreview(); return; }
         if (!window.Tagline.Auth.isLoggedIn()) {
           window.location.href = '/signin';
           return;
         }
+        // Load orders and profile in parallel — both feed the stats header
         loadOrders();
+        loadProfile();
       });
     } else {
-      // Fallback if tagline-app.js hasn't loaded yet
       if (!window.Tagline?.Auth?.isLoggedIn()) {
         window.location.href = '/signin';
         return;
       }
       loadOrders();
+      loadProfile();
     }
   }
 
@@ -681,6 +821,36 @@
         <a href="/" class="btn btn-primary">Browse the collection</a>
       </div>
     `;
+  }
+
+  // ============ STATS HEADER ============
+  // Computed entirely from the orders payload + profile.created_at.
+  // Only "paid" + "shipped" + "delivered" count toward total spent
+  // (don't count cancelled/refunded against the customer).
+  function renderAcctStats(orders) {
+    const stats = document.getElementById('acctStats');
+    if (!stats) return;
+    const completed = orders.filter(o => ['paid','shipped','delivered'].includes(o.status));
+    const totalCents = completed.reduce((s, o) => s + (o.total_cents || 0), 0);
+    document.getElementById('statOrders').textContent = completed.length;
+    document.getElementById('statOrdersSub').textContent = orders.length === completed.length
+      ? 'All-time' : (orders.length - completed.length) + ' pending or cancelled';
+    document.getElementById('statSpent').textContent = '$' + (totalCents / 100).toFixed(2);
+    stats.removeAttribute('hidden');
+  }
+  function renderMemberSince(profile) {
+    const since = profile?.created_at;
+    if (!since) return;
+    const d = new Date(since);
+    const monthYear = d.toLocaleDateString('en-US', { month:'short', year:'numeric' });
+    document.getElementById('statMember').textContent = monthYear;
+    const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    document.getElementById('statMemberSub').textContent =
+      days < 1 ? 'Just joined' :
+      days < 7 ? `${days} day${days===1?'':'s'} in` :
+      days < 30 ? `${Math.floor(days/7)} weeks in` :
+      `${Math.floor(days/30)} month${Math.floor(days/30)===1?'':'s'} in`;
+    document.getElementById('acctStats')?.removeAttribute('hidden');
   }
 
   document.getElementById('signoutBtn').addEventListener('click', async () => {
@@ -740,6 +910,9 @@
     document.getElementById('pf-state').value = a.state || '';
     document.getElementById('pf-zip').value = a.zip || '';
     document.getElementById('pf-country').value = a.country || 'US';
+    // Newsletter toggle reflects current subscription state
+    const nlToggle = document.getElementById('newsletterToggle');
+    if (nlToggle) nlToggle.checked = !!p.subscribed;
   }
 
   async function loadProfile() {
@@ -749,6 +922,7 @@
       return;
     }
     fillProfileForm(result.profile);
+    renderMemberSince(result.profile);
     window.__profileLoaded = true;
   }
 
@@ -788,6 +962,132 @@
     window.Tagline.Auth.clear();
     try { sessionStorage.clear(); } catch {}
     window.location.href = '/?deleted=1';
+  });
+
+  // ============ NEWSLETTER TOGGLE ============
+  // Live-saves on flip — no separate save button.
+  document.getElementById('newsletterToggle').addEventListener('change', async (e) => {
+    const toggle = e.target;
+    toggle.disabled = true;
+    const wantSubscribed = toggle.checked;
+    const result = await window.Tagline.API.request('/api/profile', {
+      method: 'PATCH',
+      auth: true,
+      body: { subscribed: wantSubscribed }
+    });
+    if (!result.ok) {
+      // Revert on failure
+      toggle.checked = !wantSubscribed;
+      settingsAlert(result.error || 'Could not save preference.', 'error');
+    }
+    toggle.disabled = false;
+  });
+
+  // ============ CHANGE PASSWORD ============
+  // Re-verifies the current password (so a stolen session can't change
+  // the password without knowing the current one), then updates via
+  // Supabase /auth/v1/user. Updates the local session token to the
+  // fresh one returned by the re-auth so the user stays signed in.
+  function pwAlert(msg, type = 'success') {
+    const el = document.getElementById('pwChangeAlert');
+    el.innerHTML = '';
+    if (!msg) return;
+    const div = document.createElement('div');
+    div.className = 'alert alert-' + (type === 'error' ? 'error' : 'success');
+    div.textContent = msg;
+    div.style.marginBottom = '14px';
+    el.appendChild(div);
+  }
+
+  let _pwAuthCfg = null;
+  async function getAuthCfg() {
+    if (_pwAuthCfg) return _pwAuthCfg;
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data?.ok || !data.supabaseUrl || !data.supabaseAnonKey) return null;
+      _pwAuthCfg = { url: data.supabaseUrl, key: data.supabaseAnonKey };
+      return _pwAuthCfg;
+    } catch { return null; }
+  }
+
+  document.getElementById('pwChangeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cur = document.getElementById('pw-current').value;
+    const next = document.getElementById('pw-new').value;
+    const confirm = document.getElementById('pw-confirm').value;
+
+    if (next.length < 8) { pwAlert('New password must be at least 8 characters.', 'error'); return; }
+    if (next !== confirm) { pwAlert('The two new passwords do not match.', 'error'); return; }
+    if (cur === next) { pwAlert('New password must differ from the current one.', 'error'); return; }
+    const COMMON_BAD = ['password','12345678','123456789','qwerty123','password1','iloveyou','admin123','letmein1','welcome1'];
+    if (COMMON_BAD.indexOf(next.toLowerCase()) !== -1) {
+      pwAlert('That password is too common. Pick a stronger one.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('pwChangeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Updating…';
+    pwAlert('');
+
+    const cfg = await getAuthCfg();
+    const user = window.Tagline.Auth.getUser();
+    if (!cfg || !user?.email) {
+      pwAlert('Sign in expired. Please sign in again.', 'error');
+      btn.disabled = false; btn.textContent = 'Update password';
+      return;
+    }
+
+    try {
+      // 1. Re-authenticate with current password
+      const reauthRes = await fetch(cfg.url + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': cfg.key },
+        body: JSON.stringify({ email: user.email, password: cur })
+      });
+      if (!reauthRes.ok) {
+        pwAlert('Current password is incorrect.', 'error');
+        btn.disabled = false; btn.textContent = 'Update password';
+        return;
+      }
+      const reauthData = await reauthRes.json();
+      const freshToken = reauthData.access_token;
+
+      // 2. Update password using the fresh token
+      const updateRes = await fetch(cfg.url + '/auth/v1/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': cfg.key,
+          'Authorization': 'Bearer ' + freshToken
+        },
+        body: JSON.stringify({ password: next })
+      });
+      if (!updateRes.ok) {
+        const err = await updateRes.json().catch(() => ({}));
+        pwAlert(err.error_description || err.msg || 'Could not update password.', 'error');
+        btn.disabled = false; btn.textContent = 'Update password';
+        return;
+      }
+
+      // 3. Refresh local session with the new (re-auth) token so the
+      //    user stays signed in seamlessly. Honors existing remember-me
+      //    storage location.
+      const usingSession = !!sessionStorage.getItem('tagline_token');
+      window.Tagline.Auth.setSession(freshToken, user, { sessionOnly: usingSession });
+
+      pwAlert('Password updated.', 'success');
+      // Clear the form
+      document.getElementById('pw-current').value = '';
+      document.getElementById('pw-new').value = '';
+      document.getElementById('pw-confirm').value = '';
+      btn.disabled = false; btn.textContent = 'Update password';
+    } catch (err) {
+      pwAlert('Network error. Please try again.', 'error');
+      btn.disabled = false; btn.textContent = 'Update password';
+    }
   });
 
   document.getElementById('profileForm').addEventListener('submit', async (e) => {

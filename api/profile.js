@@ -77,28 +77,39 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, phone, shipping_address, created_at')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (error) {
-        console.error('Profile fetch error:', error);
+      const [{ data: profile, error: pErr }, { data: sub }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, email, full_name, phone, shipping_address, created_at')
+          .eq('id', user.id)
+          .maybeSingle(),
+        // Lookup current newsletter status by email — best-effort.
+        supabase
+          .from('subscribers')
+          .select('active')
+          .eq('email', (user.email || '').toLowerCase())
+          .maybeSingle()
+      ]);
+      if (pErr) {
+        console.error('Profile fetch error:', pErr);
         return serverError(res, 'Could not load profile.');
       }
-      // If the trigger somehow didn't run, fall back to returning what we know
-      if (!data) {
+      const subscribed = !!(sub && sub.active);
+      if (!profile) {
+        // Trigger somehow didn't run — fall back to known auth info
         return ok(res, {
           profile: {
             id: user.id,
             email: user.email,
             full_name: user.user_metadata?.full_name || null,
             phone: null,
-            shipping_address: null
+            shipping_address: null,
+            subscribed,
+            created_at: user.created_at || null
           }
         });
       }
-      return ok(res, { profile: data });
+      return ok(res, { profile: { ...profile, subscribed } });
     } catch (err) {
       console.error('Profile GET error:', err);
       return serverError(res);
@@ -191,9 +202,36 @@ export default async function handler(req, res) {
     }
   }
 
-  // Nothing to update?
-  if (Object.keys(updates).length === 1) {
+  // Newsletter subscription toggle — orthogonal to the profiles row,
+  // so we handle it separately. Upserts the subscribers row keyed on
+  // the user's auth email.
+  if (body.subscribed !== undefined && user.email) {
+    const wantSubscribed = !!body.subscribed;
+    const lowerEmail = user.email.toLowerCase();
+    if (wantSubscribed) {
+      await supabase
+        .from('subscribers')
+        .upsert(
+          { email: lowerEmail, source: 'account', active: true, unsubscribed_at: null },
+          { onConflict: 'email' }
+        );
+    } else {
+      await supabase
+        .from('subscribers')
+        .update({ active: false, unsubscribed_at: new Date().toISOString() })
+        .eq('email', lowerEmail);
+    }
+  }
+
+  // No actual profile fields to update? (subscribed-only PATCH is fine
+  // — only fail if there's literally nothing to do.)
+  const profileFieldsTouched = Object.keys(updates).length > 1;
+  if (!profileFieldsTouched && body.subscribed === undefined) {
     return badRequest(res, 'No fields to update.');
+  }
+  if (!profileFieldsTouched) {
+    // Subscribed-only PATCH — no need to touch profiles row
+    return ok(res, { updated: true, subscribed: !!body.subscribed });
   }
 
   try {

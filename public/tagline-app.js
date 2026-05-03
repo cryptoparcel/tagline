@@ -279,9 +279,35 @@
   };
 
   // ============ AUTH ============
+  // Supports "Remember me" via a session-only mode:
+  //   setSession(token, user, { sessionOnly: false })  → localStorage (persists)
+  //   setSession(token, user, { sessionOnly: true })   → sessionStorage (cleared on tab close)
+  // getToken / getUser look in both; clear wipes both.
+  function readBoth(key) {
+    try {
+      return localStorage.getItem(key) || sessionStorage.getItem(key);
+    } catch { return null; }
+  }
+  function writeOne(key, value, sessionOnly) {
+    try {
+      // Always remove from the other store to avoid stale state
+      if (sessionOnly) {
+        localStorage.removeItem(key);
+        sessionStorage.setItem(key, value);
+      } else {
+        sessionStorage.removeItem(key);
+        localStorage.setItem(key, value);
+      }
+    } catch {}
+  }
+  function clearBoth(key) {
+    try { localStorage.removeItem(key); } catch {}
+    try { sessionStorage.removeItem(key); } catch {}
+  }
+
   const Auth = {
     getToken() {
-      const t = localStorage.getItem(TOKEN_KEY);
+      const t = readBoth(TOKEN_KEY);
       // JWT format: 3 base64url segments separated by dots
       if (typeof t !== 'string' || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t)) {
         return null;
@@ -290,11 +316,10 @@
     },
     getUser() {
       try {
-        const raw = localStorage.getItem(USER_KEY);
+        const raw = readBoth(USER_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return null;
-        // Only return whitelisted fields (don't trust anything else)
         return {
           id: typeof parsed.id === 'string' ? parsed.id : null,
           email: typeof parsed.email === 'string' ? parsed.email : null
@@ -303,14 +328,15 @@
         return null;
       }
     },
-    setSession(token, user) {
-      if (token) localStorage.setItem(TOKEN_KEY, token);
-      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setSession(token, user, options = {}) {
+      const sessionOnly = !!options.sessionOnly;
+      if (token) writeOne(TOKEN_KEY, token, sessionOnly);
+      if (user) writeOne(USER_KEY, JSON.stringify(user), sessionOnly);
       this.updateUI();
     },
     clear() {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      clearBoth(TOKEN_KEY);
+      clearBoth(USER_KEY);
       this.updateUI();
     },
     isLoggedIn() {
@@ -396,6 +422,51 @@
       }
     }
   };
+
+  // ============ PASSWORD SHOW/HIDE TOGGLES ============
+  // Auto-wires every <input type="password" data-pw-toggle> with an eye
+  // button on the right that toggles type=password ↔ type=text. Built
+  // via DOM API so it composes with any styling. Idempotent.
+  const EYE_OPEN = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF  = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.7 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.1 3.9"/><path d="M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.5-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+
+  function wirePasswordToggles() {
+    const inputs = document.querySelectorAll('input[type="password"][data-pw-toggle]');
+    inputs.forEach(input => {
+      if (input.dataset.pwWired) return;
+      input.dataset.pwWired = '1';
+
+      // Wrap the input so the toggle can be absolutely positioned.
+      // We DON'T move the input out of the existing form-group — just
+      // wrap it in place.
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;display:block';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      // Add right padding to the input so the eye button doesn't overlap text
+      const oldPaddingRight = input.style.paddingRight;
+      input.style.paddingRight = '44px';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pw-toggle-btn';
+      btn.setAttribute('aria-label', 'Show password');
+      btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--muted,#7a7a72);cursor:pointer;padding:8px;display:flex;align-items:center;line-height:1;border-radius:4px';
+      btn.innerHTML = EYE_OPEN;
+      wrap.appendChild(btn);
+
+      btn.addEventListener('click', () => {
+        const isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        btn.innerHTML = isText ? EYE_OPEN : EYE_OFF;
+        btn.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+      });
+      btn.addEventListener('mouseenter', () => { btn.style.color = 'var(--ink,#fafaf7)'; });
+      btn.addEventListener('mouseleave', () => { btn.style.color = 'var(--muted,#7a7a72)'; });
+    });
+    // Restore original padding marker so it can be reset if needed
+    void inputs.length;
+  }
 
   // ============ NEWSLETTER FORM ============
   function wireNewsletterForms() {
@@ -1456,6 +1527,7 @@
     safeInit('jsonLdProducts', () => injectProductJsonLd());
     safeInit('emailConfirm', () => handleAuthHash());
     safeInit('recentlyViewed', () => renderRecentlyViewed());
+    safeInit('pwToggles', () => wirePasswordToggles());
 
     // Update other tabs when cart/wishlist changes
     safeInit('storageEvents', () => {
@@ -1508,6 +1580,7 @@
   window.Tagline = {
     Cart, Wishlist, Auth, API, Modal, escapeHtml,
     PRODUCTS, PRODUCT_NAME_TO_ID,
+    wirePasswordToggles,
     isPreviewMode: () => isPreviewMode,
     checkPreviewMode
   };

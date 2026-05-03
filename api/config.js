@@ -22,19 +22,38 @@ export default async function handler(req, res) {
   // Cache aggressively — these change ~never
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
+  // Discount-verification banners (GovX or any provider that issues
+  // a one-time code on verification). Each entry the cart shows as a
+  // small banner with a "Verify with X" link. Customer pastes the code
+  // they get into Stripe Checkout's promo-code field (already enabled).
+  // Only banners with a configured URL are returned — unset env vars
+  // mean the banner stays hidden.
+  const intPct = (envName, fallback) => {
+    const raw = process.env[envName];
+    if (!raw) return fallback;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 && n < 100 ? n : fallback;
+  };
+
+  const discountBanners = [
+    { id: 'veteran',         label: 'Veterans & military',  percent: intPct('VETERAN_DISCOUNT_PERCENT', 10),
+      url: process.env.GOVX_VETERAN_URL || process.env.GOVX_VERIFY_URL || null },
+    { id: 'first_responder', label: 'First responders',     percent: intPct('FIRSTRESP_DISCOUNT_PERCENT', 10),
+      url: process.env.GOVX_FIRSTRESP_URL || null },
+    { id: 'student',         label: 'Students',             percent: intPct('STUDENT_DISCOUNT_PERCENT', 10),
+      url: process.env.GOVX_STUDENT_URL || null },
+    { id: 'teacher',         label: 'Teachers',             percent: intPct('TEACHER_DISCOUNT_PERCENT', 10),
+      url: process.env.GOVX_TEACHER_URL || null }
+  ].filter(b => b.url);
+
   return ok(res, {
     supabaseUrl: url,
     supabaseAnonKey: anonKey,
     stripeKey: stripeKey || null,
-    // Optional military / first-responder verification URLs. If set,
-    // the cart shows a "Verify for X% off" link that opens the
-    // verification provider's hosted page. The provider returns a
-    // one-time discount code that matches a Stripe coupon you've
-    // created — customer pastes it into Stripe Checkout's promo
-    // code field (already enabled).
-    veteranVerifyUrl: process.env.GOVX_VERIFY_URL || null,
-    veteranDiscountPercent: process.env.VETERAN_DISCOUNT_PERCENT
-      ? parseInt(process.env.VETERAN_DISCOUNT_PERCENT, 10) || 10
-      : 10
+    discountBanners,
+    // Legacy fields — kept for any cached client; new clients use
+    // discountBanners. Will be removed in a future version.
+    veteranVerifyUrl: discountBanners.find(b => b.id === 'veteran')?.url || null,
+    veteranDiscountPercent: discountBanners.find(b => b.id === 'veteran')?.percent || 10
   });
 }

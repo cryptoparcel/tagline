@@ -1,0 +1,31 @@
+Generalize discount banners (veterans + first resp + students + teachers)
+
+Same GovX pattern, four groups instead of one.
+
+Server (api/config.js) now returns a discountBanners array with one
+entry per configured group:
+  - veteran: GOVX_VETERAN_URL (legacy: GOVX_VERIFY_URL accepted)
+  - first_responder: GOVX_FIRSTRESP_URL
+  - student: GOVX_STUDENT_URL
+  - teacher: GOVX_TEACHER_URL
+
+Each group has its own DISCOUNT_PERCENT env var (default 10). Groups
+with no URL set are filtered out — the banner array only includes
+the configured ones.
+
+Legacy fields (veteranVerifyUrl, veteranDiscountPercent) still
+returned for any in-flight cached client. Will remove later.
+
+Cart UI now renders the array. Empty when nothing configured. One
+small banner per group, stacked. URLs validated http(s)-only on the
+client (defense vs malformed env). Built via DOM API for XSS safety.
+
+USER_TODOS updated:
+- Section 7c renamed and rewritten to cover all four groups
+- .env.example documents all four URL/percent pairs
+
+No new infrastructure required. Existing GovX accounts work — just
+create more campaigns in their dashboard for the new groups, each
+pointing at a matching Stripe promotion code.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

@@ -199,36 +199,37 @@ You can do this one at a time — the placeholder stays for products without an 
 
 ---
 
-### 7c. Veteran discount via GovX — code is built, needs activation
+### 7c. Discount banners (veterans / first responders / students / teachers) — code is built, needs activation
 
-**Why:** retail-grade veteran verification (used by Under Armour, Yeti, North Face). Free to integrate, ~$0.50 per redemption. Strong brand fit for athletic wear.
+**Why:** GovX is retail-grade verification (used by Under Armour, Yeti, North Face). Free to integrate, ~$0.50 per redemption. They cover **veterans, first responders, students, teachers, and military families** — each group as a separate "campaign" in your GovX dashboard.
 
-The integration uses GovX's recommended pattern: GovX issues a one-time discount code to verified veterans, customer pastes it into Stripe Checkout's promo code field. **No backend integration needed beyond exposing the verification URL.** When `GOVX_VERIFY_URL` is set in env, the cart shows a "Verify with GovX → 10% off" banner.
+The integration uses GovX's recommended pattern: their hosted page issues a one-time discount code to a verified user; the customer pastes it into Stripe Checkout's promo-code field. **No backend integration needed beyond exposing the URLs.** Each group with a URL set gets its own small banner on the cart page.
 
 **How to activate (when ready):**
 
-1. **Sign up** at https://www.govx.com/merchants → onboarding flow
+1. **Sign up** at https://www.govx.com/merchants → onboarding flow.
 
-2. **In Stripe Dashboard** → Products → Coupons → Create coupon:
-   - Name: `Veterans 10% off`
-   - Discount: 10% off
-   - Then create a **Promotion Code** with code `VETERANS10` linked to that coupon
-   - (Substitute your own code if you prefer — just match it in step 3)
+2. **In Stripe Dashboard** → Products → Coupons → for each group you want to support, create a coupon + matching promotion code. Examples:
+   - `VETERANS10` → 10% off
+   - `FIRSTRESP10` → 10% off
+   - `STUDENT10` → 10% off
+   - `TEACHER10` → 10% off
+   - (Mix percentages as you like — `VETERANS15` for veterans only, etc.)
 
-3. **In GovX merchant dashboard** → configure the discount:
-   - Set the discount type to "Custom code" or "Promotion code"
-   - Set the code value to `VETERANS10` (or whatever you used in step 2)
-   - GovX will hand this code to verified veterans on success
+3. **In GovX merchant dashboard** → create one campaign per group. Set each campaign's discount code to the matching Stripe promotion code.
 
-4. **Get your verification URL** from GovX dashboard (looks like `https://app.govx.com/verify/YOUR_VENDOR_ID`)
+4. **Grab the verification URL for each campaign** (looks like `https://app.govx.com/verify/YOUR_VENDOR_ID/veterans`).
 
-5. **Add Vercel env vars:**
-   - `GOVX_VERIFY_URL` = the URL from step 4
-   - `VETERAN_DISCOUNT_PERCENT` = `10` (or whatever percentage matches your Stripe coupon — used for display only)
+5. **Add Vercel env vars** — only set the ones you've configured. Unset = banner stays hidden:
+   - `GOVX_VETERAN_URL` / `VETERAN_DISCOUNT_PERCENT` (default 10)
+   - `GOVX_FIRSTRESP_URL` / `FIRSTRESP_DISCOUNT_PERCENT`
+   - `GOVX_STUDENT_URL` / `STUDENT_DISCOUNT_PERCENT`
+   - `GOVX_TEACHER_URL` / `TEACHER_DISCOUNT_PERCENT`
+   - (Legacy: `GOVX_VERIFY_URL` is still accepted as an alias for `GOVX_VETERAN_URL`)
 
-6. **Redeploy.** The veteran banner appears on the cart page automatically.
+6. **Redeploy.** The configured banners appear on the cart page automatically — one per group, stacked.
 
-**Customer flow:** click banner → verify on GovX (opens new tab) → GovX shows them the code → they paste it on Stripe Checkout → discount auto-applies.
+**Customer flow:** click banner → verify on GovX hosted page (opens new tab) → GovX shows them the code → they paste it on Stripe Checkout → discount auto-applies.
 
 ---
 

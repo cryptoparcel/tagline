@@ -21,3 +21,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Temp files (commit messages, scratch)
+.commit-msg.tmp
+*.tmp

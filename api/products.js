@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, color, price_cents, category, tag, stock')
+      .select('id, name, color, price_cents, category, tag, stock, description, image_url')
       .eq('active', true)
       .order('created_at', { ascending: true });
 

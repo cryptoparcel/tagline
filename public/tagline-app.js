@@ -688,6 +688,80 @@
     PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
   });
 
+  // ============ SERVER-DRIVEN CATALOG REFRESH ============
+  // The hardcoded PRODUCTS object above is the FALLBACK / dev catalog.
+  // In production, we fetch the live catalog from /api/products on every
+  // page load and overlay it into PRODUCTS so admin edits (price, stock,
+  // image, name, description) take effect within one page load.
+  //
+  // Strategy: render the homepage grid immediately with whatever's in
+  // PRODUCTS (instant first paint), then if the server returns a
+  // meaningfully different catalog, re-render once. Most-real-world
+  // users see one render — only users who edit get the brief re-render.
+  // Returns true ONLY if the catalog actually changed — avoids needless
+  // re-renders when the hardcoded fallback already matches the server.
+  function catalogSignature() {
+    return JSON.stringify(Object.keys(PRODUCTS).sort().map(id => {
+      const p = PRODUCTS[id];
+      return [id, p.name, p.price, p.stock, p.tag, p.image_url, p.category, p.color];
+    }));
+  }
+
+  async function refreshCatalog() {
+    let arr;
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) return false;
+      const data = await res.json();
+      arr = Array.isArray(data?.products) ? data.products : null;
+      if (!arr || arr.length === 0) return false;
+    } catch {
+      return false;
+    }
+
+    const before = catalogSignature();
+
+    const next = {};
+    for (const p of arr) {
+      if (typeof p?.id !== 'string' || !/^[a-z0-9-]{1,50}$/.test(p.id)) continue;
+      next[p.id] = {
+        name: String(p.name || ''),
+        color: p.color || null,
+        price: (Number.isFinite(p.price_cents) ? p.price_cents : 0) / 100,
+        stock: Number.isInteger(p.stock) ? p.stock : 0,
+        category: String(p.category || ''),
+        tag: String(p.tag || ''),
+        description: String(p.description || ''),
+        image_url: p.image_url ? String(p.image_url) : ''
+      };
+    }
+    // Replace PRODUCTS in place (keeps the const binding stable)
+    Object.keys(PRODUCTS).forEach(k => delete PRODUCTS[k]);
+    Object.assign(PRODUCTS, next);
+    // Rebuild the name → id reverse-lookup
+    Object.keys(PRODUCT_NAME_TO_ID).forEach(k => delete PRODUCT_NAME_TO_ID[k]);
+    Object.keys(PRODUCTS).forEach(id => {
+      PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
+    });
+
+    return catalogSignature() !== before;
+  }
+
+  // Re-render the homepage grid + propagate updates after a server refresh.
+  // Idempotent: bails if there's no #dropsGrid (we're not on the homepage).
+  function rerenderHomepageAfterRefresh() {
+    const grid = document.getElementById('dropsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    grid.dataset.rendered = '';     // allow render to run again
+    renderHomepageGrid();
+    // Re-wire: clear the wired flag so autoWireProductCards picks them up
+    document.querySelectorAll('.product-card[data-wired="1"]').forEach(c => {
+      c.dataset.wired = '';
+    });
+    autoWireProductCards();
+  }
+
   // ============ DYNAMIC HOMEPAGE GRID ============
   // The homepage's #dropsGrid starts empty; this function fills it from
   // PRODUCTS (which mirrors the products table). One source of truth —
@@ -755,6 +829,21 @@
     }
     grid.appendChild(frag);
     grid.dataset.rendered = '1';
+
+    // Hide filter pills + category tiles for empty categories. Catalog
+    // changes (admin adds/removes products in a category) flow through
+    // automatically since this runs on every render.
+    const usedCategories = new Set();
+    Object.values(PRODUCTS).forEach(p => { if (p.category) usedCategories.add(p.category); });
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      const text = (pill.textContent || '').trim();
+      if (text === 'All') { pill.style.display = ''; return; }
+      pill.style.display = usedCategories.has(text) ? '' : 'none';
+    });
+    document.querySelectorAll('.category-tile[data-category]').forEach(tile => {
+      const cat = tile.dataset.category || '';
+      tile.style.display = usedCategories.has(cat) ? '' : 'none';
+    });
 
     // Notify the inline IIFE to build / rebuild any dependent indices
     // (search, category filter, etc.).
@@ -1673,10 +1762,19 @@
     safeInit('updateAuthUI', () => Auth.updateUI());
     safeInit('newsletterForms', () => wireNewsletterForms());
     safeInit('addToCart', () => wireAddToCart());
-    // Render the homepage grid BEFORE wiring product cards so the wire
-    // step picks up the freshly-added cards.
+    // Render the homepage grid with hardcoded PRODUCTS first (instant
+    // first paint), then refresh from /api/products in the background.
+    // If the server catalog differs (admin edits, new products, price
+    // changes), re-render once with the fresh data.
     safeInit('renderHomepage', () => renderHomepageGrid());
     safeInit('productCards', () => autoWireProductCards());
+    safeInit('refreshCatalog', () => {
+      refreshCatalog().then(changed => {
+        if (changed && document.getElementById('dropsGrid')) {
+          rerenderHomepageAfterRefresh();
+        }
+      });
+    });
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
     safeInit('jsonLdProducts', () => injectProductJsonLd());
     safeInit('emailConfirm', () => handleAuthHash());

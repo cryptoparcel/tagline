@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -10,22 +10,22 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="color-scheme" content="dark" />
 
-<title>TAGLINE — Custom Athletic Wear</title>
+<title>TAGLINE â€” Custom Athletic Wear</title>
 <meta name="description" content="Custom athletic wear. Shop hoodies, tees, bottoms, footwear, and accessories." />
 
 <!-- Open Graph / social previews -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="TAGLINE — Custom Athletic Wear" />
-<meta property="og:description" content="Custom athletic wear, made to your fit. God · Health · Wealth." />
+<meta property="og:title" content="TAGLINE â€” Custom Athletic Wear" />
+<meta property="og:description" content="Custom athletic wear, made to your fit. God Â· Health Â· Wealth." />
 <meta property="og:url" content="https://tagline-ten.vercel.app/" />
 <meta property="og:site_name" content="TAGLINE" />
 <meta property="og:image" content="https://tagline-ten.vercel.app/og-image.svg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="TAGLINE — Custom Athletic Wear" />
+<meta property="og:image:alt" content="TAGLINE â€” Custom Athletic Wear" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="TAGLINE — Custom Athletic Wear" />
-<meta name="twitter:description" content="Custom athletic wear, made to your fit. God · Health · Wealth." />
+<meta name="twitter:title" content="TAGLINE â€” Custom Athletic Wear" />
+<meta name="twitter:description" content="Custom athletic wear, made to your fit. God Â· Health Â· Wealth." />
 <meta name="twitter:image" content="https://tagline-ten.vercel.app/og-image.svg" />
 
 <!-- Canonical URL helps search engines avoid duplicate content -->
@@ -34,14 +34,14 @@
 <!-- ============ STRUCTURED DATA (JSON-LD) ============ -->
 <!-- Organization + WebSite schema for Google's Knowledge Graph and rich
      results. Product ItemList is injected at runtime by tagline-app.js
-     (single source of truth — the PRODUCTS object). -->
+     (single source of truth â€” the PRODUCTS object). -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "TAGLINE",
   "url": "https://tagline-ten.vercel.app/",
-  "description": "Custom athletic wear — hoodies, tees, bottoms, footwear, and accessories.",
+  "description": "Custom athletic wear â€” hoodies, tees, bottoms, footwear, and accessories.",
   "sameAs": [
     "https://instagram.com",
     "https://tiktok.com",
@@ -143,7 +143,7 @@
     .recently-viewed .pcm-image{font-size:36px}
   }
 
-  /* Skip-to-content link — first focusable element on the page.
+  /* Skip-to-content link â€” first focusable element on the page.
      Visually hidden until focused. WCAG 2.4.1 "Bypass Blocks". */
   .skip-link{
     position:absolute;
@@ -191,7 +191,7 @@
     -webkit-tap-highlight-color:transparent;
     touch-action:manipulation;
   }
-  /* Honor reduced motion preference — but keep the cross alive (essential to brand) */
+  /* Honor reduced motion preference â€” but keep the cross alive (essential to brand) */
   @media (prefers-reduced-motion: reduce) {
     *:not(.cross-stage):not(.cross-ring):not(.cross-ring-1):not(.cross-ring-2):not(.cross-ring-3),
     *:not(.cross-stage):not(.cross-ring):not(.cross-ring-1):not(.cross-ring-2):not(.cross-ring-3)::before,
@@ -205,7 +205,7 @@
   /* Prevent horizontal scroll on mobile */
   html, body { overflow-x:hidden; max-width:100vw; }
 
-  /* Image defaults — never overflow, never break layout */
+  /* Image defaults â€” never overflow, never break layout */
   img, svg, video {
     max-width:100%;
     height:auto;
@@ -489,11 +489,11 @@
 
   /* ============ HERO ============ */
   /*
-   * Pure black background. The cross alone — no beams, no shafts.
+   * Pure black background. The cross alone â€” no beams, no shafts.
    * Layers (back to front):
    *   1. Soft warm halo behind cross (breathes with heartbeat)
    *   2. Cross-shaped sonar ping waves expanding outward
-   *   3. The cross itself — sharpest, brightest, dimensional
+   *   3. The cross itself â€” sharpest, brightest, dimensional
    *   4. Subtle radial vignette darkening at edges
    *   5. Hero text content (eyebrow, headline, sub, CTAs)
    */
@@ -509,7 +509,7 @@
     background:#08080a;
   }
 
-  /* Cross stage — holds cross, glow, and rings. Beats together. */
+  /* Cross stage â€” holds cross, glow, and rings. Beats together. */
   .cross-stage{
     position:absolute;
     top:42%; left:50%;
@@ -523,16 +523,16 @@
     animation:heartbeat 2.6s ease-in-out infinite;
   }
   /*
-   * Smooth continuous breathing — no plateaus, no dead time.
+   * Smooth continuous breathing â€” no plateaus, no dead time.
    * The cross expands and contracts in a perfect sine-like wave.
-   * 2.6s cycle = ~23 BPM — slow, meditative, but always moving.
+   * 2.6s cycle = ~23 BPM â€” slow, meditative, but always moving.
    */
   @keyframes heartbeat {
     0%, 100% { transform:translate3d(-50%, -50%, 0) scale(1); }
     50%      { transform:translate3d(-50%, -50%, 0) scale(1.04); }
   }
 
-  /* The bright halo behind the cross — synced perfectly with the beat */
+  /* The bright halo behind the cross â€” synced perfectly with the beat */
   .cross-glow{
     position:absolute;
     top:50%; left:50%;
@@ -559,7 +559,7 @@
     50%      { opacity:1;   transform:translate3d(-50%, -50%, 0) scale(1.06); }
   }
 
-  /* Inner core glow — tighter, brighter */
+  /* Inner core glow â€” tighter, brighter */
   .cross-glow::after{
     content:'';
     position:absolute;
@@ -575,8 +575,8 @@
     filter:blur(16px);
   }
 
-  /* Concentric cross-shaped pings emanating outward — synced to heartbeat */
-  /* Cycle is 3 × heartbeat (7.8s), with 2.6s spacing — one ring per beat */
+  /* Concentric cross-shaped pings emanating outward â€” synced to heartbeat */
+  /* Cycle is 3 Ã— heartbeat (7.8s), with 2.6s spacing â€” one ring per beat */
   .cross-ring{
     position:absolute;
     top:50%; left:50%;
@@ -599,7 +599,7 @@
     100% { transform:translate3d(-50%, -50%, 0) scale(2.8); opacity:0;   filter:blur(10px); }
   }
 
-  /* The cross itself — sharpest layer with rich multi-stop glow */
+  /* The cross itself â€” sharpest layer with rich multi-stop glow */
   .cross-shape{
     position:absolute;
     top:50%; left:50%;
@@ -664,11 +664,11 @@
     text-rendering:optimizeLegibility;
     -webkit-font-feature-settings:"kern" 1, "liga" 1;
     font-feature-settings:"kern" 1, "liga" 1;
-    /* Keep GOD·HEALTH·WEALTH on a single horizontal line.
+    /* Keep GODÂ·HEALTHÂ·WEALTH on a single horizontal line.
      * Browser will scale font size down if needed via clamp(). */
     white-space:nowrap;
   }
-  /* Each word gets its own span — keeps each word together as a unit
+  /* Each word gets its own span â€” keeps each word together as a unit
    * and never breaks mid-word. The whole headline stays one row.  */
   .hero-headline .word{
     display:inline;
@@ -752,7 +752,7 @@
     to{opacity:1; transform:translateY(0)}
   }
 
-  /* ============ CROSS ENTRANCE — first page load ============
+  /* ============ CROSS ENTRANCE â€” first page load ============
    * Cross gently materializes with the heartbeat picking up.
    */
   @keyframes crossEnter{ from{opacity:0; transform:translate3d(-50%,-50%,0) scale(.85)} to{opacity:1; transform:translate3d(-50%,-50%,0) scale(1)} }
@@ -778,7 +778,7 @@
    * triggering a smooth fade-up. Stagger child elements for sequence.
    *
    * IMPORTANT: Animations are opt-in via .reveal-pending class added by JS.
-   * If JS fails / is slow, content stays VISIBLE — no blank pages.
+   * If JS fails / is slow, content stays VISIBLE â€” no blank pages.
    */
   .reveal.reveal-pending{
     opacity:0;
@@ -1047,7 +1047,7 @@
   }
 
   /* ============ PRODUCT CARD INTERACTION ============ */
-  /* The whole card is clickable — opens the quick-view drawer */
+  /* The whole card is clickable â€” opens the quick-view drawer */
   .product-card{
     position:relative;
     cursor:pointer;
@@ -1131,7 +1131,7 @@
   }
   .product-card:hover::after{ transform:scaleX(1); }
 
-  /* Sold out cards — visually different, no cursor pointer */
+  /* Sold out cards â€” visually different, no cursor pointer */
   .product-card.sold-out{
     cursor:not-allowed;
     opacity:.6;
@@ -1156,7 +1156,7 @@
     pointer-events:auto;
   }
 
-  /* Drawer itself — slides from right on desktop, from bottom on mobile */
+  /* Drawer itself â€” slides from right on desktop, from bottom on mobile */
   .qv-drawer{
     position:fixed;
     top:0; right:0; bottom:0;
@@ -1872,7 +1872,7 @@
     gap:8px;
   }
   .newsletter-form button::after{
-    content:'→';
+    content:'â†’';
     font-size:14px;
     transition:transform .25s ease;
   }
@@ -2091,8 +2091,8 @@
     .cross-glow::after{width:160px; height:160px}
     .cross-ring{width:115px; height:200px}
     .hero-headline{
-      /* Use vw so it scales with screen width — guarantees one-line fit.
-       * 8.5vw ≈ 27px at 320px screen, ~36px at 425px, ~46px at 540px. */
+      /* Use vw so it scales with screen width â€” guarantees one-line fit.
+       * 8.5vw â‰ˆ 27px at 320px screen, ~36px at 425px, ~46px at 540px. */
       font-size:clamp(26px, 8.5vw, 56px) !important;
       letter-spacing:-0.04em;
     }
@@ -2164,7 +2164,7 @@
     .product-card{aspect-ratio:1/1.1}
   }
 
-  /* Disable expensive bg-effects only — keep the cross alive everywhere */
+  /* Disable expensive bg-effects only â€” keep the cross alive everywhere */
   @media (prefers-reduced-motion: reduce) {
     .cross-stage, .cross-glow, .cross-ring-1, .cross-ring-2, .cross-ring-3 {
       animation-duration: 6s !important;
@@ -2298,14 +2298,14 @@
     <label class="qv-field-label">Quantity</label>
     <div class="qv-qty-row">
       <div class="qv-qty-stepper">
-        <button type="button" class="qv-qty-btn" id="qvQtyMinus" aria-label="Decrease quantity">−</button>
+        <button type="button" class="qv-qty-btn" id="qvQtyMinus" aria-label="Decrease quantity">âˆ’</button>
         <span class="qv-qty-display" id="qvQty">1</span>
         <button type="button" class="qv-qty-btn" id="qvQtyPlus" aria-label="Increase quantity">+</button>
       </div>
       <span class="qv-stock" id="qvStock"></span>
     </div>
 
-    <!-- Style this with — populated by tagline-app.js from PRODUCT_PAIRINGS.
+    <!-- Style this with â€” populated by tagline-app.js from PRODUCT_PAIRINGS.
          Hidden if there are no pairings or the product isn't in the map. -->
     <div class="qv-pairings" id="qvPairings" hidden>
       <div class="qv-pairings-head">
@@ -2387,8 +2387,8 @@
   </div>
   <div class="hero-vignette"></div>
   <div class="hero-content">
-    <div class="hero-eyebrow">Spring 2026 · New collection</div>
-    <h1 class="hero-headline"><span class="word">GOD</span><span class="dot">·</span><span class="word">HEALTH</span><span class="dot">·</span><span class="word">WEALTH</span></h1>
+    <div class="hero-eyebrow">Spring 2026 Â· New collection</div>
+    <h1 class="hero-headline"><span class="word">GOD</span><span class="dot">Â·</span><span class="word">HEALTH</span><span class="dot">Â·</span><span class="word">WEALTH</span></h1>
     <p class="hero-sub">Custom athletic wear, made to your fit.</p>
     <div class="ctas">
       <a href="#shop" class="btn btn-primary">Shop the collection</a>
@@ -2417,412 +2417,14 @@
     </div>
   </div>
 
-  <div class="drops-grid reveal-stagger">
-
-    <article class="product-card">
-      <span class="product-tag gold">New</span>
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="hood1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde0e8"/></linearGradient></defs>
-          <path d="M60 50 Q100 30 140 50 L160 80 L150 110 L150 175 L50 175 L50 110 L40 80 Z" fill="url(#hood1)"/>
-          <path d="M75 50 Q100 70 125 50 L120 90 Q100 100 80 90 Z" fill="#cbd0db"/>
-          <circle cx="100" cy="120" r="2" fill="#b8893d"/>
-          <path d="M100 122 v15" stroke="#b8bdc8" stroke-width="1"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Ascend Hoodie</span><span class="name-sub">Cream</span></div>
-        <span class="price">$148</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="zip1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset="1" stop-color="#d8dbe2"/></linearGradient></defs>
-          <path d="M55 55 Q100 35 145 55 L165 85 L155 115 L155 175 L45 175 L45 115 L35 85 Z" fill="url(#zip1)"/>
-          <path d="M80 55 Q100 70 120 55 L118 85 Q100 92 82 85 Z" fill="#c5cad4"/>
-          <line x1="100" y1="60" x2="100" y2="175" stroke="#a8aebd" stroke-width="1.2"/>
-          <circle cx="100" cy="80" r="2.5" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Halo Zip</span><span class="name-sub">Bone</span></div>
-        <span class="price">$165</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="tee1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e2e5ed"/></linearGradient></defs>
-          <path d="M60 55 L80 65 L100 70 L120 65 L140 55 L165 75 L155 100 L140 95 L140 170 L60 170 L60 95 L45 100 L35 75 Z" fill="url(#tee1)"/>
-          <path d="M80 65 Q100 78 120 65" fill="none" stroke="#c8cdd8" stroke-width="1.5"/>
-          <circle cx="100" cy="115" r="10" fill="none" stroke="#b8893d" stroke-width="1" opacity=".7"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Origin Tee</span><span class="name-sub">Ivory</span></div>
-        <span class="price">$58</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="tank1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde1e9"/></linearGradient></defs>
-          <path d="M70 50 L80 65 L60 75 L50 105 L50 175 L150 175 L150 105 L140 75 L120 65 L130 50 L130 60 Q100 80 70 60 Z" fill="url(#tank1)"/>
-          <circle cx="100" cy="120" r="14" fill="none" stroke="#b8893d" stroke-width="1.2" opacity=".8"/>
-          <path d="M100 106 v28 M86 120 h28" stroke="#b8893d" stroke-width="1" opacity=".6"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Sigil Tank</span><span class="name-sub">White</span></div>
-        <span class="price">$78</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <span class="product-tag">Restock</span>
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="ls1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fdfdfd"/><stop offset="1" stop-color="#dde0e8"/></linearGradient></defs>
-          <path d="M60 50 Q100 35 140 50 L160 75 L155 160 L140 165 L130 80 L130 175 L70 175 L70 80 L60 165 L45 160 L40 75 Z" fill="url(#ls1)"/>
-          <path d="M80 50 Q100 65 120 50" fill="none" stroke="#c8cdd8" stroke-width="1.5"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Vesper Long</span><span class="name-sub">Pearl</span></div>
-        <span class="price">$92</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="jog1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M70 25 L130 25 L135 50 L130 175 L108 175 L100 90 L92 175 L70 175 L65 50 Z" fill="url(#jog1)"/>
-          <path d="M70 25 Q100 35 130 25" fill="none" stroke="#c0c5d0" stroke-width="1.5"/>
-          <circle cx="100" cy="40" r="2" fill="#b8893d"/>
-          <path d="M100 42 v8" stroke="#a8aebd" stroke-width="1"/>
-          <rect x="76" y="168" width="20" height="6" fill="#c0c5d0"/>
-          <rect x="104" y="168" width="20" height="6" fill="#c0c5d0"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Path Jogger</span><span class="name-sub">Bone</span></div>
-        <span class="price">$118</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="sh1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fdfdfd"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
-          <path d="M55 60 L145 60 L150 85 L142 145 L115 145 L100 100 L85 145 L58 145 L50 85 Z" fill="url(#sh1)"/>
-          <path d="M55 60 Q100 70 145 60" fill="none" stroke="#c0c5d0" stroke-width="1.5"/>
-          <circle cx="100" cy="75" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Trial Short</span><span class="name-sub">Ivory</span></div>
-        <span class="price">$72</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="cr1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadee6"/></linearGradient></defs>
-          <path d="M55 55 Q100 38 145 55 L168 80 L160 165 L143 168 L138 90 L138 175 L62 175 L62 90 L57 168 L40 165 L32 80 Z" fill="url(#cr1)"/>
-          <path d="M82 55 Q100 70 118 55 L116 75 Q100 80 84 75 Z" fill="#c5cad4"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Cloud Crew</span><span class="name-sub">Fog</span></div>
-        <span class="price">$128</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="cap1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fefefe"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M50 110 Q60 60 100 60 Q140 60 150 110 L155 120 L45 120 Z" fill="url(#cap1)"/>
-          <path d="M30 130 Q100 115 170 130 L170 142 Q100 132 30 142 Z" fill="#e8ebf2"/>
-          <circle cx="100" cy="95" r="6" fill="none" stroke="#b8893d" stroke-width="1.5"/>
-          <circle cx="100" cy="95" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Crown Cap</span><span class="name-sub">White</span></div>
-        <span class="price">$48</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <span class="product-tag gold">Limited</span>
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="sn1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4d8e0"/></linearGradient></defs>
-          <path d="M30 130 Q40 90 80 90 Q120 90 140 100 Q170 110 170 130 L170 145 Q170 155 160 155 L40 155 Q30 155 30 145 Z" fill="url(#sn1)"/>
-          <path d="M30 145 L170 145 L170 152 Q170 158 162 158 L38 158 Q30 158 30 152 Z" fill="#f0f2f7"/>
-          <path d="M70 110 Q90 100 110 110" stroke="#b8893d" stroke-width="2.5" fill="none"/>
-          <circle cx="55" cy="125" r="2.5" fill="#a8aebd"/>
-          <circle cx="75" cy="120" r="2.5" fill="#a8aebd"/>
-          <circle cx="95" cy="118" r="2.5" fill="#a8aebd"/>
-          <circle cx="115" cy="120" r="2.5" fill="#a8aebd"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Halo Runner</span><span class="name-sub">Triple White</span></div>
-        <span class="price">$215</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="br1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde1e9"/></linearGradient></defs>
-          <path d="M50 70 L70 60 L100 80 L130 60 L150 70 L155 130 L130 145 L100 135 L70 145 L45 130 Z" fill="url(#br1)"/>
-          <path d="M70 60 Q85 85 100 80" fill="none" stroke="#c5cad4" stroke-width="1.5"/>
-          <path d="M130 60 Q115 85 100 80" fill="none" stroke="#c5cad4" stroke-width="1.5"/>
-          <circle cx="100" cy="105" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Aether Bra</span><span class="name-sub">Pearl</span></div>
-        <span class="price">$68</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="leg1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M75 25 L125 25 L130 50 L122 175 L108 175 L100 90 L92 175 L78 175 L70 50 Z" fill="url(#leg1)"/>
-          <path d="M75 25 Q100 32 125 25" fill="none" stroke="#c0c5d0" stroke-width="1.5"/>
-          <circle cx="100" cy="40" r="2" fill="#b8893d"/>
-          <path d="M85 90 L88 175 M115 90 L112 175" stroke="#c5cad4" stroke-width=".6"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Aether Legging</span><span class="name-sub">White</span></div>
-        <span class="price">$98</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <span class="product-tag gold">New</span>
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="bom1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
-          <rect x="78" y="48" width="44" height="14" rx="2" fill="#c5cad4"/>
-          <path d="M55 62 Q100 55 145 62 L165 85 L155 110 L155 160 L45 160 L45 110 L35 85 Z" fill="url(#bom1)"/>
-          <rect x="45" y="160" width="110" height="12" fill="#c5cad4"/>
-          <line x1="50" y1="166" x2="150" y2="166" stroke="#a8aebd" stroke-width=".6"/>
-          <line x1="100" y1="62" x2="100" y2="160" stroke="#a8aebd" stroke-width="1.2"/>
-          <circle cx="100" cy="85" r="2.5" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Reign Bomber</span><span class="name-sub">Bone</span></div>
-        <span class="price">$245</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="trk1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
-          <path d="M85 50 L100 60 L115 50 L122 65 L100 72 L78 65 Z" fill="#c5cad4"/>
-          <path d="M55 60 Q100 55 145 60 L165 85 L155 175 L45 175 L35 85 Z" fill="url(#trk1)"/>
-          <path d="M50 78 L46 175 L40 175 L44 78 Z" fill="#b8893d" opacity=".75"/>
-          <path d="M150 78 L154 175 L160 175 L156 78 Z" fill="#b8893d" opacity=".75"/>
-          <line x1="100" y1="60" x2="100" y2="175" stroke="#a8aebd" stroke-width="1.2"/>
-          <circle cx="100" cy="80" r="2.5" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Velocity Track</span><span class="name-sub">Ivory</span></div>
-        <span class="price">$185</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="bn1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M55 130 Q60 60 100 60 Q140 60 145 130 Z" fill="url(#bn1)"/>
-          <rect x="50" y="120" width="100" height="22" rx="2" fill="#e8ebf2"/>
-          <line x1="55" y1="125" x2="145" y2="125" stroke="#c0c5d0" stroke-width=".6"/>
-          <line x1="55" y1="135" x2="145" y2="135" stroke="#c0c5d0" stroke-width=".6"/>
-          <circle cx="100" cy="92" r="3" fill="#b8893d" opacity=".8"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Vow Beanie</span><span class="name-sub">Cream</span></div>
-        <span class="price">$42</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="po1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
-          <path d="M60 55 L80 65 L86 60 L100 80 L114 60 L120 65 L140 55 L165 75 L155 100 L140 95 L140 170 L60 170 L60 95 L45 100 L35 75 Z" fill="url(#po1)"/>
-          <path d="M86 60 L100 80 L114 60 L108 50 L100 56 L92 50 Z" fill="#c5cad4"/>
-          <line x1="100" y1="80" x2="100" y2="108" stroke="#a8aebd" stroke-width="1"/>
-          <circle cx="100" cy="90" r="1.5" fill="#a8aebd"/>
-          <circle cx="100" cy="102" r="1.5" fill="#a8aebd"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Anthem Polo</span><span class="name-sub">White</span></div>
-        <span class="price">$88</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="crp1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde1e9"/></linearGradient></defs>
-          <path d="M70 60 L80 75 L60 80 L55 110 L55 145 L145 145 L145 110 L140 80 L120 75 L130 60 L130 70 Q100 85 70 70 Z" fill="url(#crp1)"/>
-          <path d="M80 75 Q100 88 120 75" fill="none" stroke="#c8cdd8" stroke-width="1.5"/>
-          <circle cx="100" cy="105" r="10" fill="none" stroke="#b8893d" stroke-width="1" opacity=".7"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Lumen Crop</span><span class="name-sub">Pearl</span></div>
-        <span class="price">$54</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="trp1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M70 25 L130 25 L135 50 L132 175 L108 175 L100 90 L92 175 L68 175 L65 50 Z" fill="url(#trp1)"/>
-          <path d="M70 25 Q100 35 130 25" fill="none" stroke="#c0c5d0" stroke-width="1.5"/>
-          <path d="M73 50 L75 175 L80 175 L78 50 Z" fill="#b8893d" opacity=".7"/>
-          <path d="M127 50 L125 175 L120 175 L122 50 Z" fill="#b8893d" opacity=".7"/>
-          <circle cx="100" cy="40" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Pilgrim Pant</span><span class="name-sub">Ivory</span></div>
-        <span class="price">$128</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="wnd1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde0e8"/></linearGradient></defs>
-          <path d="M50 50 Q100 28 150 50 L168 80 L155 175 L45 175 L32 80 Z" fill="url(#wnd1)"/>
-          <path d="M75 50 Q100 65 125 50 L120 75 Q100 85 80 75 Z" fill="#c5cad4"/>
-          <line x1="100" y1="65" x2="100" y2="175" stroke="#a8aebd" stroke-width="1"/>
-          <line x1="32" y1="120" x2="168" y2="120" stroke="#c0c5d0" stroke-width=".8"/>
-          <circle cx="100" cy="90" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Spirit Shell</span><span class="name-sub">White</span></div>
-        <span class="price">$198</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="vst1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadee6"/></linearGradient></defs>
-          <path d="M65 55 Q100 40 135 55 L145 75 L142 175 L58 175 L55 75 Z" fill="url(#vst1)"/>
-          <path d="M82 55 Q100 67 118 55 L116 70 Q100 75 84 70 Z" fill="#c5cad4"/>
-          <line x1="58" y1="95" x2="142" y2="95" stroke="#c5cad4" stroke-width="1"/>
-          <line x1="58" y1="125" x2="142" y2="125" stroke="#c5cad4" stroke-width="1"/>
-          <line x1="58" y1="155" x2="142" y2="155" stroke="#c5cad4" stroke-width="1"/>
-          <line x1="100" y1="60" x2="100" y2="175" stroke="#a8aebd" stroke-width="1"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Echo Vest</span><span class="name-sub">Bone</span></div>
-        <span class="price">$155</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="hen1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde0e8"/></linearGradient></defs>
-          <path d="M60 50 Q100 35 140 50 L160 75 L155 160 L140 165 L130 80 L130 175 L70 175 L70 80 L60 165 L45 160 L40 75 Z" fill="url(#hen1)"/>
-          <path d="M80 50 Q100 65 120 50" fill="none" stroke="#c8cdd8" stroke-width="1.5"/>
-          <line x1="100" y1="65" x2="100" y2="115" stroke="#a8aebd" stroke-width="1"/>
-          <circle cx="100" cy="80" r="1.5" fill="#a8aebd"/>
-          <circle cx="100" cy="95" r="1.5" fill="#a8aebd"/>
-          <circle cx="100" cy="110" r="1.5" fill="#a8aebd"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Verse Henley</span><span class="name-sub">Cream</span></div>
-        <span class="price">$84</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="sk1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M55 50 L90 50 L92 130 Q92 145 75 145 L55 145 Q50 145 50 138 Z" fill="url(#sk1)"/>
-          <path d="M110 50 L145 50 L150 138 Q150 145 145 145 L125 145 Q108 145 108 130 Z" fill="url(#sk1)"/>
-          <line x1="55" y1="58" x2="92" y2="58" stroke="#b8893d" stroke-width="1.5"/>
-          <line x1="55" y1="65" x2="92" y2="65" stroke="#b8893d" stroke-width="1"/>
-          <line x1="110" y1="58" x2="148" y2="58" stroke="#b8893d" stroke-width="1.5"/>
-          <line x1="110" y1="65" x2="148" y2="65" stroke="#b8893d" stroke-width="1"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Sole Sock</span><span class="name-sub">White Pair</span></div>
-        <span class="price">$24</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="hb1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
-          <path d="M30 90 Q100 60 170 90 L170 115 Q100 85 30 115 Z" fill="url(#hb1)"/>
-          <path d="M30 90 Q100 60 170 90" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>
-          <circle cx="100" cy="100" r="8" fill="none" stroke="#b8893d" stroke-width="1.5"/>
-          <circle cx="100" cy="100" r="2" fill="#b8893d"/>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Pulse Band</span><span class="name-sub">White</span></div>
-        <span class="price">$22</span>
-      </div>
-    </article>
-
-    <article class="product-card">
-      <span class="product-tag dark">Sold Out</span>
-      <div class="product-illu">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="tot1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
-          <path d="M70 55 Q70 30 100 30 Q130 30 130 55" fill="none" stroke="#c5cad4" stroke-width="3"/>
-          <path d="M50 65 L150 65 L160 165 L40 165 Z" fill="url(#tot1)"/>
-          <line x1="55" y1="80" x2="145" y2="80" stroke="#c5cad4" stroke-width=".8"/>
-          <text x="100" y="120" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="13" font-weight="700" fill="#b8893d" letter-spacing="0.5">TAGLINE</text>
-        </svg>
-      </div>
-      <div class="product-meta">
-        <div><span class="name">Quill Tote</span><span class="name-sub">Canvas White</span></div>
-        <span class="price">$38</span>
-      </div>
-    </article>
-
+  <div class="drops-grid reveal-stagger" id="dropsGrid">
+    <!-- Cards rendered by tagline-app.js from window.Tagline.PRODUCTS.
+         Empty here so the catalog stays a single source of truth — edit
+         products in Supabase and the homepage updates without touching HTML. -->
   </div>
 
   <div class="view-all-row">
-    <a href="#all" class="view-all">View all 24 styles
+    <a href="#shop" class="view-all">View all styles
       <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </a>
   </div>
@@ -2957,7 +2559,7 @@
     </div>
   </div>
   <div class="foot-bottom">
-    <span>© 2026 TAGLINE. All rights reserved.</span>
+    <span>Â© 2026 TAGLINE. All rights reserved.</span>
     <div class="socials">
       <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Instagram</a>
       <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">TikTok</a>
@@ -2984,7 +2586,7 @@
       const prefersReducedMotion = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
-        // Don't add reveal-pending — content stays visible without animation
+        // Don't add reveal-pending â€” content stays visible without animation
         return;
       }
 
@@ -3016,31 +2618,9 @@
     }
 
     // ============ FILTER PILLS ============
-    // Maps each product card to its category by reading data-category attribute
-    // (we'll add data-category to each product card via JS).
-    const PRODUCT_CATEGORIES = {
-      'Ascend Hoodie': 'Outerwear', 'Halo Zip': 'Outerwear',
-      'Origin Tee': 'Tops', 'Sigil Tank': 'Tops', 'Vesper Long': 'Tops',
-      'Path Jogger': 'Bottoms', 'Trial Short': 'Bottoms',
-      'Cloud Crew': 'Outerwear', 'Crown Cap': 'Accessories',
-      'Halo Runner': 'Footwear', 'Aether Bra': 'Tops', 'Aether Legging': 'Bottoms',
-      'Reign Bomber': 'Outerwear', 'Velocity Track': 'Outerwear',
-      'Vow Beanie': 'Accessories', 'Anthem Polo': 'Tops',
-      'Lumen Crop': 'Tops', 'Pilgrim Pant': 'Bottoms',
-      'Spirit Shell': 'Outerwear', 'Echo Vest': 'Outerwear',
-      'Verse Henley': 'Tops', 'Sole Sock': 'Accessories',
-      'Pulse Band': 'Accessories', 'Quill Tote': 'Accessories'
-    };
-
-    // Tag each product card with its category for filtering
-    document.querySelectorAll('.product-card').forEach(card => {
-      const nameEl = card.querySelector('.product-meta .name');
-      if (nameEl) {
-        const cat = PRODUCT_CATEGORIES[nameEl.textContent.trim()];
-        if (cat) card.dataset.category = cat;
-      }
-    });
-
+    // Cards have data-category set by tagline-app.js renderHomepageGrid
+    // (sourced from PRODUCTS). The old hardcoded PRODUCT_CATEGORIES map
+    // has been removed — single source of truth lives in PRODUCTS now.
     function applyFilter(category) {
       // Update which pill is "on"
       document.querySelectorAll('.filter-pill').forEach(p => {
@@ -3062,7 +2642,7 @@
       });
     });
 
-    // ============ CATEGORY TILES → FILTER ============
+    // ============ CATEGORY TILES â†’ FILTER ============
     // Clicking a category tile scrolls to shop and applies that category filter
     document.querySelectorAll('.category-tile[data-category]').forEach(tile => {
       tile.addEventListener('click', (e) => {
@@ -3075,21 +2655,30 @@
     });
 
     // ============ SEARCH ============
-    // Build a searchable index from the product cards rendered on the page
-    const searchIndex = [];
-    document.querySelectorAll('.product-card').forEach(card => {
-      const nameEl = card.querySelector('.product-meta .name');
-      const colorEl = card.querySelector('.product-meta .name-sub');
-      const priceEl = card.querySelector('.product-meta .price');
-      if (!nameEl) return;
-      searchIndex.push({
-        name: nameEl.textContent.trim(),
-        color: colorEl ? colorEl.textContent.trim() : '',
-        price: priceEl ? priceEl.textContent.trim() : '',
-        category: card.dataset.category || '',
-        initial: nameEl.textContent.trim().charAt(0)
+    // The grid is rendered dynamically by tagline-app.js after this
+    // inline script runs, so we (re)build the search index when the
+    // 'tagline:homepage-ready' event fires (or immediately if cards
+    // are already there — defensive for any future static cards).
+    let searchIndex = [];
+    function buildSearchIndex() {
+      searchIndex = [];
+      document.querySelectorAll('.product-card').forEach(card => {
+        const nameEl = card.querySelector('.product-meta .name');
+        const colorEl = card.querySelector('.product-meta .name-sub');
+        const priceEl = card.querySelector('.product-meta .price');
+        if (!nameEl) return;
+        searchIndex.push({
+          name: nameEl.textContent.trim(),
+          color: colorEl ? colorEl.textContent.trim() : '',
+          price: priceEl ? priceEl.textContent.trim() : '',
+          category: card.dataset.category || '',
+          initial: nameEl.textContent.trim().charAt(0)
+        });
       });
-    });
+    }
+    window.addEventListener('tagline:homepage-ready', buildSearchIndex);
+    // If cards are already present (e.g. SSR or fast paint), build now too
+    if (document.querySelector('#dropsGrid .product-card')) buildSearchIndex();
 
     const searchOverlay = document.getElementById('searchOverlay');
     const searchBtn = document.getElementById('searchBtn');
@@ -3246,14 +2835,14 @@
       });
     });
 
-    // ============ FORMS — prevent broken submits ============
+    // ============ FORMS â€” prevent broken submits ============
     document.querySelectorAll('form').forEach(form => {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = form.querySelector('input[type="email"]');
         const button = form.querySelector('button');
         if (input && input.value && button) {
-          button.textContent = 'Joined ✓';
+          button.textContent = 'Joined âœ“';
           input.value = '';
           input.blur();
           setTimeout(() => {
@@ -3277,7 +2866,7 @@
         else header.classList.remove('scrolled');
       }
 
-      // Progress bar — width = how far down the page we are
+      // Progress bar â€” width = how far down the page we are
       if (progressBar) {
         const scrollHeight = (document.documentElement.scrollHeight || document.body.scrollHeight)
                              - document.documentElement.clientHeight;

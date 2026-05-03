@@ -10,11 +10,13 @@ This is the **one running list** of action items that depend on you (configuring
 
 ### 1. Run the SQL migrations in Supabase
 
+> ⚠️ **Catalog migration:** The product catalog has been replaced with the real 33-product Tagline Apparel catalog (was placeholder names like "Ascend Hoodie"). Re-running the SQL below will swap the seed data and wire the new `image_url` column.
+
 **Why:** several recent fixes need DB changes. Without these:
 - Stripe webhooks return 500 and Stripe retries forever (idempotency table)
 - The atomic stock-decrement function still uses the old silently-clamping version (oversell risk on limited items)
 
-**How:** Supabase Dashboard → SQL Editor → New query → paste and run all three:
+**How:** Supabase Dashboard → SQL Editor → New query → paste and run all four:
 
 ```sql
 -- 1. Idempotency table (Stripe + NowPayments webhooks)
@@ -48,9 +50,17 @@ begin
   return rows_affected > 0;
 end;
 $$;
+
+-- 4. Add image_url column (canonical product image URL)
+alter table products add column if not exists image_url text;
 ```
 
-(Alternative: re-run the entire `sql/schema.sql` — it's idempotent.)
+**For the catalog refresh** (replacing the 24 placeholder products with your real 33), re-run the entire `sql/schema.sql` — it now contains:
+- The new `image_url` column
+- A `delete from products where id in (...old 24 IDs...)` to remove placeholders
+- An `insert ... on conflict (id) do update` so each of the 33 real products is inserted (or refreshed if you re-run later)
+
+Safe to run as many times as you want.
 
 ---
 

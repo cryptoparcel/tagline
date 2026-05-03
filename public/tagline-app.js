@@ -44,27 +44,39 @@
     (item.size === undefined || VALID_SIZES.indexOf(item.size) !== -1);
 
   // ============ IMAGE-PROBE CACHE ============
-  // The homepage probes /images/products/{id}.jpg for each of the 24
-  // product cards on every page load. With most images missing, that
-  // was 24+ wasted 404s per visit. Cache the result per-session so we
-  // probe each id at most ONCE — and skip future probes for known-404s.
-  //   sessionStorage value: 'ok' (image exists) or '404' (doesn't)
+  // Resolve a product's display image, with sessionStorage caching so
+  // each id is probed at most once per session. Calls onFound(url) with
+  // the URL that loaded successfully, or skips silently on failure.
+  //
+  // Resolution order:
+  //   1. PRODUCTS[id].image_url (set from the products table)
+  //   2. /images/products/{id}.jpg (local fallback for self-hosted images)
+  //
+  // Cache value is the working URL string, or '404' for known-missing.
+  function getProductImageUrl(productId) {
+    const p = PRODUCTS[productId];
+    if (p && p.image_url) return p.image_url;
+    return `/images/products/${productId}.jpg`;
+  }
+
   function probeProductImage(productId, onFound) {
     const key = 'tagline_img_' + productId;
+    const targetUrl = getProductImageUrl(productId);
     let cached = null;
     try { cached = sessionStorage.getItem(key); } catch {}
-    if (cached === '404') return;        // known-missing, skip
-    if (cached === 'ok') { onFound(); return; }
+    if (cached === '404') return;
+    // If the cache stores a URL and it matches the current target, use it
+    if (cached && cached !== '404' && cached === targetUrl) { onFound(targetUrl); return; }
 
     const test = new Image();
     test.onload = () => {
-      try { sessionStorage.setItem(key, 'ok'); } catch {}
-      onFound();
+      try { sessionStorage.setItem(key, targetUrl); } catch {}
+      onFound(targetUrl);
     };
     test.onerror = () => {
       try { sessionStorage.setItem(key, '404'); } catch {}
     };
-    test.src = `/images/products/${productId}.jpg`;
+    test.src = targetUrl;
   }
 
   // localStorage helpers — read/parse/validate/cap in one shot.
@@ -524,89 +536,150 @@
   }
 
   // ============ PRODUCT DATA ============
-  // Full data for each product, used by quick-view drawer.
+  // Full data for each product. Mirrors the products table in Supabase
+  // (with prices in dollars rather than cents for display convenience).
   // `description` is the editorial brand-voice copy — also flows into
   // JSON-LD product schema, so it doubles as SEO surface.
+  // `image_url` is the canonical product image. probeProductImage falls
+  // back to /images/products/{id}.jpg if image_url is empty.
   const PRODUCTS = {
-    'ascend-hoodie':  { name:'Ascend Hoodie',   color:'Cream',         price:148, stock:50,  category:'Outerwear',   tag:'New',
-      description:'Heavyweight cotton that gets better with every wash. Cut for relaxed everyday wear — not too long, not too cropped.' },
-    'halo-zip':       { name:'Halo Zip',        color:'Bone',          price:165, stock:40,  category:'Outerwear',   tag:'',
-      description:'The full-zip we’d reach for first when the temperature drops. Brushed interior, real metal hardware, made to layer.' },
-    'origin-tee':     { name:'Origin Tee',      color:'Ivory',         price:58,  stock:100, category:'Tops',        tag:'',
-      description:'Our flagship tee. Heavy enough to be substantial, soft enough to forget you’re wearing it. Pre-shrunk, garment-dyed.' },
-    'sigil-tank':     { name:'Sigil Tank',      color:'White',         price:78,  stock:80,  category:'Tops',        tag:'',
-      description:'Built for the gym but cut to wear out of it. Embroidered cross detail, mesh-back panel, doesn’t ride up under a vest.' },
-    'vesper-long':    { name:'Vesper Long',     color:'Pearl',         price:92,  stock:60,  category:'Tops',        tag:'Restock',
-      description:'Long-sleeve in a modal-cotton blend with a clean drape. Layers under outerwear; stands alone on cooler evenings.' },
-    'path-jogger':    { name:'Path Jogger',     color:'Bone',          price:118, stock:45,  category:'Bottoms',     tag:'',
-      description:'The jogger we wear most. Tapered through the leg, mid-rise, drawcord waist. Pairs with nearly everything in the line.' },
-    'trial-short':    { name:'Trial Short',     color:'Ivory',         price:72,  stock:70,  category:'Bottoms',     tag:'',
-      description:'7-inch inseam with a built-in liner. Designed for runs and lifts, works for weekends. Hidden zip pocket for keys.' },
-    'cloud-crew':     { name:'Cloud Crew',      color:'Fog',           price:128, stock:50,  category:'Outerwear',   tag:'',
-      description:'Heavy french-terry sweater in fog white. The crew you’ll come back to all season — soft inside, structured outside.' },
-    'crown-cap':      { name:'Crown Cap',       color:'White',         price:48,  stock:120, category:'Accessories', tag:'',
-      description:'Six-panel cotton-twill cap. Curved brim, clean embroidered logo, adjustable for any head shape.' },
-    'halo-runner':    { name:'Halo Runner',     color:'Triple White',  price:215, stock:25,  category:'Footwear',    tag:'Limited',
-      description:'Limited edition. Mesh upper, cushioned midsole, leather heel counter. Made in small numbers, never restocked.' },
-    'aether-bra':     { name:'Aether Bra',      color:'Pearl',         price:68,  stock:75,  category:'Tops',        tag:'',
-      description:'Medium support, racerback design, removable pads. Moisture-wicking fabric — works as hard as you do.' },
-    'aether-legging': { name:'Aether Legging',  color:'White',         price:98,  stock:60,  category:'Bottoms',     tag:'',
-      description:'High-rise compression with side pockets you can actually use. Four-way stretch, opaque from every angle.' },
-    'reign-bomber':   { name:'Reign Bomber',    color:'Bone',          price:245, stock:30,  category:'Outerwear',   tag:'New',
-      description:'Lightweight bomber with satin lining and a hidden inner pocket. Quietly elegant — the jacket that finishes an outfit.' },
-    'velocity-track': { name:'Velocity Track',  color:'Ivory',         price:185, stock:35,  category:'Outerwear',   tag:'',
-      description:'Quarter-zip track jacket with side stripes and ribbed hem. Athletic cut, off-duty energy.' },
-    'vow-beanie':     { name:'Vow Beanie',      color:'Cream',         price:42,  stock:150, category:'Accessories', tag:'',
-      description:'Ribbed wool-cotton blend with our embroidered cross. Snug fit, holds its shape, made for cold mornings.' },
-    'anthem-polo':    { name:'Anthem Polo',     color:'White',         price:88,  stock:55,  category:'Tops',        tag:'',
-      description:'Knit polo in pima cotton with a three-button placket. Smart enough to dress up, soft enough to live in.' },
-    'lumen-crop':     { name:'Lumen Crop',      color:'Pearl',         price:54,  stock:70,  category:'Tops',        tag:'',
-      description:'Cropped tee with raw hem detail. Slightly boxy cut — wear with high-rise bottoms for the right proportions.' },
-    'pilgrim-pant':   { name:'Pilgrim Pant',    color:'Ivory',         price:128, stock:40,  category:'Bottoms',     tag:'',
-      description:'Wide-leg track pant in a cotton-poly blend. Side pockets, drawcord waist, drapes well over sneakers.' },
-    'spirit-shell':   { name:'Spirit Shell',    color:'White',         price:198, stock:30,  category:'Outerwear',   tag:'',
-      description:'Lightweight water-resistant windbreaker that packs into its own pocket. Reflective accents for early runs.' },
-    'echo-vest':      { name:'Echo Vest',       color:'Bone',          price:155, stock:35,  category:'Outerwear',   tag:'',
-      description:'Quilted vest with down-alternative fill and deep zip pockets. The layer that turns one outfit into three seasons.' },
-    'verse-henley':   { name:'Verse Henley',    color:'Cream',         price:84,  stock:55,  category:'Tops',        tag:'',
-      description:'Three-button henley in slub jersey. Vintage-feel cotton, gets character with wear. Pairs with everything we make.' },
-    'sole-sock':      { name:'Sole Sock',       color:'White Pair',    price:24,  stock:200, category:'Accessories', tag:'',
-      description:'Single pair of crew socks. Cushioned footbed, ribbed shaft, embroidered logo at the ankle. Never the afterthought.' },
-    'pulse-band':     { name:'Pulse Band',      color:'White',         price:22,  stock:180, category:'Accessories', tag:'',
-      description:'Stretch terry-cotton sweat headband. Comfortable for long workouts, holds its shape all season.' },
-    'quill-tote':     { name:'Quill Tote',      color:'Canvas White',  price:38,  stock:0,   category:'Accessories', tag:'Sold Out',
-      description:'Heavy canvas tote with embroidered logo and reinforced bottom. Leather handles. Currently sold out — back next drop.' }
+    'everyday-shirt':           { name:'"Everyday" Shirt',                 color:null, price:25, stock:60, category:'Tops',      tag:'',
+      description:'The shirt you grab without thinking. Soft cotton, classic fit, made for daily rotation.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8c64d9c2-9284-4019-b2f5-cb4ef82f3df6.png?v=1768914448&width=1000' },
+    'tl-winter-hoodie':         { name:'"TL" Winter Hoodie',               color:null, price:45, stock:50, category:'Outerwear', tag:'',
+      description:'Heavyweight winter pullover with the TL signature. Built for cold mornings and casual nights.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828&width=1000' },
+    'tl-winter-sweatpants':     { name:'"TL" Winter Sweatpants',           color:null, price:45, stock:45, category:'Bottoms',   tag:'',
+      description:'Match the hoodie. Heavy fleece-lined sweatpants with side pockets and an embroidered logo.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_e2a10b3a-eb39-4d5d-b226-97c26277a75b.heic?v=1768915828&width=1000' },
+    'ttm-quarter-zip':          { name:'"TTM" Quarter-Zip',                color:null, price:35, stock:40, category:'Tops',      tag:'',
+      description:'Quarter-zip pullover with the TTM detail. Athletic cut, brushed inside, pairs with anything.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/B2796E1A-0A02-4370-BC1A-87BDFE471E5A.png?v=1762482462&width=1000' },
+    'compression-shorts-2in1':  { name:'2-in-1 Compression Shorts',        color:null, price:40, stock:60, category:'Bottoms',   tag:'',
+      description:'Compression liner inside, training short outside. The pair that handles the gym AND the run.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0022.jpg?v=1761716083&width=1000' },
+    'embroidery-hoodie':        { name:'3-D Embroidery Hoodie',            color:null, price:45, stock:35, category:'Outerwear', tag:'',
+      description:'Heavyweight hoodie with raised 3-D embroidery. Premium feel, statement detail.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157&width=1000' },
+    'embroidery-tee':           { name:'3-D Embroidery T-Shirt',           color:null, price:30, stock:80, category:'Tops',      tag:'',
+      description:'Premium tee with raised 3-D embroidery. Heavy enough to drape right, soft enough to live in.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_caac77bf-a368-4c9f-8dba-f96b475ed42c.jpg?v=1775534730&width=1000' },
+    'autumn-hoodie':            { name:'Autumn Hoodie',                    color:null, price:40, stock:45, category:'Outerwear', tag:'',
+      description:'Mid-weight pullover for transitional weather. Soft inside, structured outside.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/F927811C-A783-41CF-8491-3BB00D16D998.jpg?v=1762497681&width=1000' },
+    'boxe-tee':                 { name:'Box\'e Tee',                       color:null, price:20, stock:90, category:'Tops',      tag:'',
+      description:'Boxy-cut tee in heavyweight cotton. Loose through the chest and shoulders, slightly cropped.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_935aa918-1d27-4cb2-96fb-e191e14f38f3.jpg?v=1775552279&width=1000' },
+    'cargo-sweatpants':         { name:'Cargo Sweatpants',                 color:null, price:55, stock:35, category:'Bottoms',   tag:'',
+      description:'Sweatpants meet cargo pockets. Tapered leg, drawcord waist, six functional pockets.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457&width=1000' },
+    'drawstring-long-sleeve':   { name:'Drawstring Long Sleeve',           color:null, price:25, stock:70, category:'Tops',      tag:'',
+      description:'Long sleeve tee with adjustable drawstring hem. Layer it open or pull it tight.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512&width=1000' },
+    'scrunch-leggings':         { name:'High-Waist Scrunch Leggings',      color:null, price:25, stock:75, category:'Bottoms',   tag:'',
+      description:'High-rise scrunch-back leggings with four-way stretch. Lifts and supports.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748&width=1000' },
+    'irregular-bra':            { name:'Irregular Bra',                    color:null, price:25, stock:60, category:'Tops',      tag:'',
+      description:'Asymmetric strap design with light support and removable pads. Different on purpose.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/B723BBA2-B00A-4C9A-8283-226AFEB8C698.jpg?v=1761548691&width=1000' },
+    'basketball-shorts':        { name:'Basketball Shorts',                color:null, price:25, stock:80, category:'Bottoms',   tag:'',
+      description:'Court-ready shorts with deep pockets. Mesh-lined for breathability, built to last.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_59c8766e-4591-468f-8075-8b4287f30a9f.jpg?v=1775535578&width=1000' },
+    'gym-shirt':                { name:'Gym Shirt',                        color:null, price:25, stock:70, category:'Tops',      tag:'',
+      description:'Lightweight performance shirt with a mesh-back panel. Built to move, dries fast.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_65a0576e-dbba-443f-a04a-5d91f6d91d20.jpg?v=1775552279&width=1000' },
+    'runner-vest':              { name:'Runner Vest',                      color:null, price:45, stock:30, category:'Outerwear', tag:'',
+      description:'Lightweight running vest with hi-vis trim. Holds your essentials without the bounce.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_0a5e02aa-8e81-4e92-963d-cee6741b086c.jpg?v=1775536851&width=1000' },
+    'running-pants':            { name:'Running Pants',                    color:null, price:30, stock:50, category:'Bottoms',   tag:'',
+      description:'Tapered running pants with reflective accents. Light, fast, weather-ready.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_570552c0-1a69-472d-9320-398747b35f08.jpg?v=1775536043&width=1000' },
+    'open-back-top':            { name:'Open-Back Top',                    color:null, price:15, stock:65, category:'Tops',      tag:'',
+      description:'Strappy open-back top for studio workouts. Light support, ample airflow.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000' },
+    'oversized-sweater':        { name:'Oversized Light Sweater',          color:null, price:65, stock:25, category:'Outerwear', tag:'',
+      description:'Soft-weave oversized sweater. Drapes long, layers easy, finishes any outfit.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/F329367F-4612-4CBE-A66D-A7BD3BC84DC1.jpg?v=1761553089&width=1000' },
+    'quarter-zip-long-sleeve':  { name:'Quarter-Zip Long Sleeve',          color:null, price:35, stock:45, category:'Tops',      tag:'',
+      description:'Quarter-zip long sleeve in soft jersey. Layer-friendly, runs true to size.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0025.jpg?v=1761716083&width=1000' },
+    'quick-dry-shirt':          { name:'Quick-Dry Shirt',                  color:null, price:20, stock:80, category:'Tops',      tag:'',
+      description:'Performance shirt that dries in minutes. Anti-odor finish, low-profile fit.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/7E62E8C7-9832-4D8F-B46A-AE8249EDD544.jpg?v=1761546662&width=1000' },
+    'slim-sweatshirt':          { name:'Slim Sweatshirt',                  color:null, price:50, stock:35, category:'Outerwear', tag:'',
+      description:'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs, brushed inside.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0038.jpg?v=1761716083&width=1000' },
+    'slim-fit-pants':           { name:'Slim-Fit Flex Pants',              color:null, price:35, stock:50, category:'Bottoms',   tag:'',
+      description:'Slim-fit flex pants with stretch. Comfortable enough for shifts, sharp enough for off-duty.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/8C4F7825-DEEA-4CEF-955E-C5432C6FB34B.jpg?v=1761544634&width=1000' },
+    'sport-pants':              { name:'Sport Pants',                      color:null, price:55, stock:30, category:'Bottoms',   tag:'',
+      description:'Premium sport pant with side stripes. Tapered fit, drawcord waist, finished hem.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/BD848E54-21F0-4255-B1F1-7D0A533C1E35.jpg?v=1761554034&width=1000' },
+    'sport-pants-light':        { name:'Sport Pant Light',                 color:null, price:35, stock:50, category:'Bottoms',   tag:'',
+      description:'Lighter weight version of our sport pant. Same fit, less weight — for warmer months.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/ECE25F92-576E-4A30-B8F5-CCD44DB470B0.jpg?v=1761627349&width=1000' },
+    'tl-rocket-hoodie':         { name:'TL "Rocket" Hoodie',               color:null, price:55, stock:30, category:'Outerwear', tag:'Featured',
+      description:'The Rocket hoodie. Heavyweight, embroidered, and unmistakably ours.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983&width=1000' },
+    'tl-rocket-shirt':          { name:'TL "Rocket" Shirt',                color:null, price:25, stock:70, category:'Tops',      tag:'Featured',
+      description:'The Rocket tee. Soft, structured, statement-piece embroidery.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286&width=1000' },
+    'womens-2in1-shorts':       { name:'Women\'s 2-in-1 Shorts',           color:null, price:30, stock:55, category:'Bottoms',   tag:'',
+      description:'Compression liner under a flowy short. The pair that goes from gym to coffee.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_26e60b6f-49f2-4a3a-b34d-2140bfdf784e.jpg?v=1775536820&width=1000' },
+    'womens-gym-shorts':        { name:'Women\'s Gym Shorts',              color:null, price:20, stock:80, category:'Bottoms',   tag:'',
+      description:'Light, breathable gym shorts with built-in liner. Quick-drying, doesn\'t ride.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_1210f229-9c09-47f0-9203-2aa876bb70fb.jpg?v=1775552279&width=1000' },
+    'womens-sport-bra':         { name:'Women\'s Sport Bra',               color:null, price:30, stock:60, category:'Tops',      tag:'',
+      description:'Medium-support sport bra. Removable pads, racerback design, moisture-wicking.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279&width=1000' },
+    'vback-leggings':           { name:'V-Back Leggings',                  color:null, price:30, stock:65, category:'Bottoms',   tag:'',
+      description:'High-waist V-back leggings. Sculpted seam, four-way stretch, opaque from every angle.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000' },
+    'womens-hoodie':            { name:'Women\'s Hoodie',                  color:null, price:35, stock:50, category:'Outerwear', tag:'',
+      description:'Cropped-fit pullover hoodie for women. Heavy cotton, fits true.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/A610FF16-6BA4-4255-90B0-F42AB7246271.jpg?v=1762317317&width=1000' },
+    'buttersoft-leggings':      { name:'Women\'s "Butter-Soft" Leggings',  color:null, price:30, stock:70, category:'Bottoms',   tag:'New',
+      description:'Butter-soft fabric, high rise, pocket-equipped. The leggings you\'ll forget you\'re wearing.',
+      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785&width=1000' }
   };
 
   // Hand-curated outfit pairings — what to wear with each piece.
   // Shown in the quick-view drawer as a "Style this with" carousel.
-  // Curate-don't-compute: at 24 products, hand-picking beats any
-  // recommendation algorithm. Edit freely as the catalog evolves.
   const PRODUCT_PAIRINGS = {
-    'ascend-hoodie':  ['path-jogger',    'crown-cap',     'sole-sock'],
-    'halo-zip':       ['origin-tee',     'path-jogger',   'crown-cap'],
-    'origin-tee':     ['path-jogger',    'crown-cap',     'sole-sock'],
-    'sigil-tank':     ['trial-short',    'pulse-band',    'sole-sock'],
-    'vesper-long':    ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
-    'path-jogger':    ['origin-tee',     'halo-zip',      'sole-sock'],
-    'trial-short':    ['sigil-tank',     'pulse-band',    'sole-sock'],
-    'cloud-crew':     ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
-    'crown-cap':      ['ascend-hoodie',  'origin-tee',    'path-jogger'],
-    'halo-runner':    ['sole-sock',      'trial-short',   'sigil-tank'],
-    'aether-bra':     ['aether-legging', 'pulse-band',    'sole-sock'],
-    'aether-legging': ['aether-bra',     'sigil-tank',    'sole-sock'],
-    'reign-bomber':   ['origin-tee',     'pilgrim-pant',  'vow-beanie'],
-    'velocity-track': ['path-jogger',    'origin-tee',    'crown-cap'],
-    'vow-beanie':     ['cloud-crew',     'vesper-long',   'pilgrim-pant'],
-    'anthem-polo':    ['pilgrim-pant',   'crown-cap',     'sole-sock'],
-    'lumen-crop':     ['aether-legging', 'crown-cap',     'sole-sock'],
-    'pilgrim-pant':   ['vesper-long',    'vow-beanie',    'crown-cap'],
-    'spirit-shell':   ['origin-tee',     'path-jogger',   'sole-sock'],
-    'echo-vest':      ['verse-henley',   'pilgrim-pant',  'vow-beanie'],
-    'verse-henley':   ['pilgrim-pant',   'vow-beanie',    'sole-sock'],
-    'sole-sock':      ['trial-short',    'halo-runner',   'pulse-band'],
-    'pulse-band':     ['sigil-tank',     'trial-short',   'sole-sock'],
-    'quill-tote':     ['origin-tee',     'crown-cap',     'sole-sock']
+    'everyday-shirt':           ['cargo-sweatpants',     'basketball-shorts',  'sport-pants-light'],
+    'tl-winter-hoodie':         ['tl-winter-sweatpants', 'sport-pants',        'cargo-sweatpants'],
+    'tl-winter-sweatpants':     ['tl-winter-hoodie',     'embroidery-tee',     'gym-shirt'],
+    'ttm-quarter-zip':          ['cargo-sweatpants',     'sport-pants',        'embroidery-tee'],
+    'compression-shorts-2in1':  ['quick-dry-shirt',      'gym-shirt',          'runner-vest'],
+    'embroidery-hoodie':        ['cargo-sweatpants',     'embroidery-tee',     'sport-pants'],
+    'embroidery-tee':           ['cargo-sweatpants',     'basketball-shorts',  'tl-winter-sweatpants'],
+    'autumn-hoodie':            ['cargo-sweatpants',     'sport-pants',        'embroidery-tee'],
+    'boxe-tee':                 ['basketball-shorts',    'womens-gym-shorts',  'sport-pants-light'],
+    'cargo-sweatpants':         ['everyday-shirt',       'embroidery-hoodie',  'autumn-hoodie'],
+    'drawstring-long-sleeve':   ['scrunch-leggings',     'sport-pants-light',  'compression-shorts-2in1'],
+    'scrunch-leggings':         ['womens-sport-bra',     'womens-gym-shorts',  'open-back-top'],
+    'irregular-bra':            ['vback-leggings',       'scrunch-leggings',   'buttersoft-leggings'],
+    'basketball-shorts':        ['boxe-tee',             'gym-shirt',          'embroidery-tee'],
+    'gym-shirt':                ['basketball-shorts',    'running-pants',      'compression-shorts-2in1'],
+    'runner-vest':              ['quick-dry-shirt',      'running-pants',      'compression-shorts-2in1'],
+    'running-pants':            ['runner-vest',          'quick-dry-shirt',    'gym-shirt'],
+    'open-back-top':            ['vback-leggings',       'scrunch-leggings',   'buttersoft-leggings'],
+    'oversized-sweater':        ['tl-winter-sweatpants', 'slim-fit-pants',     'cargo-sweatpants'],
+    'quarter-zip-long-sleeve':  ['cargo-sweatpants',     'sport-pants',        'slim-fit-pants'],
+    'quick-dry-shirt':          ['running-pants',        'gym-shirt',          'compression-shorts-2in1'],
+    'slim-sweatshirt':          ['slim-fit-pants',       'cargo-sweatpants',   'sport-pants'],
+    'slim-fit-pants':           ['slim-sweatshirt',      'embroidery-tee',     'oversized-sweater'],
+    'sport-pants':              ['ttm-quarter-zip',      'embroidery-tee',     'tl-rocket-shirt'],
+    'sport-pants-light':        ['drawstring-long-sleeve','gym-shirt',         'everyday-shirt'],
+    'tl-rocket-hoodie':         ['tl-rocket-shirt',      'sport-pants',        'cargo-sweatpants'],
+    'tl-rocket-shirt':          ['tl-rocket-hoodie',     'cargo-sweatpants',   'sport-pants'],
+    'womens-2in1-shorts':       ['womens-sport-bra',     'scrunch-leggings',   'open-back-top'],
+    'womens-gym-shorts':        ['womens-sport-bra',     'scrunch-leggings',   'open-back-top'],
+    'womens-sport-bra':         ['scrunch-leggings',     'vback-leggings',     'buttersoft-leggings'],
+    'vback-leggings':           ['womens-sport-bra',     'irregular-bra',      'open-back-top'],
+    'womens-hoodie':            ['buttersoft-leggings',  'scrunch-leggings',   'vback-leggings'],
+    'buttersoft-leggings':      ['womens-hoodie',        'womens-sport-bra',   'open-back-top']
   };
 
   // Maps product name to DB product ID
@@ -614,6 +687,79 @@
   Object.keys(PRODUCTS).forEach(id => {
     PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
   });
+
+  // ============ DYNAMIC HOMEPAGE GRID ============
+  // The homepage's #dropsGrid starts empty; this function fills it from
+  // PRODUCTS (which mirrors the products table). One source of truth —
+  // edits in Supabase flow to the homepage without touching HTML.
+  //
+  // Each card carries data-product-id and data-category, so the existing
+  // search/filter/wiring code can pick them up unchanged.
+  //
+  // After rendering, dispatches `tagline:homepage-ready` so the inline
+  // IIFE in index.html can (re)build the search index against the
+  // populated cards.
+  function renderHomepageGrid() {
+    const grid = document.getElementById('dropsGrid');
+    if (!grid) return;
+    if (grid.dataset.rendered === '1') return; // idempotent
+
+    const frag = document.createDocumentFragment();
+    for (const id of Object.keys(PRODUCTS)) {
+      const p = PRODUCTS[id];
+      const card = document.createElement('article');
+      card.className = 'product-card';
+      card.dataset.productId = id;
+      card.dataset.category = p.category || '';
+
+      // Optional tag pill (New / Featured / Limited / etc.)
+      if (p.tag) {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'product-tag gold';
+        tagEl.textContent = p.tag;
+        card.appendChild(tagEl);
+      }
+
+      // Image area — letter placeholder. autoWireProductCards probes for
+      // a real image (image_url first, then /images/products/{id}.jpg)
+      // and replaces this placeholder if it loads.
+      const illu = document.createElement('div');
+      illu.className = 'product-illu';
+      illu.style.cssText = 'display:grid;place-items:center';
+      const letter = document.createElement('div');
+      letter.style.cssText = 'font-family:"Space Grotesk",sans-serif;font-size:clamp(48px,9vw,84px);font-weight:600;color:rgba(255,255,250,.06);letter-spacing:-0.04em;line-height:1';
+      letter.textContent = p.name.charAt(0).toUpperCase();
+      illu.appendChild(letter);
+      card.appendChild(illu);
+
+      // Meta — name + sub (color or category) + price
+      const meta = document.createElement('div');
+      meta.className = 'product-meta';
+      const namesDiv = document.createElement('div');
+      const nameEl = document.createElement('span');
+      nameEl.className = 'name';
+      nameEl.textContent = p.name;
+      const subEl = document.createElement('span');
+      subEl.className = 'name-sub';
+      subEl.textContent = p.color || p.category || '';
+      namesDiv.appendChild(nameEl);
+      namesDiv.appendChild(subEl);
+      const priceEl = document.createElement('span');
+      priceEl.className = 'price';
+      priceEl.textContent = '$' + p.price;
+      meta.appendChild(namesDiv);
+      meta.appendChild(priceEl);
+      card.appendChild(meta);
+
+      frag.appendChild(card);
+    }
+    grid.appendChild(frag);
+    grid.dataset.rendered = '1';
+
+    // Notify the inline IIFE to build / rebuild any dependent indices
+    // (search, category filter, etc.).
+    window.dispatchEvent(new CustomEvent('tagline:homepage-ready'));
+  }
 
   // ============ ADD TO CART BUTTONS (data-add-to-cart) ============
   // For any inline "Add to cart" button that exists in HTML
@@ -754,10 +900,10 @@
       card.appendChild(imgWrap);
 
       // Try real image — uses session-cached probe
-      probeProductImage(id, () => {
+      probeProductImage(id, (url) => {
         imgWrap.textContent = '';
         const img = document.createElement('img');
-        img.src = `/images/products/${id}.jpg`;
+        img.src = url;
         img.alt = p.name;
         img.loading = 'lazy';
         imgWrap.appendChild(img);
@@ -814,10 +960,10 @@
       const oldImg = imageEl.querySelector('img.qv-real-image');
       if (oldImg) oldImg.remove();
       els.imageLetter.style.display = '';
-      probeProductImage(productId, () => {
+      probeProductImage(productId, (url) => {
         els.imageLetter.style.display = 'none';
         const img = document.createElement('img');
-        img.src = `/images/products/${productId}.jpg`;
+        img.src = url;
         img.alt = product.name;
         img.className = 'qv-real-image';
         img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0';
@@ -1143,10 +1289,15 @@
     const wishlistItems = Wishlist.get();
     document.querySelectorAll('.product-card').forEach(card => {
       if (card.dataset.wired) return;
-      const nameEl = card.querySelector('.product-meta .name');
-      if (!nameEl) return;
-      const productId = PRODUCT_NAME_TO_ID[nameEl.textContent.trim()];
-      if (!productId) return;
+      // Prefer data-product-id (set by renderHomepageGrid). Fall back to
+      // looking up by displayed name for any legacy hardcoded cards.
+      let productId = card.dataset.productId;
+      if (!productId) {
+        const nameEl = card.querySelector('.product-meta .name');
+        if (!nameEl) return;
+        productId = PRODUCT_NAME_TO_ID[nameEl.textContent.trim()];
+        if (!productId) return;
+      }
       card.dataset.wired = '1';
       card.dataset.productId = productId;
 
@@ -1158,16 +1309,16 @@
       }
 
       // ============ REAL IMAGE SUPPORT ============
-      // Try to load /images/products/{id}.jpg. probeProductImage caches
-      // results in sessionStorage so each card is probed at most once
-      // per session — vs 24 probes on every page load before.
+      // probeProductImage resolves PRODUCTS[id].image_url first, falling
+      // back to the local /images/products/{id}.jpg path. Caches the
+      // result per-session so each card is probed at most once.
       const illu = card.querySelector('.product-illu');
       if (illu) {
         const productName = nameEl.textContent.trim();
-        probeProductImage(productId, () => {
+        probeProductImage(productId, (url) => {
           while (illu.firstChild) illu.removeChild(illu.firstChild);
           const img = document.createElement('img');
-          img.src = `/images/products/${productId}.jpg`;
+          img.src = url;
           img.alt = productName;
           img.loading = 'lazy';
           img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
@@ -1441,10 +1592,10 @@
       });
       // Swap in real product images via the shared cache
       const imageEl = card.querySelector('.pcm-image');
-      probeProductImage(id, () => {
+      probeProductImage(id, (url) => {
         imageEl.textContent = '';
         const img = document.createElement('img');
-        img.src = `/images/products/${id}.jpg`;
+        img.src = url;
         img.alt = PRODUCTS[id]?.name || '';
         img.loading = 'lazy';
         img.style.cssText = 'width:100%;height:100%;object-fit:cover';
@@ -1522,6 +1673,9 @@
     safeInit('updateAuthUI', () => Auth.updateUI());
     safeInit('newsletterForms', () => wireNewsletterForms());
     safeInit('addToCart', () => wireAddToCart());
+    // Render the homepage grid BEFORE wiring product cards so the wire
+    // step picks up the freshly-added cards.
+    safeInit('renderHomepage', () => renderHomepageGrid());
     safeInit('productCards', () => autoWireProductCards());
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
     safeInit('jsonLdProducts', () => injectProductJsonLd());

@@ -112,6 +112,145 @@
   }
   .auth-prompt p{color:var(--ink-soft);margin-bottom:24px;font-size:14px}
 
+  /* ============ PRODUCT EDITOR ============ */
+  .pe-row{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    margin-bottom:8px;
+    transition:border-color .2s;
+  }
+  .pe-row:hover{ border-color:var(--line-strong); }
+  .pe-summary{
+    display:grid;
+    grid-template-columns:60px 1fr auto auto auto;
+    gap:14px;
+    align-items:center;
+    padding:12px 16px;
+    cursor:pointer;
+  }
+  @media (max-width:640px){
+    .pe-summary{
+      grid-template-columns:48px 1fr auto;
+      gap:10px;
+      padding:10px 12px;
+    }
+    .pe-stock-cell, .pe-active-cell{ display:none; }
+  }
+  .pe-thumb{
+    width:60px; height:60px;
+    background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    color:rgba(255,255,250,.18);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px; font-weight:600;
+    overflow:hidden;
+  }
+  @media (max-width:640px){ .pe-thumb{ width:48px; height:48px; font-size:18px; } }
+  .pe-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .pe-name{ font-size:13px; font-weight:500; color:var(--ink); margin-bottom:2px; }
+  .pe-meta{ font-size:11px; color:var(--muted); letter-spacing:.04em; }
+  .pe-price{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px; font-weight:600;
+    color:var(--gold-soft);
+  }
+  .pe-stock-cell{
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:right;
+    min-width:50px;
+  }
+  .pe-active-cell{ font-size:11px; }
+  .pe-active-cell .pill-yes{
+    color:var(--gold-soft);
+    border:1px solid rgba(184,137,61,.4);
+    padding:3px 10px;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+  }
+  .pe-active-cell .pill-no{
+    color:var(--muted);
+    border:1px solid var(--line-strong);
+    padding:3px 10px;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+  }
+
+  .pe-form{
+    display:none;
+    padding:18px;
+    border-top:1px solid var(--line);
+    background:rgba(0,0,0,.15);
+  }
+  .pe-row.editing .pe-form{ display:block; }
+  .pe-form .pe-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  @media (max-width:640px){ .pe-form .pe-grid{ grid-template-columns:1fr; } }
+  .pe-form label{
+    display:block;
+    font-size:10px; font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .pe-form input, .pe-form select, .pe-form textarea{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    color:var(--ink);
+    padding:10px 12px;
+    font-family:inherit;
+    font-size:13px;
+    outline:none;
+  }
+  .pe-form input:focus, .pe-form select:focus, .pe-form textarea:focus{
+    border-color:var(--gold);
+  }
+  .pe-form textarea{ resize:vertical; min-height:60px; line-height:1.5; }
+  .pe-actions{
+    display:flex; justify-content:flex-end; gap:8px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .pe-btn{
+    background:transparent;
+    border:1px solid var(--line-strong);
+    color:var(--ink-soft);
+    font-family:inherit;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:8px 16px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .pe-btn:hover{ background:rgba(255,255,250,.04); color:var(--ink); border-color:var(--ink-soft); }
+  .pe-btn.primary{
+    background:var(--ink);
+    color:var(--bg);
+    border-color:var(--ink);
+  }
+  .pe-btn.primary:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg); }
+  .pe-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .pe-help{ font-size:11px; color:var(--muted); margin-top:4px; line-height:1.5; }
+  .pe-status{
+    font-size:11px;
+    color:var(--gold-soft);
+    margin-top:8px;
+    min-height:14px;
+  }
+  .pe-status.error{ color:var(--error); }
+
   /* Export buttons row above the data tables */
   .table-actions{
     display:flex;justify-content:flex-end;gap:8px;
@@ -242,6 +381,7 @@
 
       <div class="admin-tabs">
         <button class="admin-tab ${activeView==='orders' ? 'active' : ''}" data-view="orders">Orders</button>
+        <button class="admin-tab ${activeView==='products' ? 'active' : ''}" data-view="products">Products</button>
         <button class="admin-tab ${activeView==='subscribers' ? 'active' : ''}" data-view="subscribers">Subscribers</button>
         <button class="admin-tab ${activeView==='messages' ? 'active' : ''}" data-view="messages">Messages</button>
       </div>
@@ -322,6 +462,11 @@
           </table>
         </div>
       `;
+    }
+
+    if (activeView === 'products') {
+      renderProductsView(result.products || [], target);
+      return;
     }
 
     if (activeView === 'messages') {
@@ -434,6 +579,254 @@
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ============ PRODUCT EDITOR VIEW ============
+  // Lists all products with thumbnail + name + price + stock + active
+  // status. Click any row to expand an edit form. Save sends a PATCH
+  // (action=update_product) to /api/admin and refreshes that one row.
+  function renderProductsView(products, target) {
+    if (!products.length) {
+      target.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)">No products yet.</div>';
+      return;
+    }
+    // Group by category for visual organization
+    const byCat = {};
+    products.forEach(p => {
+      const cat = p.category || 'Uncategorized';
+      if (!byCat[cat]) byCat[cat] = [];
+      byCat[cat].push(p);
+    });
+    // Build HTML
+    target.innerHTML = `
+      <div class="table-actions" style="margin-bottom:18px">
+        <span style="font-size:12px;color:var(--muted);align-self:center">${products.length} product${products.length === 1 ? '' : 's'}. Click any row to edit.</span>
+      </div>
+      <div id="peList"></div>
+    `;
+    const list = document.getElementById('peList');
+    // Render each category as a header + its rows
+    Object.keys(byCat).sort().forEach(cat => {
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin:18px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)';
+      header.textContent = cat;
+      list.appendChild(header);
+      byCat[cat].forEach(p => list.appendChild(buildProductRow(p)));
+    });
+  }
+
+  function buildProductRow(p) {
+    const row = document.createElement('div');
+    row.className = 'pe-row';
+    row.dataset.productId = p.id;
+
+    // Summary (clickable to expand)
+    const summary = document.createElement('div');
+    summary.className = 'pe-summary';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'pe-thumb';
+    if (p.image_url) {
+      const img = document.createElement('img');
+      img.src = p.image_url;
+      img.alt = p.name || '';
+      img.loading = 'lazy';
+      img.onerror = () => { thumb.removeChild(img); thumb.textContent = (p.name||'').charAt(0).toUpperCase(); };
+      thumb.appendChild(img);
+    } else {
+      thumb.textContent = (p.name||'').charAt(0).toUpperCase();
+    }
+
+    const info = document.createElement('div');
+    const nameEl = document.createElement('div');
+    nameEl.className = 'pe-name';
+    nameEl.textContent = p.name;
+    const metaEl = document.createElement('div');
+    metaEl.className = 'pe-meta';
+    metaEl.textContent = (p.color || '') + (p.tag ? ' · ' + p.tag : '');
+    info.appendChild(nameEl);
+    info.appendChild(metaEl);
+
+    const price = document.createElement('div');
+    price.className = 'pe-price';
+    price.textContent = '$' + (p.price_cents / 100).toFixed(2);
+
+    const stock = document.createElement('div');
+    stock.className = 'pe-stock-cell';
+    stock.textContent = p.stock + ' in stock';
+
+    const active = document.createElement('div');
+    active.className = 'pe-active-cell';
+    const pill = document.createElement('span');
+    pill.className = p.active ? 'pill-yes' : 'pill-no';
+    pill.textContent = p.active ? 'Live' : 'Hidden';
+    active.appendChild(pill);
+
+    summary.appendChild(thumb);
+    summary.appendChild(info);
+    summary.appendChild(price);
+    summary.appendChild(stock);
+    summary.appendChild(active);
+    row.appendChild(summary);
+
+    // Edit form (lazy — built on first expand)
+    const form = document.createElement('div');
+    form.className = 'pe-form';
+    row.appendChild(form);
+
+    summary.addEventListener('click', () => {
+      const opening = !row.classList.contains('editing');
+      if (opening && !form.dataset.built) {
+        buildEditForm(form, p);
+        form.dataset.built = '1';
+      }
+      row.classList.toggle('editing');
+    });
+
+    return row;
+  }
+
+  function buildEditForm(form, p) {
+    // Use innerHTML once to construct the form's structure with placeholder
+    // values. Field values are set via .value (XSS-safe even with weird
+    // strings) right after.
+    form.innerHTML = `
+      <div class="pe-grid">
+        <div>
+          <label for="pe-name-${p.id}">Name</label>
+          <input id="pe-name-${p.id}" type="text" maxlength="200" />
+        </div>
+        <div>
+          <label for="pe-color-${p.id}">Color</label>
+          <input id="pe-color-${p.id}" type="text" maxlength="50" placeholder="(none)" />
+        </div>
+      </div>
+      <div class="pe-grid">
+        <div>
+          <label for="pe-price-${p.id}">Price ($)</label>
+          <input id="pe-price-${p.id}" type="number" min="0" step="0.01" />
+        </div>
+        <div>
+          <label for="pe-stock-${p.id}">Stock</label>
+          <input id="pe-stock-${p.id}" type="number" min="0" step="1" />
+        </div>
+      </div>
+      <div class="pe-grid">
+        <div>
+          <label for="pe-cat-${p.id}">Category</label>
+          <select id="pe-cat-${p.id}">
+            <option>Tops</option>
+            <option>Bottoms</option>
+            <option>Outerwear</option>
+            <option>Footwear</option>
+            <option>Accessories</option>
+            <option>Uncategorized</option>
+          </select>
+        </div>
+        <div>
+          <label for="pe-tag-${p.id}">Tag</label>
+          <select id="pe-tag-${p.id}">
+            <option value="">(none)</option>
+            <option>New</option>
+            <option>Featured</option>
+            <option>Limited</option>
+            <option>Restock</option>
+            <option>Sold Out</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="pe-image-${p.id}">Image URL</label>
+        <input id="pe-image-${p.id}" type="url" maxlength="1000" placeholder="https://..." />
+        <div class="pe-help">Public http(s) URL of the product image. Use width=1000 on Shopify URLs for retina-sharp display.</div>
+      </div>
+      <div style="margin-top:14px">
+        <label for="pe-desc-${p.id}">Description</label>
+        <textarea id="pe-desc-${p.id}" maxlength="2000" rows="3"></textarea>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
+        <label style="margin-bottom:0;letter-spacing:0;text-transform:none;font-size:13px;color:var(--ink)">
+          <input id="pe-active-${p.id}" type="checkbox" style="width:auto;margin-right:8px;vertical-align:middle"/>
+          Live on the site
+        </label>
+      </div>
+      <div class="pe-actions">
+        <button type="button" class="pe-btn" data-action="cancel">Cancel</button>
+        <button type="button" class="pe-btn primary" data-action="save">Save changes</button>
+      </div>
+      <div class="pe-status" data-status></div>
+    `;
+
+    // Populate field values (XSS-safe via .value)
+    form.querySelector('#pe-name-' + p.id).value = p.name || '';
+    form.querySelector('#pe-color-' + p.id).value = p.color || '';
+    form.querySelector('#pe-price-' + p.id).value = (p.price_cents / 100).toFixed(2);
+    form.querySelector('#pe-stock-' + p.id).value = p.stock;
+    form.querySelector('#pe-cat-' + p.id).value = p.category || 'Uncategorized';
+    form.querySelector('#pe-tag-' + p.id).value = p.tag || '';
+    form.querySelector('#pe-image-' + p.id).value = p.image_url || '';
+    form.querySelector('#pe-desc-' + p.id).value = p.description || '';
+    form.querySelector('#pe-active-' + p.id).checked = !!p.active;
+
+    // Wire actions
+    form.querySelector('[data-action="cancel"]').addEventListener('click', () => {
+      const row = form.closest('.pe-row');
+      row.classList.remove('editing');
+    });
+    form.querySelector('[data-action="save"]').addEventListener('click', () => {
+      saveProductEdit(form, p);
+    });
+  }
+
+  async function saveProductEdit(form, p) {
+    const status = form.querySelector('[data-status]');
+    status.classList.remove('error');
+    status.textContent = 'Saving…';
+    const saveBtn = form.querySelector('[data-action="save"]');
+    saveBtn.disabled = true;
+
+    // Read + validate
+    const v = (id) => form.querySelector('#pe-' + id + '-' + p.id);
+    const name = v('name').value.trim();
+    const color = v('color').value.trim();
+    const priceDollars = parseFloat(v('price').value);
+    const stock = parseInt(v('stock').value, 10);
+    const category = v('cat').value;
+    const tag = v('tag').value;
+    const image_url = v('image').value.trim();
+    const description = v('desc').value;
+    const active = v('active').checked;
+
+    if (!name) { status.textContent = 'Name is required'; status.classList.add('error'); saveBtn.disabled = false; return; }
+    if (!Number.isFinite(priceDollars) || priceDollars < 0) { status.textContent = 'Invalid price'; status.classList.add('error'); saveBtn.disabled = false; return; }
+    if (!Number.isInteger(stock) || stock < 0) { status.textContent = 'Invalid stock'; status.classList.add('error'); saveBtn.disabled = false; return; }
+    if (image_url && !/^https?:\/\//i.test(image_url)) { status.textContent = 'Image URL must start with http:// or https://'; status.classList.add('error'); saveBtn.disabled = false; return; }
+
+    const result = await adminPost('/api/admin', {
+      action: 'update_product',
+      product_id: p.id,
+      name,
+      color: color || null,
+      price_cents: Math.round(priceDollars * 100),
+      stock,
+      category,
+      tag: tag || null,
+      image_url: image_url || null,
+      description: description || null,
+      active
+    });
+
+    if (!result.ok) {
+      status.textContent = result.error || 'Could not save.';
+      status.classList.add('error');
+      saveBtn.disabled = false;
+      return;
+    }
+    status.textContent = 'Saved ✓';
+    saveBtn.disabled = false;
+    // Refresh the whole products view after a brief delay so the user
+    // sees the success state, then sees their change reflected.
+    setTimeout(() => loadView(), 800);
   }
 
   logoutBtn.addEventListener('click', () => {

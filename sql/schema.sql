@@ -269,3 +269,44 @@ on conflict (id) do update set
   image_url   = excluded.image_url,
   active      = true,
   updated_at  = now();
+
+-- ============================================================
+-- IMAGE STORAGE — Supabase Storage bucket for admin-uploaded photos
+-- ============================================================
+-- The /api/admin-upload endpoint writes here when an admin crops + uploads
+-- a new product photo. Bucket is public-read (so the homepage can load
+-- images without auth). Writes are gated by the service role key in the
+-- API endpoint, NOT by RLS policies on this table.
+--
+-- If the insert below fails with "permission denied for schema storage",
+-- create the bucket manually: Supabase Dashboard → Storage → New bucket
+-- name "product-images", make it Public, Save. Then skip this block.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'product-images',
+  'product-images',
+  true,
+  3145728, -- 3 MB per file
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+-- Public read policy on the bucket (so homepage <img> loads work).
+-- Wrapped in a guard so re-running this script doesn't error if the
+-- policy already exists.
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'product_images_public_read'
+  ) then
+    create policy product_images_public_read
+      on storage.objects for select
+      using (bucket_id = 'product-images');
+  end if;
+end$$;

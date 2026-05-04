@@ -293,6 +293,134 @@
     border-color:var(--ink-soft);
   }
   .export-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ============ PHOTO UPLOAD + CROP ============ */
+  .pe-upload-row{
+    display:flex; gap:8px; align-items:center;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+  .pe-upload-btn{
+    background:rgba(184,137,61,.1);
+    border:1px solid rgba(184,137,61,.4);
+    color:var(--gold-soft);
+    font-family:inherit;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    cursor:pointer;
+    transition:all .2s;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .pe-upload-btn:hover{ background:rgba(184,137,61,.18); }
+  .pe-upload-btn:disabled{ opacity:.5; cursor:wait; }
+  .pe-upload-btn svg{ width:14px; height:14px; }
+  .pe-upload-status{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  /* Crop modal — fixed full-screen overlay with the image + crop frame */
+  .crop-modal{
+    position:fixed; inset:0;
+    background:rgba(8,8,10,.94);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+    z-index:9999;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:24px;
+    padding-top:calc(24px + env(safe-area-inset-top));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    overscroll-behavior:contain;
+    touch-action:none;
+  }
+  .crop-modal[hidden]{ display:none; }
+  .crop-stage{
+    position:relative;
+    max-width:min(90vw, 600px);
+    max-height:60vh;
+    background:#0d0c0a;
+    border:1px solid var(--line);
+    user-select:none;
+    -webkit-user-select:none;
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #cropImage{
+    display:block;
+    max-width:100%;
+    max-height:60vh;
+    width:auto; height:auto;
+    pointer-events:none;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+  /* The frame is the SQUARE the user is keeping. Everything outside is
+     the discarded area, dimmed via four shaded overlays. */
+  .crop-frame{
+    position:absolute;
+    border:2px solid var(--gold);
+    box-shadow:0 0 0 9999px rgba(8,8,10,.6);
+    cursor:grab;
+    touch-action:none;
+  }
+  .crop-frame:active{ cursor:grabbing; }
+  /* Subtle rule-of-thirds grid lines for visual aid */
+  .crop-frame::before, .crop-frame::after{
+    content:'';
+    position:absolute; inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(to right, transparent 33.33%, rgba(255,255,255,.25) 33.33%, rgba(255,255,255,.25) 33.6%, transparent 33.6%, transparent 66.66%, rgba(255,255,255,.25) 66.66%, rgba(255,255,255,.25) 66.93%, transparent 66.93%);
+  }
+  .crop-frame::after{
+    background:
+      linear-gradient(to bottom, transparent 33.33%, rgba(255,255,255,.25) 33.33%, rgba(255,255,255,.25) 33.6%, transparent 33.6%, transparent 66.66%, rgba(255,255,255,.25) 66.66%, rgba(255,255,255,.25) 66.93%, transparent 66.93%);
+  }
+  .crop-controls{
+    margin-top:24px;
+    display:flex; flex-direction:column;
+    align-items:center; gap:14px;
+    max-width:min(90vw, 600px);
+    width:100%;
+  }
+  .crop-hint{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0;
+    text-align:center;
+    line-height:1.4;
+  }
+  .crop-buttons{
+    display:flex; gap:10px;
+    width:100%;
+    max-width:400px;
+  }
+  .crop-btn{
+    flex:1;
+    background:transparent;
+    border:1px solid var(--line-strong);
+    color:var(--ink-soft);
+    font-family:inherit;
+    font-size:13px; font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    padding:14px 18px;
+    cursor:pointer;
+    transition:all .2s;
+    min-height:48px;
+  }
+  .crop-btn:hover{ background:rgba(255,255,250,.04); color:var(--ink); }
+  .crop-btn.primary{
+    background:var(--gold);
+    color:#08080a;
+    border-color:var(--gold);
+  }
+  .crop-btn.primary:hover{ background:var(--gold-soft); border-color:var(--gold-soft); }
+  .crop-btn:disabled{ opacity:.5; cursor:wait; }
 </style>
 </head>
 <body>
@@ -754,9 +882,17 @@
         </div>
       </div>
       <div>
-        <label for="pe-image-${p.id}">Image URL</label>
+        <label for="pe-image-${p.id}">Product photo</label>
         <input id="pe-image-${p.id}" type="url" maxlength="1000" placeholder="https://..." />
-        <div class="pe-help">Public http(s) URL. Use <code style="color:var(--ink-soft)">width=1000</code> on Shopify URLs for retina-sharp display.</div>
+        <div class="pe-upload-row">
+          <button type="button" class="pe-upload-btn" data-upload-trigger="${p.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
+            Upload + crop photo
+          </button>
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" id="pe-file-${p.id}" hidden />
+          <span class="pe-upload-status" id="pe-upstatus-${p.id}"></span>
+        </div>
+        <div class="pe-help">Take a photo or pick from gallery. We'll crop it to a square so all product cards line up.</div>
         <div id="pe-imgprev-${p.id}" class="pe-imgprev" hidden></div>
       </div>
       <div style="margin-top:14px">
@@ -923,6 +1059,228 @@
   }
 
   boot();
+})();
+</script>
+
+<!-- ============ PHOTO UPLOAD + CROP ============ -->
+<!-- Modal lives at body level so it can fully overlay the admin UI.
+     One modal, reused for every product upload (state captured per-open). -->
+<div id="cropModal" class="crop-modal" hidden role="dialog" aria-modal="true" aria-label="Crop photo">
+  <div class="crop-stage" id="cropStage">
+    <img id="cropImage" alt="" />
+    <div class="crop-frame" id="cropFrame"></div>
+  </div>
+  <div class="crop-controls">
+    <p class="crop-hint">Drag the gold box to choose what shows on the product card.<br/>The result will be square — fits every layout.</p>
+    <div class="crop-buttons">
+      <button type="button" class="crop-btn" id="cropCancel">Cancel</button>
+      <button type="button" class="crop-btn primary" id="cropConfirm">Use this photo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // Hijack the .pe-upload-btn click → open file picker; on file selected,
+  // open the crop modal; on confirm, POST cropped image to /api/admin-upload
+  // and stuff the resulting URL back into the matching pe-image-<id> input.
+
+  const modal       = document.getElementById('cropModal');
+  const cropImage   = document.getElementById('cropImage');
+  const cropFrame   = document.getElementById('cropFrame');
+  const cropStage   = document.getElementById('cropStage');
+  const cropCancel  = document.getElementById('cropCancel');
+  const cropConfirm = document.getElementById('cropConfirm');
+
+  let activeProductId = null;       // which product row this upload is for
+  let activeStatusEl = null;        // status text element near the upload button
+  let activeImageInput = null;      // the pe-image-<id> input to fill on success
+
+  // Drag state for the crop frame
+  let drag = null;
+
+  // Find the closest admin key from sessionStorage (set on login).
+  function getAdminKey() {
+    try { return sessionStorage.getItem('tagline_admin_key') || ''; } catch { return ''; }
+  }
+
+  // Delegate clicks: any .pe-upload-btn → trigger the matching <input type="file">
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-upload-trigger]');
+    if (!btn) return;
+    const productId = btn.dataset.uploadTrigger;
+    const fileInput = document.getElementById('pe-file-' + productId);
+    if (!fileInput) return;
+    activeProductId  = productId;
+    activeStatusEl   = document.getElementById('pe-upstatus-' + productId);
+    activeImageInput = document.getElementById('pe-image-' + productId);
+    fileInput.value = '';
+    fileInput.click();
+  });
+
+  // Delegate file selection: any pe-file-<id> input change → open crop modal
+  document.addEventListener('change', (e) => {
+    const input = e.target;
+    if (!input.matches || !input.matches('input[type="file"][id^="pe-file-"]')) return;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!/^image\//i.test(file.type)) {
+      setStatus('Pick an image file.', true);
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      setStatus('Image too large — keep under 12 MB.', true);
+      return;
+    }
+    setStatus('Loading…', false);
+    const reader = new FileReader();
+    reader.onload = () => openCropModal(reader.result);
+    reader.onerror = () => setStatus('Could not read that file.', true);
+    reader.readAsDataURL(file);
+  });
+
+  function setStatus(msg, isError) {
+    if (!activeStatusEl) return;
+    activeStatusEl.textContent = msg;
+    activeStatusEl.style.color = isError ? 'var(--error)' : 'var(--ink-soft)';
+  }
+
+  function openCropModal(dataUrl) {
+    cropImage.onload = () => {
+      // Fit frame: 70% of the smaller image dimension, centered
+      requestAnimationFrame(() => {
+        const stageRect = cropStage.getBoundingClientRect();
+        const imgRect   = cropImage.getBoundingClientRect();
+        const min = Math.min(imgRect.width, imgRect.height);
+        const size = Math.floor(min * 0.7);
+        cropFrame.style.width  = size + 'px';
+        cropFrame.style.height = size + 'px';
+        // Center within stage (the image is centered in stage by flex)
+        const offsetLeft = (stageRect.width  - size) / 2;
+        const offsetTop  = (stageRect.height - size) / 2;
+        cropFrame.style.left = offsetLeft + 'px';
+        cropFrame.style.top  = offsetTop  + 'px';
+      });
+      modal.removeAttribute('hidden');
+      setStatus('', false);
+    };
+    cropImage.onerror = () => {
+      setStatus('That format is not supported in this browser. Try JPEG or PNG.', true);
+    };
+    cropImage.src = dataUrl;
+  }
+
+  function closeCropModal() {
+    modal.setAttribute('hidden', '');
+    cropImage.removeAttribute('src');
+    cropConfirm.disabled = false;
+    cropConfirm.textContent = 'Use this photo';
+  }
+
+  cropCancel.addEventListener('click', () => {
+    closeCropModal();
+    setStatus('', false);
+  });
+
+  // ===== DRAG TO REPOSITION CROP FRAME =====
+  cropFrame.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const stageRect = cropStage.getBoundingClientRect();
+    const imgRect   = cropImage.getBoundingClientRect();
+    drag = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origLeft: parseFloat(cropFrame.style.left) || 0,
+      origTop:  parseFloat(cropFrame.style.top)  || 0,
+      // Constrain frame to stay within the IMAGE bounds (not the stage)
+      minLeft: imgRect.left - stageRect.left,
+      minTop:  imgRect.top  - stageRect.top,
+      maxLeft: imgRect.left - stageRect.left + imgRect.width  - cropFrame.offsetWidth,
+      maxTop:  imgRect.top  - stageRect.top  + imgRect.height - cropFrame.offsetHeight
+    };
+    cropFrame.setPointerCapture(e.pointerId);
+  });
+
+  cropFrame.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    let nl = drag.origLeft + (e.clientX - drag.startX);
+    let nt = drag.origTop  + (e.clientY - drag.startY);
+    nl = Math.max(drag.minLeft, Math.min(nl, drag.maxLeft));
+    nt = Math.max(drag.minTop,  Math.min(nt, drag.maxTop));
+    cropFrame.style.left = nl + 'px';
+    cropFrame.style.top  = nt + 'px';
+  });
+
+  function endDrag() { drag = null; }
+  cropFrame.addEventListener('pointerup', endDrag);
+  cropFrame.addEventListener('pointercancel', endDrag);
+
+  // ===== CONFIRM: CROP TO 1000x1000 → POST → FILL URL =====
+  cropConfirm.addEventListener('click', async () => {
+    cropConfirm.disabled = true;
+    cropConfirm.textContent = 'Uploading…';
+
+    try {
+      // Compute crop coords in original-image pixel space
+      const imgBox   = cropImage.getBoundingClientRect();
+      const frameBox = cropFrame.getBoundingClientRect();
+      const scaleX = cropImage.naturalWidth  / cropImage.offsetWidth;
+      const scaleY = cropImage.naturalHeight / cropImage.offsetHeight;
+      const sx = Math.max(0, (frameBox.left - imgBox.left) * scaleX);
+      const sy = Math.max(0, (frameBox.top  - imgBox.top)  * scaleY);
+      const sw = frameBox.width  * scaleX;
+      const sh = frameBox.height * scaleY;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1000;
+      canvas.height = 1000;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      // Match-color background in case the source has alpha
+      ctx.fillStyle = '#f3eee4';
+      ctx.fillRect(0, 0, 1000, 1000);
+      ctx.drawImage(cropImage, sx, sy, sw, sh, 0, 0, 1000, 1000);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      const res = await fetch('/api/admin-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Key': getAdminKey()
+        },
+        body: JSON.stringify({
+          product_id: activeProductId,
+          data_url: dataUrl
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || ('Upload failed (' + res.status + ')'));
+      }
+      // Fill the URL input — also fire 'input' so any preview updates
+      if (activeImageInput) {
+        activeImageInput.value = json.url;
+        activeImageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      setStatus('Photo uploaded. Click "Save changes" to publish.', false);
+      closeCropModal();
+    } catch (err) {
+      console.error('[admin upload]', err);
+      cropConfirm.disabled = false;
+      cropConfirm.textContent = 'Use this photo';
+      setStatus(err.message || 'Upload failed.', true);
+    }
+  });
+
+  // Esc to cancel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hasAttribute('hidden')) {
+      closeCropModal();
+    }
+  });
 })();
 </script>
 

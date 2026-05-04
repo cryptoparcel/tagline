@@ -993,15 +993,28 @@
       el.addEventListener('pointerup', finish);
       el.addEventListener('pointercancel', finish);
     });
+    // NOTE: stage click-to-deselect listener is wired ONCE at init time
+    // (see wireStageDeselect below). Putting it here would re-attach on
+    // every render() and slowly leak handlers — was a bug.
+  }
 
-    // Click empty preview area to deselect
+  // Wired once at boot. Clicking the empty preview area (the stage,
+  // the product SVG, or the empty product container) deselects the
+  // currently-selected layer. Layer pointerdown handlers stop
+  // propagation, so this never fires when clicking on a layer.
+  function wireStageDeselect() {
     const stage = document.getElementById('previewStage');
+    if (!stage) return;
     stage.addEventListener('pointerdown', (e) => {
-      if (e.target === stage || e.target.tagName === 'svg' || e.target.tagName === 'path' || e.target.tagName === 'rect' || e.target.id === 'previewProduct') {
-        if (state.selectedLayerId !== null) {
-          state.selectedLayerId = null;
-          render();
-        }
+      const tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+      const isStageSurface =
+        e.target === stage ||
+        e.target.id === 'previewProduct' ||
+        tag === 'svg' || tag === 'path' || tag === 'rect' ||
+        tag === 'defs' || tag === 'lineargradient' || tag === 'stop';
+      if (isStageSurface && state.selectedLayerId !== null) {
+        state.selectedLayerId = null;
+        render();
       }
     });
   }
@@ -1384,6 +1397,7 @@
   }
 
   // ===== INIT =====
+  wireStageDeselect();
   render();
   // Re-sync text font sizes if window resizes (preview width may change)
   window.addEventListener('resize', () => {

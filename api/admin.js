@@ -1,16 +1,15 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import { sendEmail, orderShippedHtml } from '../lib/email.js';
 import {
-  requireMethod, getBody, ok, unauthorized, badRequest, serverError, isAdmin, requireSameOrigin
+  requireMethod, getBody, ok, badRequest, serverError, requireAdmin, requireSameOrigin
 } from '../lib/util.js';
 
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'GET', 'POST')) return;
   if (!requireSameOrigin(req, res)) return;
-
-  if (!isAdmin(req)) {
-    return unauthorized(res, 'Admin access required.');
-  }
+  // Accept either ADMIN_API_KEY (legacy) or a signed-in user with
+  // profiles.is_admin = true.
+  if (!await requireAdmin(req, res)) return;
 
   const supabase = getSupabaseAdmin();
 

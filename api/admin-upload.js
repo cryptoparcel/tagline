@@ -12,8 +12,8 @@
 
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import {
-  requireMethod, getBody, ok, badRequest, unauthorized,
-  serverError, isAdmin, requireSameOrigin
+  requireMethod, getBody, ok, badRequest,
+  serverError, requireAdmin, requireSameOrigin
 } from '../lib/util.js';
 
 const BUCKET = 'product-images';
@@ -22,7 +22,7 @@ const MAX_BYTES = 3 * 1024 * 1024; // 3MB after base64 decode (very generous)
 export default async function handler(req, res) {
   if (!requireMethod(req, res, 'POST')) return;
   if (!requireSameOrigin(req, res)) return;
-  if (!isAdmin(req)) return unauthorized(res, 'Admin access required.');
+  if (!await requireAdmin(req, res)) return;
 
   try {
     const body = getBody(req);

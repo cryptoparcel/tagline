@@ -448,10 +448,25 @@
   function setKey(k){ localStorage.setItem(KEY_STORAGE, k); }
   function clearKey(){ localStorage.removeItem(KEY_STORAGE); }
 
+  // Auth token may be in localStorage (Remember me) or sessionStorage (single
+  // session). tagline-app.js writes to whichever the user picked at sign-in.
+  function readToken() {
+    try {
+      const t = localStorage.getItem('tagline_token') || sessionStorage.getItem('tagline_token') || '';
+      return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t) ? t : '';
+    } catch { return ''; }
+  }
+
   // Admin fetch — wraps the raw response with consistent shape so callers
   // don't have to handle non-JSON responses, network errors, or 404s.
+  // Sends BOTH the X-Admin-Key (legacy) and the Authorization Bearer
+  // token (Supabase auth). Server accepts either as proof of admin.
   async function adminRequest(path, { method = 'GET', body } = {}) {
-    const headers = { 'X-Admin-Key': getKey() || '' };
+    const headers = {};
+    const key = getKey();
+    const token = readToken();
+    if (key) headers['X-Admin-Key'] = key;
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     if (body) headers['Content-Type'] = 'application/json';
     try {
       const res = await fetch(path, {
@@ -1037,12 +1052,28 @@
       return;
     }
 
+    // Auth precedence:
+    //  1. ADMIN_API_KEY in localStorage  → use the key
+    //  2. Signed-in user with profiles.is_admin = true  → use the JWT
+    //  3. Otherwise → show the key prompt
+    // We test (2) by hitting /api/admin?view=stats; if it returns 200
+    // with just the Authorization Bearer token (no key), the user is
+    // a verified admin and we skip the prompt.
     if (getKey()) {
       logoutBtn.style.display = '';
       renderDashboard();
-    } else {
-      renderAuth();
+      return;
     }
+    const token = readToken();
+    if (token) {
+      const probe = await adminRequest('/api/admin?view=stats');
+      if (probe.ok) {
+        logoutBtn.style.display = '';
+        renderDashboard();
+        return;
+      }
+    }
+    renderAuth();
   }
 
   function showPreviewMode() {
@@ -1101,9 +1132,19 @@
   // Drag state for the crop frame
   let drag = null;
 
-  // Find the closest admin key from sessionStorage (set on login).
+  // Read the admin key (localStorage) or the Supabase auth token (admins
+  // who are signed in as a profile with is_admin=true). Either auth path
+  // is accepted by /api/admin-upload.
   function getAdminKey() {
-    try { return sessionStorage.getItem('tagline_admin_key') || ''; } catch { return ''; }
+    try { return localStorage.getItem('tagline_admin_key') || ''; } catch { return ''; }
+  }
+  function getAuthToken() {
+    try {
+      // Token may be in either storage depending on the user's "Remember me"
+      // choice at sign-in. Match the JWT format defensively.
+      const t = localStorage.getItem('tagline_token') || sessionStorage.getItem('tagline_token') || '';
+      return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t) ? t : '';
+    } catch { return ''; }
   }
 
   // Delegate clicks: any .pe-upload-btn → trigger the matching <input type="file">
@@ -1245,12 +1286,14 @@
       ctx.drawImage(cropImage, sx, sy, sw, sh, 0, 0, 1000, 1000);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
+      const headers = { 'Content-Type': 'application/json' };
+      const key = getAdminKey();
+      const token = getAuthToken();
+      if (key) headers['X-Admin-Key'] = key;
+      if (token) headers['Authorization'] = 'Bearer ' + token;
       const res = await fetch('/api/admin-upload', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Key': getAdminKey()
-        },
+        headers,
         body: JSON.stringify({
           product_id: activeProductId,
           data_url: dataUrl

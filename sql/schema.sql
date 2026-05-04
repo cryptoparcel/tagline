@@ -40,20 +40,44 @@ create table if not exists profiles (
   full_name text,
   phone text,
   shipping_address jsonb, -- { line1, line2, city, state, zip, country }
+  is_admin boolean not null default false, -- per-user admin flag for /admin
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Auto-create profile when a new auth user signs up
+-- Add is_admin to existing deployments that pre-date this column
+alter table profiles add column if not exists is_admin boolean not null default false;
+create index if not exists idx_profiles_is_admin on profiles(is_admin) where is_admin = true;
+
+-- Bootstrap admin: grant is_admin to the founder email so they can sign in
+-- normally and have admin powers without entering an API key. Works whether
+-- the user has signed up yet or not:
+--   - If the auth.users row exists but no profile row (rare but possible),
+--     insert one with is_admin = true.
+--   - If the profile already exists, flip is_admin to true.
+--   - If the auth user doesn't exist yet, this is a no-op; the
+--     handle_new_user() trigger above will set is_admin at signup time.
+-- Add more emails to the IN list as the team grows.
+insert into profiles (id, email, is_admin)
+select u.id, u.email, true
+from auth.users u
+where lower(u.email) in ('monsterxzapp@yahoo.com')
+on conflict (id) do update set is_admin = true;
+
+-- Auto-create profile when a new auth user signs up.
+-- Bootstrap admin: emails listed below are granted is_admin = true on
+-- signup, so the founder gets admin without anyone touching the DB after.
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  is_bootstrap_admin boolean := lower(new.email) in ('monsterxzapp@yahoo.com');
 begin
-  insert into public.profiles (id, email, full_name)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name');
+  insert into public.profiles (id, email, full_name, is_admin)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name', is_bootstrap_admin);
   return new;
 end;
 $$;

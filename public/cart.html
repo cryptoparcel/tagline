@@ -39,8 +39,12 @@
     align-items:center;
   }
   @media (max-width:520px){
-    .cart-item{grid-template-columns:64px 1fr;gap:14px}
+    .cart-item{grid-template-columns:64px 1fr;gap:14px;padding:16px}
     .cart-item-price{grid-column:2;text-align:right;margin-top:8px}
+    /* Bigger tap targets for touch screens */
+    .qty-btn{width:40px;height:40px;font-size:18px}
+    .qty-display{width:42px;font-size:14px}
+    .remove-btn{padding:10px 0;font-size:11px}
   }
   .cart-item-thumb{
     width:80px;height:80px;

@@ -23,7 +23,16 @@
     margin-top:32px;
   }
   @media (max-width:980px){ .wish-grid{ grid-template-columns:repeat(3, 1fr); gap:14px; } }
-  @media (max-width:700px){ .wish-grid{ grid-template-columns:repeat(2, 1fr); gap:8px; } }
+  @media (max-width:700px){
+    .wish-grid{ grid-template-columns:repeat(2, 1fr); gap:8px; }
+    .wish-info{ padding:12px 14px 14px; }
+    .wish-name{ font-size:14px; }
+    .wish-color{ font-size:9px; letter-spacing:.12em; margin-bottom:8px; }
+    .wish-price{ font-size:13px; }
+    /* Bigger remove button for touch */
+    .wish-remove{ width:40px; height:40px; }
+    .wish-remove svg{ width:20px; height:20px; }
+  }
   @media (max-width:400px){ .wish-grid{ grid-template-columns:1fr; gap:14px; } }
 
   .wish-card{

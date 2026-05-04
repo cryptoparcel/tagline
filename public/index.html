@@ -2133,7 +2133,8 @@
     .signin-link{display:none}
     .menu-toggle{ display:grid; }
     .drops-grid{grid-template-columns:repeat(3, 1fr); gap:14px}
-    .categories-grid{grid-template-columns:repeat(2, 1fr); gap:10px}
+    /* 3 categories total — keep 3-col layout on tablet so the row is balanced */
+    .categories-grid{grid-template-columns:repeat(3, 1fr); gap:10px}
     .foot-grid{grid-template-columns:1fr 1fr; gap:32px}
     .hero{height:560px}
     .newsletter-inner{grid-template-columns:1fr; padding:48px 32px; gap:28px}
@@ -2187,11 +2188,19 @@
     .product-meta .name{font-size:14px}
     .product-meta .name-sub{font-size:9px; letter-spacing:.12em; margin-top:4px}
     .product-meta .price{font-size:12px; padding:6px 10px; bottom:10px; right:10px}
+    /* Bigger heart tap target on touch screens (40x40 vs default 36x36) */
+    .heart-btn{width:40px; height:40px; top:10px; right:10px}
+    .heart-btn svg{width:20px; height:20px}
+    /* Filter pills more comfortable to tap */
+    .filter-pill{min-height:38px; padding:8px 16px}
 
     /* Category tiles */
+    .categories-grid{grid-template-columns:repeat(3, 1fr); gap:8px}
     .categories-head h2{font-size:28px}
-    .category-icon{width:60px; height:60px}
-    .category-name{font-size:13px}
+    .category-icon{width:48px; height:48px}
+    .category-name{font-size:12px}
+    .category-count{font-size:9px}
+    .category-tile{padding:18px 8px}
 
     /* Customize section */
     .customize-inner h2{font-size:36px}
@@ -2218,10 +2227,16 @@
   @media (max-width: 400px){
     /* Single column on tiny phones */
     .drops-grid{grid-template-columns:1fr; gap:14px}
+    /* Categories drop to 1-col at this width — 3 small tiles would crowd */
     .categories-grid{grid-template-columns:1fr; gap:10px}
     .foot-grid{grid-template-columns:1fr; gap:32px}
     .hero-headline{font-size:26px !important; letter-spacing:-0.04em}
-    .product-card{aspect-ratio:1/1.1}
+    /* Card switches to landscape-ish 1/1.2 for full-width stacked layout —
+       gives the photo enough room without making the card scroll-heavy */
+    .product-card{aspect-ratio:1/1.2}
+    .product-meta{padding:14px 16px 10px}
+    .product-meta .name{font-size:16px}
+    .product-meta .price{font-size:13px; padding:7px 12px}
   }
 
   /* Disable expensive bg-effects only — keep the cross alive everywhere */

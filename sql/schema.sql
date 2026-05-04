@@ -13,12 +13,13 @@ create table if not exists products (
   color text,
   price_cents integer not null check (price_cents >= 0),
   category text not null,
-  tag text, -- 'New', 'Limited', 'Restock', 'Sold Out', 'Featured', null
+  tag text, -- 'New', 'Featured', 'Limited', 'Restock', 'Sold Out', null
   stock integer not null default 0,
   active boolean not null default true,
   stripe_price_id text, -- filled in once you create products in Stripe
   description text,
-  image_url text, -- public image URL (Shopify CDN or self-hosted). Falls back to /images/products/{id}.jpg if null.
+  image_url text, -- public http(s) URL of the product photo. Falls back
+                  -- to /images/products/{id}.jpg if null.
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -212,61 +213,53 @@ end;
 $$;
 
 -- ============================================================
--- SEED DATA — Real Tagline Apparel catalog (33 products)
+-- SEED DATA — 24 product slots, real Tagline Apparel data
 -- ============================================================
--- Image URLs point at the Shopify CDN with width=1000 for sharp retina
--- rendering. Note: 'tl-winter-sweatpants' uses a .heic file — most
--- browsers can't display it; the letter-placeholder fallback shows
--- until you re-upload as JPG/PNG. Items 'open-back-top' and
--- 'vback-leggings' point at the same image — fix one of them when you
--- have a unique photo.
+-- Original 24 IDs preserved (so they stay aligned with the static
+-- card layout in index.html and existing carts/wishlists). Real
+-- names, prices, and image URLs from the live Tagline Apparel
+-- catalog. Re-run safely: ON CONFLICT DO UPDATE refreshes existing
+-- rows. Cleanup of any stale 33-product seed at the top.
 
--- Clean up the old placeholder catalog (the 24 ascend-hoodie/halo-zip/etc.
--- products) on existing deployments. Safe to re-run — does nothing if
--- they're already gone. Keeps any orders that referenced them untouched
--- (orders.items is a JSON snapshot, not a foreign key).
+-- Cleanup: in case a previous run installed the 33-product catalog
+-- with different IDs, remove those (they were placeholder-different
+-- from the original 24 — orders snapshot product data so this is safe).
 delete from products where id in (
-  'ascend-hoodie','halo-zip','origin-tee','sigil-tank','vesper-long',
-  'path-jogger','trial-short','cloud-crew','crown-cap','halo-runner',
-  'aether-bra','aether-legging','reign-bomber','velocity-track','vow-beanie',
-  'anthem-polo','lumen-crop','pilgrim-pant','spirit-shell','echo-vest',
-  'verse-henley','sole-sock','pulse-band','quill-tote'
+  'everyday-shirt','tl-winter-hoodie','tl-winter-sweatpants','ttm-quarter-zip',
+  'compression-shorts-2in1','embroidery-hoodie','embroidery-tee','autumn-hoodie',
+  'boxe-tee','cargo-sweatpants','drawstring-long-sleeve','scrunch-leggings',
+  'irregular-bra','basketball-shorts','gym-shirt','runner-vest','running-pants',
+  'open-back-top','oversized-sweater','quarter-zip-long-sleeve','quick-dry-shirt',
+  'slim-sweatshirt','slim-fit-pants','sport-pants','sport-pants-light',
+  'tl-rocket-hoodie','tl-rocket-shirt','womens-2in1-shorts','womens-gym-shorts',
+  'womens-sport-bra','vback-leggings','womens-hoodie','buttersoft-leggings'
 );
 
 insert into products (id, name, color, price_cents, category, tag, stock, description, image_url) values
-  ('everyday-shirt',           '"Everyday" Shirt',                 null,    2500, 'Tops',        null,       60, 'The shirt you grab without thinking. Soft cotton, classic fit, made for daily rotation.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8c64d9c2-9284-4019-b2f5-cb4ef82f3df6.png?v=1768914448&width=1000'),
-  ('tl-winter-hoodie',         '"TL" Winter Hoodie',               null,    4500, 'Outerwear',   null,       50, 'Heavyweight winter pullover with the TL signature. Built for cold mornings and casual nights.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828&width=1000'),
-  ('tl-winter-sweatpants',     '"TL" Winter Sweatpants',           null,    4500, 'Bottoms',     null,       45, 'Match the hoodie. Heavy fleece-lined sweatpants with side pockets and an embroidered logo.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_e2a10b3a-eb39-4d5d-b226-97c26277a75b.heic?v=1768915828&width=1000'),
-  ('ttm-quarter-zip',          '"TTM" Quarter-Zip',                null,    3500, 'Tops',        null,       40, 'Quarter-zip pullover with the TTM detail. Athletic cut, brushed inside, pairs with anything.', 'https://taglineapparel.myshopify.com/cdn/shop/files/B2796E1A-0A02-4370-BC1A-87BDFE471E5A.png?v=1762482462&width=1000'),
-  ('compression-shorts-2in1',  '2-in-1 Compression Shorts',        null,    4000, 'Bottoms',     null,       60, 'Compression liner inside, training short outside. The pair that handles the gym AND the run.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0022.jpg?v=1761716083&width=1000'),
-  ('embroidery-hoodie',        '3-D Embroidery Hoodie',            null,    4500, 'Outerwear',   null,       35, 'Heavyweight hoodie with raised 3-D embroidery. Premium feel, statement detail.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157&width=1000'),
-  ('embroidery-tee',           '3-D Embroidery T-Shirt',           null,    3000, 'Tops',        null,       80, 'Premium tee with raised 3-D embroidery. Heavy enough to drape right, soft enough to live in.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_caac77bf-a368-4c9f-8dba-f96b475ed42c.jpg?v=1775534730&width=1000'),
-  ('autumn-hoodie',            'Autumn Hoodie',                    null,    4000, 'Outerwear',   null,       45, 'Mid-weight pullover for transitional weather. Soft inside, structured outside.', 'https://taglineapparel.myshopify.com/cdn/shop/files/F927811C-A783-41CF-8491-3BB00D16D998.jpg?v=1762497681&width=1000'),
-  ('boxe-tee',                 'Box''e Tee',                       null,    2000, 'Tops',        null,       90, 'Boxy-cut tee in heavyweight cotton. Loose through the chest and shoulders, slightly cropped.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_935aa918-1d27-4cb2-96fb-e191e14f38f3.jpg?v=1775552279&width=1000'),
-  ('cargo-sweatpants',         'Cargo Sweatpants',                 null,    5500, 'Bottoms',     null,       35, 'Sweatpants meet cargo pockets. Tapered leg, drawcord waist, six functional pockets.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457&width=1000'),
-  ('drawstring-long-sleeve',   'Drawstring Long Sleeve',           null,    2500, 'Tops',        null,       70, 'Long sleeve tee with adjustable drawstring hem. Layer it open or pull it tight.', 'https://taglineapparel.myshopify.com/cdn/shop/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512&width=1000'),
-  ('scrunch-leggings',         'High-Waist Scrunch Leggings',      null,    2500, 'Bottoms',     null,       75, 'High-rise scrunch-back leggings with four-way stretch. Lifts and supports.', 'https://taglineapparel.myshopify.com/cdn/shop/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748&width=1000'),
-  ('irregular-bra',            'Irregular Bra',                    null,    2500, 'Tops',        null,       60, 'Asymmetric strap design with light support and removable pads. Different on purpose.', 'https://taglineapparel.myshopify.com/cdn/shop/files/B723BBA2-B00A-4C9A-8283-226AFEB8C698.jpg?v=1761548691&width=1000'),
-  ('basketball-shorts',        'Basketball Shorts',                null,    2500, 'Bottoms',     null,       80, 'Court-ready shorts with deep pockets. Mesh-lined for breathability, built to last.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_59c8766e-4591-468f-8075-8b4287f30a9f.jpg?v=1775535578&width=1000'),
-  ('gym-shirt',                'Gym Shirt',                        null,    2500, 'Tops',        null,       70, 'Lightweight performance shirt with a mesh-back panel. Built to move, dries fast.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_65a0576e-dbba-443f-a04a-5d91f6d91d20.jpg?v=1775552279&width=1000'),
-  ('runner-vest',              'Runner Vest',                      null,    4500, 'Outerwear',   null,       30, 'Lightweight running vest with hi-vis trim. Holds your essentials without the bounce.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_0a5e02aa-8e81-4e92-963d-cee6741b086c.jpg?v=1775536851&width=1000'),
-  ('running-pants',            'Running Pants',                    null,    3000, 'Bottoms',     null,       50, 'Tapered running pants with reflective accents. Light, fast, weather-ready.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_570552c0-1a69-472d-9320-398747b35f08.jpg?v=1775536043&width=1000'),
-  ('open-back-top',            'Open-Back Top',                    null,    1500, 'Tops',        null,       65, 'Strappy open-back top for studio workouts. Light support, ample airflow.', 'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000'),
-  ('oversized-sweater',        'Oversized Light Sweater',          null,    6500, 'Outerwear',   null,       25, 'Soft-weave oversized sweater. Drapes long, layers easy, finishes any outfit.', 'https://taglineapparel.myshopify.com/cdn/shop/files/F329367F-4612-4CBE-A66D-A7BD3BC84DC1.jpg?v=1761553089&width=1000'),
-  ('quarter-zip-long-sleeve',  'Quarter-Zip Long Sleeve',          null,    3500, 'Tops',        null,       45, 'Quarter-zip long sleeve in soft jersey. Layer-friendly, runs true to size.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0025.jpg?v=1761716083&width=1000'),
-  ('quick-dry-shirt',          'Quick-Dry Shirt',                  null,    2000, 'Tops',        null,       80, 'Performance shirt that dries in minutes. Anti-odor finish, low-profile fit.', 'https://taglineapparel.myshopify.com/cdn/shop/files/7E62E8C7-9832-4D8F-B46A-AE8249EDD544.jpg?v=1761546662&width=1000'),
-  ('slim-sweatshirt',          'Slim Sweatshirt',                  null,    5000, 'Outerwear',   null,       35, 'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs, brushed inside.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0038.jpg?v=1761716083&width=1000'),
-  ('slim-fit-pants',           'Slim-Fit Flex Pants',              null,    3500, 'Bottoms',     null,       50, 'Slim-fit flex pants with stretch. Comfortable enough for shifts, sharp enough for off-duty.', 'https://taglineapparel.myshopify.com/cdn/shop/files/8C4F7825-DEEA-4CEF-955E-C5432C6FB34B.jpg?v=1761544634&width=1000'),
-  ('sport-pants',              'Sport Pants',                      null,    5500, 'Bottoms',     null,       30, 'Premium sport pant with side stripes. Tapered fit, drawcord waist, finished hem.', 'https://taglineapparel.myshopify.com/cdn/shop/files/BD848E54-21F0-4255-B1F1-7D0A533C1E35.jpg?v=1761554034&width=1000'),
-  ('sport-pants-light',        'Sport Pant Light',                 null,    3500, 'Bottoms',     null,       50, 'Lighter weight version of our sport pant. Same fit, less weight — for warmer months.', 'https://taglineapparel.myshopify.com/cdn/shop/files/ECE25F92-576E-4A30-B8F5-CCD44DB470B0.jpg?v=1761627349&width=1000'),
-  ('tl-rocket-hoodie',         'TL "Rocket" Hoodie',               null,    5500, 'Outerwear',   'Featured', 30, 'The Rocket hoodie. Heavyweight, embroidered, and unmistakably ours.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983&width=1000'),
-  ('tl-rocket-shirt',          'TL "Rocket" Shirt',                null,    2500, 'Tops',        'Featured', 70, 'The Rocket tee. Soft, structured, statement-piece embroidery.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286&width=1000'),
-  ('womens-2in1-shorts',       'Women''s 2-in-1 Shorts',           null,    3000, 'Bottoms',     null,       55, 'Compression liner under a flowy short. The pair that goes from gym to coffee.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_26e60b6f-49f2-4a3a-b34d-2140bfdf784e.jpg?v=1775536820&width=1000'),
-  ('womens-gym-shorts',        'Women''s Gym Shorts',              null,    2000, 'Bottoms',     null,       80, 'Light, breathable gym shorts with built-in liner. Quick-drying, doesn''t ride.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_1210f229-9c09-47f0-9203-2aa876bb70fb.jpg?v=1775552279&width=1000'),
-  ('womens-sport-bra',         'Women''s Sport Bra',               null,    3000, 'Tops',        null,       60, 'Medium-support sport bra. Removable pads, racerback design, moisture-wicking.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279&width=1000'),
-  ('vback-leggings',           'V-Back Leggings',                  null,    3000, 'Bottoms',     null,       65, 'High-waist V-back leggings. Sculpted seam, four-way stretch, opaque from every angle.', 'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000'),
-  ('womens-hoodie',            'Women''s Hoodie',                  null,    3500, 'Outerwear',   null,       50, 'Cropped-fit pullover hoodie for women. Heavy cotton, fits true.', 'https://taglineapparel.myshopify.com/cdn/shop/files/A610FF16-6BA4-4255-90B0-F42AB7246271.jpg?v=1762317317&width=1000'),
-  ('buttersoft-leggings',      'Women''s "Butter-Soft" Leggings',  null,    3000, 'Bottoms',     'New',      70, 'Butter-soft fabric, high rise, pocket-equipped. The leggings you''ll forget you''re wearing.', 'https://taglineapparel.myshopify.com/cdn/shop/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785&width=1000')
+  ('ascend-hoodie',     'TL Winter Hoodie',                     null,    4500, 'Outerwear', null,       50, 'Heavyweight winter pullover with the TL signature.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828&width=1000'),
+  ('halo-zip',          'TTM Quarter-Zip',                      null,    3500, 'Tops',      null,       40, 'Quarter-zip pullover with the TTM detail. Athletic cut, brushed inside.', 'https://taglineapparel.myshopify.com/cdn/shop/files/B2796E1A-0A02-4370-BC1A-87BDFE471E5A.png?v=1762482462&width=1000'),
+  ('origin-tee',        '"Everyday" Shirt',                     null,    2500, 'Tops',      null,      100, 'The shirt you grab without thinking. Soft cotton, classic fit.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8c64d9c2-9284-4019-b2f5-cb4ef82f3df6.png?v=1768914448&width=1000'),
+  ('sigil-tank',        'Gym Shirt',                            null,    2500, 'Tops',      null,       80, 'Lightweight performance shirt with mesh-back panel. Built to move.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_65a0576e-dbba-443f-a04a-5d91f6d91d20.jpg?v=1775552279&width=1000'),
+  ('vesper-long',       'Drawstring Long Sleeve',               null,    2500, 'Tops',      null,       60, 'Long sleeve tee with adjustable drawstring hem.', 'https://taglineapparel.myshopify.com/cdn/shop/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512&width=1000'),
+  ('path-jogger',       'Cargo Sweatpants',                     null,    5500, 'Bottoms',   null,       45, 'Sweatpants meet cargo pockets. Tapered leg, drawcord waist.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457&width=1000'),
+  ('trial-short',       '2-in-1 Compression Shorts',            null,    4000, 'Bottoms',   null,       70, 'Compression liner inside, training short outside.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0022.jpg?v=1761716083&width=1000'),
+  ('cloud-crew',        'Slim Sweatshirt',                      null,    5000, 'Outerwear', null,       50, 'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0038.jpg?v=1761716083&width=1000'),
+  ('crown-cap',         'TL "Rocket" Shirt',                    null,    2500, 'Tops',      'Featured', 70, 'The Rocket tee. Soft, structured, statement-piece embroidery.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286&width=1000'),
+  ('halo-runner',       'TL "Rocket" Hoodie',                   null,    5500, 'Outerwear', 'Featured', 30, 'The Rocket hoodie. Heavyweight, embroidered, unmistakably ours.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983&width=1000'),
+  ('aether-bra',        'Irregular Bra',                        null,    2500, 'Tops',      null,       60, 'Asymmetric strap design with light support and removable pads.', 'https://taglineapparel.myshopify.com/cdn/shop/files/B723BBA2-B00A-4C9A-8283-226AFEB8C698.jpg?v=1761548691&width=1000'),
+  ('aether-legging',    'High-Waist Scrunch Leggings',          null,    2500, 'Bottoms',   null,       75, 'High-rise scrunch-back leggings with four-way stretch.', 'https://taglineapparel.myshopify.com/cdn/shop/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748&width=1000'),
+  ('reign-bomber',      '3-D Embroidery Hoodie',                null,    4500, 'Outerwear', 'New',      35, 'Heavyweight hoodie with raised 3-D embroidery. Premium feel.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157&width=1000'),
+  ('velocity-track',    'Runner Vest',                          null,    4500, 'Outerwear', null,       30, 'Lightweight running vest with hi-vis trim.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_0a5e02aa-8e81-4e92-963d-cee6741b086c.jpg?v=1775536851&width=1000'),
+  ('vow-beanie',        'Box''e Tee',                           null,    2000, 'Tops',      null,       90, 'Boxy-cut tee in heavyweight cotton. Loose, slightly cropped.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_935aa918-1d27-4cb2-96fb-e191e14f38f3.jpg?v=1775552279&width=1000'),
+  ('anthem-polo',       'Quarter-Zip Long Sleeve',              null,    3500, 'Tops',      null,       45, 'Quarter-zip long sleeve in soft jersey. Layer-friendly.', 'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0025.jpg?v=1761716083&width=1000'),
+  ('lumen-crop',        'Open-Back Top',                        null,    1500, 'Tops',      null,       65, 'Strappy open-back top for studio workouts. Light support, ample airflow.', 'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000'),
+  ('pilgrim-pant',      'Sport Pants',                          null,    5500, 'Bottoms',   null,       30, 'Premium sport pant with side stripes. Tapered fit, drawcord waist.', 'https://taglineapparel.myshopify.com/cdn/shop/files/BD848E54-21F0-4255-B1F1-7D0A533C1E35.jpg?v=1761554034&width=1000'),
+  ('spirit-shell',      'Autumn Hoodie',                        null,    4000, 'Outerwear', null,       45, 'Mid-weight pullover for transitional weather. Soft inside, structured outside.', 'https://taglineapparel.myshopify.com/cdn/shop/files/F927811C-A783-41CF-8491-3BB00D16D998.jpg?v=1762497681&width=1000'),
+  ('echo-vest',         'Oversized Light Sweater',              null,    6500, 'Outerwear', null,       25, 'Soft-weave oversized sweater. Drapes long, layers easy.', 'https://taglineapparel.myshopify.com/cdn/shop/files/F329367F-4612-4CBE-A66D-A7BD3BC84DC1.jpg?v=1761553089&width=1000'),
+  ('verse-henley',      'Quick-Dry Shirt',                      null,    2000, 'Tops',      null,       80, 'Performance shirt that dries in minutes. Anti-odor finish.', 'https://taglineapparel.myshopify.com/cdn/shop/files/7E62E8C7-9832-4D8F-B46A-AE8249EDD544.jpg?v=1761546662&width=1000'),
+  ('sole-sock',         'Women''s Gym Shorts',                  null,    2000, 'Bottoms',   null,       80, 'Light, breathable gym shorts with built-in liner.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_1210f229-9c09-47f0-9203-2aa876bb70fb.jpg?v=1775552279&width=1000'),
+  ('pulse-band',        'Women''s Sport Bra',                   null,    3000, 'Tops',      null,       60, 'Medium-support sport bra. Removable pads, racerback design.', 'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279&width=1000'),
+  ('quill-tote',        'Women''s "Butter-Soft" Leggings',      null,    3000, 'Bottoms',   'New',      70, 'Butter-soft fabric, high rise, pocket-equipped.', 'https://taglineapparel.myshopify.com/cdn/shop/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785&width=1000')
 on conflict (id) do update set
   name        = excluded.name,
   color       = excluded.color,

@@ -1019,10 +1019,14 @@
 
   /* Header sits ABOVE the image — name big and bold on the dark card,
      no fight with photo content. position:static (default) so the price
-     pill inside positions relative to .product-card instead of here. */
+     pill inside positions relative to .product-card instead of here.
+     order:-1 forces meta-above-illu visually even if reorderCardLayout()
+     hasn't run yet (prevents a flash where the meta renders below the
+     image on first paint). */
   .product-meta{
     padding:16px 18px 12px;
     flex-shrink:0;
+    order:-1;
   }
   .product-meta > div{
     display:block;

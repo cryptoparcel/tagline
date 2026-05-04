@@ -842,7 +842,9 @@
     // Populate drawer with product data (using textContent for XSS safety)
     els.imageLetter.textContent = product.name.charAt(0);
     els.name.textContent = product.name;
-    els.color.textContent = product.color;
+    // color is null on most products — fall back to category so the slot
+    // doesn't render the literal string "null".
+    els.color.textContent = product.color || product.category || '';
     els.price.textContent = '$' + product.price;
     els.description.textContent = product.description;
 
@@ -1504,29 +1506,30 @@
     const origin = window.location.origin;
     const items = Object.keys(PRODUCTS).map((id, idx) => {
       const p = PRODUCTS[id];
+      const product = {
+        "@type": "Product",
+        "name": p.name,
+        "description": p.description,
+        "sku": id,
+        "category": p.category,
+        "brand": { "@type": "Brand", "name": "TAGLINE" },
+        "image": p.image_url || `${origin}/images/products/${id}.jpg`,
+        "offers": {
+          "@type": "Offer",
+          "url": `${origin}/#shop`,
+          "priceCurrency": "USD",
+          "price": p.price.toFixed(2),
+          "availability": p.stock > 0
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          "itemCondition": "https://schema.org/NewCondition"
+        }
+      };
+      if (p.color) product.color = p.color;
       return {
         "@type": "ListItem",
         "position": idx + 1,
-        "item": {
-          "@type": "Product",
-          "name": p.name,
-          "description": p.description,
-          "sku": id,
-          "category": p.category,
-          "color": p.color,
-          "brand": { "@type": "Brand", "name": "TAGLINE" },
-          "image": `${origin}/images/products/${id}.jpg`,
-          "offers": {
-            "@type": "Offer",
-            "url": `${origin}/#shop`,
-            "priceCurrency": "USD",
-            "price": p.price.toFixed(2),
-            "availability": p.stock > 0
-              ? "https://schema.org/InStock"
-              : "https://schema.org/OutOfStock",
-            "itemCondition": "https://schema.org/NewCondition"
-          }
-        }
+        "item": product
       };
     });
     const data = {

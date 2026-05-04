@@ -268,7 +268,7 @@
     if (!p) return null;
     return {
       name: p.name,
-      color: p.color,
+      color: p.color || p.category || '',
       price: p.price,
       initial: p.name.charAt(0).toUpperCase()
     };

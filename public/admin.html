@@ -294,6 +294,92 @@
   }
   .export-btn:disabled{opacity:.5;cursor:not-allowed}
 
+  /* ============ SETUP CHECKLIST ============ */
+  .setup-wrap{ display:flex; flex-direction:column; gap:10px; }
+  .setup-banner{
+    padding:14px 18px;
+    border:1px solid var(--line);
+    font-size:14px;
+    line-height:1.5;
+    margin-bottom:6px;
+  }
+  .setup-banner.ok{ border-color:rgba(184,137,61,.5); background:rgba(184,137,61,.08); color:var(--gold-soft); }
+  .setup-banner.warn{ border-color:rgba(212,165,88,.45); background:rgba(212,165,88,.06); color:var(--ink); }
+  .setup-banner.err{ border-color:rgba(232,80,91,.5); background:rgba(232,80,91,.08); color:#f3a4a8; }
+  .setup-item{
+    border:1px solid var(--line);
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    padding:14px 16px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .setup-item.err{ border-color:rgba(232,80,91,.35); }
+  .setup-item.warn{ border-color:var(--line); }
+  .setup-item.ok{ border-color:rgba(184,137,61,.25); }
+  .setup-head{ display:flex; align-items:center; gap:12px; }
+  .setup-icon{
+    width:24px; height:24px;
+    border-radius:50%;
+    display:grid; place-items:center;
+    font-weight:700; font-size:12px;
+    flex-shrink:0;
+  }
+  .setup-icon.ok{ background:rgba(184,137,61,.16); color:var(--gold-soft); border:1px solid rgba(184,137,61,.45); }
+  .setup-icon.err{ background:rgba(232,80,91,.18); color:#f3a4a8; border:1px solid rgba(232,80,91,.45); }
+  .setup-icon.warn{ background:rgba(255,255,250,.06); color:var(--ink-soft); border:1px solid var(--line-strong); }
+  .setup-name{ font-size:14px; font-weight:700; color:var(--ink); flex:1; }
+  .setup-req{
+    display:inline-block;
+    margin-left:8px;
+    font-size:9px; font-weight:700;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:#f3a4a8;
+    background:rgba(232,80,91,.12);
+    border:1px solid rgba(232,80,91,.4);
+    padding:2px 7px;
+    border-radius:999px;
+  }
+  .setup-missing{
+    font-size:12px;
+    color:var(--ink-soft);
+    padding-left:36px;
+  }
+  .setup-missing code{
+    background:rgba(232,80,91,.12);
+    color:#f3a4a8;
+    padding:2px 6px;
+    font-family:'Space Grotesk',monospace;
+    font-size:11px;
+    letter-spacing:.04em;
+  }
+  .setup-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    padding-left:36px;
+    line-height:1.6;
+  }
+  .setup-hint.ok{ color:var(--gold-soft); }
+  .setup-live{
+    font-size:11px;
+    padding-left:36px;
+    letter-spacing:.04em;
+  }
+  .setup-live.ok{ color:var(--gold-soft); }
+  .setup-live.err{ color:#f3a4a8; }
+  .setup-docs{
+    align-self:flex-start;
+    margin-left:36px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    text-decoration:none;
+    border-bottom:1px solid rgba(184,137,61,.3);
+    padding-bottom:2px;
+  }
+  .setup-docs:hover{ color:var(--gold); border-bottom-color:var(--gold); }
+
   /* ============ PHOTO UPLOAD + CROP ============ */
   .pe-upload-row{
     display:flex; gap:8px; align-items:center;
@@ -545,6 +631,7 @@
         <button class="admin-tab ${activeView==='products' ? 'active' : ''}" data-view="products">Products</button>
         <button class="admin-tab ${activeView==='subscribers' ? 'active' : ''}" data-view="subscribers">Subscribers</button>
         <button class="admin-tab ${activeView==='messages' ? 'active' : ''}" data-view="messages">Messages</button>
+        <button class="admin-tab ${activeView==='setup' ? 'active' : ''}" data-view="setup">Setup</button>
       </div>
       <div id="viewContent">Loading…</div>
     `;
@@ -564,6 +651,11 @@
   async function loadView(){
     const target = document.getElementById('viewContent');
     target.innerHTML = '<div style="color:var(--muted);padding:24px" aria-live="polite" aria-busy="true">Loading…</div>';
+
+    if (activeView === 'setup') {
+      await renderSetupView(target);
+      return;
+    }
 
     const result = await adminFetch(`/api/admin?view=${encodeURIComponent(activeView)}`);
     if (!result.ok) {
@@ -740,6 +832,82 @@
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ============ SETUP STATUS VIEW ============
+  // Shows a checklist of every integration the site uses and what env
+  // vars / connectivity tests each one passed or failed. Renders the
+  // step-by-step setup hint inline for any incomplete item.
+  async function renderSetupView(target) {
+    const result = await adminFetch('/api/admin-setup-status');
+    if (!result.ok) {
+      target.innerHTML = '';
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-error';
+      alert.textContent = result.error || 'Could not load setup status.';
+      target.appendChild(alert);
+      return;
+    }
+
+    const items = result.items || [];
+    const requiredOk = result.complete;
+    const allOk      = result.all_complete;
+
+    const summaryHtml = allOk
+      ? '<div class="setup-banner ok">Everything\'s set up. The site is fully wired and ready for orders.</div>'
+      : (requiredOk
+          ? '<div class="setup-banner warn">All required integrations are live. Optional items are below — set them up when you\'re ready.</div>'
+          : '<div class="setup-banner err">Required integrations are missing. The site can\'t take orders until these are set.</div>');
+
+    const itemsHtml = items.map(it => {
+      const statusIcon = it.ok
+        ? '<span class="setup-icon ok" aria-label="Done">✓</span>'
+        : (it.required
+            ? '<span class="setup-icon err" aria-label="Required">!</span>'
+            : '<span class="setup-icon warn" aria-label="Optional">○</span>');
+      const liveLine = it.live ? renderLiveLine(it.live) : '';
+      const missingLine = it.missing && it.missing.length
+        ? `<div class="setup-missing">Missing: <code>${it.missing.map(escapeHtml).join('</code>, <code>')}</code></div>`
+        : '';
+      const docsLink = it.docs_url
+        ? `<a class="setup-docs" href="${escapeHtml(it.docs_url)}" target="_blank" rel="noopener">Open dashboard ↗</a>`
+        : '';
+      const hintHtml = it.ok
+        ? `<div class="setup-hint ok">${escapeHtml(it.hint)}</div>`
+        : `<div class="setup-hint">${escapeHtml(it.hint).replace(/\n/g, '<br>')}</div>`;
+      return `
+        <div class="setup-item ${it.ok ? 'ok' : (it.required ? 'err' : 'warn')}">
+          <div class="setup-head">
+            ${statusIcon}
+            <div class="setup-name">${escapeHtml(it.name)}${it.required ? ' <span class="setup-req">required</span>' : ''}</div>
+          </div>
+          ${liveLine}
+          ${missingLine}
+          ${hintHtml}
+          ${docsLink}
+        </div>
+      `;
+    }).join('');
+
+    target.innerHTML = `
+      <div class="setup-wrap">
+        ${summaryHtml}
+        ${itemsHtml}
+        <button type="button" class="export-btn" id="setupRefresh" style="margin-top:14px">Refresh status</button>
+      </div>
+    `;
+    document.getElementById('setupRefresh').addEventListener('click', () => loadView());
+  }
+
+  function renderLiveLine(live) {
+    if (live.connected) {
+      const mode = live.mode ? ` (<span class="mono">${escapeHtml(live.mode)}</span>)` : '';
+      return `<div class="setup-live ok">Live connection works${mode}</div>`;
+    }
+    if (live.error) {
+      return `<div class="setup-live err">Live test failed: ${escapeHtml(live.error)}</div>`;
+    }
+    return '';
   }
 
   // ============ PRODUCT EDITOR VIEW ============

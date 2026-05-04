@@ -37,7 +37,8 @@ export default async function handler(req, res) {
   const services = {
     db: false,
     stripe: !!process.env.STRIPE_SECRET_KEY,  // presence of key is "configured"
-    resend: !!process.env.RESEND_API_KEY
+    resend: !!process.env.RESEND_API_KEY,
+    nowpayments: !!(process.env.NOWPAYMENTS_API_KEY && process.env.NOWPAYMENTS_IPN_SECRET)
   };
 
   // Active reachability check for Supabase — a tiny query against products.
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
     services.db = false;
   }
 
+  // nowpayments is optional (crypto checkout) — don't fail health on it
   const allOk = services.db && services.stripe && services.resend;
   const body = JSON.stringify({
     ok: allOk,

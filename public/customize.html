@@ -7,11 +7,11 @@
 <meta name="color-scheme" content="dark" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
 <title>Build your own — TAGLINE</title>
-<meta name="description" content="Pick a blank hoodie, tee, or sweatpants. Choose your color. Drop your design on it. We'll print it and ship it to your door." />
+<meta name="description" content="Pick a blank, choose your color, layer your designs. Drop multiple images, type text, drag, rotate, scale — we'll print and ship it." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/styles.css" />
 
 <style>
@@ -23,12 +23,8 @@
     align-items:start;
     margin-top:32px;
   }
-  @media (max-width:980px){
-    .config-layout{grid-template-columns:1fr;gap:28px}
-  }
-  @media (max-width:640px){
-    .config-layout{gap:18px;margin-top:18px}
-  }
+  @media (max-width:980px){ .config-layout{grid-template-columns:1fr;gap:28px} }
+  @media (max-width:640px){ .config-layout{gap:18px;margin-top:18px} }
 
   /* ===== PREVIEW ===== */
   .config-preview{
@@ -41,220 +37,238 @@
     transition:background .5s ease;
     box-shadow:0 24px 60px -30px rgba(0,0,0,.5);
   }
-  @media (max-width:980px){
-    .config-preview{position:static;aspect-ratio:1/.95}
+  /* Front / Back toggle pinned to the top-right of the preview */
+  .side-toggle{
+    position:absolute;
+    top:14px; right:14px;
+    z-index:5;
+    display:flex;
+    background:rgba(8,8,10,.85);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:999px;
+    padding:3px;
   }
-  @media (max-width:640px){
-    .config-preview{aspect-ratio:1/.85}
+  .side-toggle button{
+    background:transparent;
+    border:none;
+    color:rgba(255,255,250,.55);
+    font-family:inherit;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:color .2s, background .2s;
+    min-height:34px;
   }
+  .side-toggle button:hover{ color:var(--ink); }
+  .side-toggle button.active{
+    background:var(--gold);
+    color:#08080a;
+  }
+  @media (max-width:980px){ .config-preview{position:static;aspect-ratio:1/.95} }
+  @media (max-width:640px){ .config-preview{aspect-ratio:1/.85} }
   .config-preview-label{
     position:absolute;
     top:18px;left:18px;
-    font-size:10px;
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    color:var(--gold);
-    font-weight:600;
-    z-index:5;
+    font-size:10px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--gold);
+    font-weight:600; z-index:5;
     pointer-events:none;
   }
   .preview-stage{
-    position:absolute;
-    inset:0;
-    display:grid;
-    place-items:center;
+    position:absolute; inset:0;
+    display:grid; place-items:center;
     overflow:hidden;
   }
   .preview-product{
     position:relative;
     width:62%;
     max-width:520px;
-    transition:transform .35s cubic-bezier(.22,.61,.36,1);
-    will-change:transform;
+    transition:width .35s ease;
   }
   @media (max-width:640px){ .preview-product{width:68%} }
   .preview-product svg{ width:100%; height:auto; display:block; }
 
-  /* The user's uploaded design — sits ON the product. Absolute, draggable,
-     resizable. Centered on the chest by default. */
-  .design-overlay{
+  /* ===== LAYERS ===== */
+  /* Each layer is a positioned div containing an image or text. The
+     transform handles rotation; width is in % so it scales with the
+     product preview. */
+  .layer{
     position:absolute;
-    left:50%;
-    top:38%;
-    transform:translate(-50%, -50%);
-    width:34%;
     user-select:none;
     -webkit-user-select:none;
     cursor:grab;
     touch-action:none;
-    transition:opacity .25s ease;
+    transform-origin:center;
   }
-  .design-overlay:active{ cursor:grabbing; }
-  .design-overlay img{
-    width:100%; height:auto;
+  .layer:active{ cursor:grabbing; }
+  .layer img, .layer .layer-text{
     display:block;
     pointer-events:none;
     -webkit-user-drag:none;
+  }
+  .layer img{
+    width:100%; height:auto;
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));
   }
-  /* Resize handle in the bottom-right of the design — drag this to scale */
-  .design-resize{
+  .layer .layer-text{
+    width:100%;
+    text-align:center;
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:0.04em;
+    line-height:1;
+    word-break:break-word;
+    text-shadow:0 2px 6px rgba(0,0,0,.35);
+    /* font-size scales with width via JS */
+  }
+  .layer.selected{
+    outline:1px dashed rgba(184,137,61,.85);
+    outline-offset:6px;
+  }
+  /* Handles only appear on selected layer */
+  .layer-handle{
     position:absolute;
-    right:-10px; bottom:-10px;
-    width:24px; height:24px;
-    background:var(--gold);
+    width:28px; height:28px;
     border:2px solid #08080a;
     border-radius:50%;
-    cursor:nwse-resize;
+    background:var(--gold);
+    cursor:grab;
     touch-action:none;
-    box-shadow:0 2px 8px rgba(0,0,0,.4);
-    transition:transform .15s ease, background .2s ease;
+    box-shadow:0 2px 8px rgba(0,0,0,.5);
+    display:none;
   }
-  .design-resize:hover{ transform:scale(1.15); }
-  .design-resize::before{
+  .layer.selected .layer-handle{ display:block; }
+  .layer-handle:active{ cursor:grabbing; }
+  .layer-handle.resize{ right:-14px; bottom:-14px; cursor:nwse-resize; }
+  .layer-handle.resize::before{
     content:'';
-    position:absolute;
-    inset:6px;
+    position:absolute; inset:7px;
     border-right:2px solid #08080a;
     border-bottom:2px solid #08080a;
     pointer-events:none;
   }
-  /* Subtle dashed outline so users can see the design's bounds even on
-     a similar-color shirt. Hidden when no design is loaded. */
-  .design-overlay.has-design{
-    outline:1px dashed rgba(184,137,61,.45);
-    outline-offset:6px;
+  .layer-handle.rotate{
+    left:50%; top:-44px;
+    transform:translateX(-50%);
+    cursor:grab;
   }
-  /* Empty state in the preview when nothing's picked yet */
+  .layer-handle.rotate::before{
+    content:'';
+    position:absolute; inset:7px;
+    border:2px solid #08080a;
+    border-radius:50%;
+    border-bottom-color:transparent;
+    pointer-events:none;
+  }
+  .layer-delete{
+    position:absolute;
+    right:-14px; top:-14px;
+    width:28px; height:28px;
+    border-radius:50%;
+    background:#e8505b;
+    border:2px solid #08080a;
+    color:#fff;
+    font-size:14px; font-weight:700;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,.5);
+    display:none;
+    padding:0;
+    align-items:center; justify-content:center;
+  }
+  .layer.selected .layer-delete{ display:flex; }
+  /* Connecting line from rotate handle to top of layer */
+  .layer.selected::before{
+    content:'';
+    position:absolute;
+    left:50%; top:-30px;
+    width:1px; height:30px;
+    background:rgba(184,137,61,.6);
+    pointer-events:none;
+  }
+
   .preview-empty{
-    color:var(--muted);
-    font-size:12px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    text-align:center;
-    padding:32px;
+    color:var(--muted); font-size:12px;
+    letter-spacing:.16em; text-transform:uppercase;
+    text-align:center; padding:32px;
   }
 
   /* ===== CONFIG STEPS ===== */
   .config-form{ padding-top:8px; }
-  .config-step{
-    padding:22px 0;
-    border-bottom:1px solid var(--line);
-  }
+  .config-step{ padding:22px 0; border-bottom:1px solid var(--line); }
   .config-step:last-of-type{ border-bottom:none; }
   .config-step-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    margin-bottom:12px;
+    display:flex; justify-content:space-between;
+    align-items:baseline; margin-bottom:12px;
   }
   .config-step-num{
     font-family:'Space Grotesk',sans-serif;
-    font-size:11px;
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    color:var(--gold);
-    font-weight:600;
+    font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--gold); font-weight:600;
   }
   .config-step-tag{
-    font-size:10px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--muted);
-    font-weight:600;
+    font-size:10px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); font-weight:600;
   }
   .config-step-title{
     font-family:'Space Grotesk',sans-serif;
-    font-size:20px;
-    font-weight:600;
-    letter-spacing:-0.02em;
-    color:var(--ink);
+    font-size:20px; font-weight:600;
+    letter-spacing:-0.02em; color:var(--ink);
     margin-bottom:6px;
   }
   .config-step-sub{
-    font-size:13px;
-    color:var(--ink-soft);
-    margin-bottom:14px;
-    line-height:1.5;
+    font-size:13px; color:var(--ink-soft);
+    margin-bottom:14px; line-height:1.5;
   }
 
   /* ===== PRODUCT PICKER ===== */
   .product-grid-config{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
+    display:grid; grid-template-columns:repeat(2,1fr);
     gap:8px;
   }
   .product-option{
     background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
     border:1px solid var(--line);
-    padding:14px 14px 12px;
-    cursor:pointer;
-    text-align:left;
-    transition:border-color .25s, transform .25s, background .25s;
-    color:inherit;
-    font-family:inherit;
-    display:flex;
-    align-items:center;
-    gap:12px;
+    padding:14px;
+    cursor:pointer; text-align:left;
+    transition:all .25s;
+    color:inherit; font-family:inherit;
+    display:flex; align-items:center; gap:12px;
   }
-  .product-option:hover{
-    border-color:var(--line-strong);
-    transform:translateY(-1px);
-  }
-  .product-option.selected{
-    border-color:var(--gold);
-    background:rgba(184,137,61,.08);
-  }
+  .product-option:hover{ border-color:var(--line-strong); transform:translateY(-1px); }
+  .product-option.selected{ border-color:var(--gold); background:rgba(184,137,61,.08); }
   .product-option-icon{
-    width:36px; height:36px;
-    flex-shrink:0;
-    color:var(--ink-soft);
-    transition:color .25s ease;
+    width:36px; height:36px; flex-shrink:0;
+    color:var(--ink-soft); transition:color .25s;
   }
   .product-option.selected .product-option-icon{ color:var(--gold-soft); }
   .product-option-icon svg{ width:100%; height:100%; }
   .product-option-text{ flex:1; min-width:0; }
   .product-option-name{
     font-family:'Space Grotesk', sans-serif;
-    font-size:14px;
-    font-weight:700;
-    color:var(--ink);
-    margin-bottom:2px;
+    font-size:14px; font-weight:700;
+    color:var(--ink); margin-bottom:2px;
     letter-spacing:-0.01em;
   }
-  .product-option-price{
-    font-size:11px;
-    color:var(--muted);
-    letter-spacing:.04em;
-  }
+  .product-option-price{ font-size:11px; color:var(--muted); letter-spacing:.04em; }
 
-  /* ===== COLOR SWATCHES ===== */
-  .swatch-row{
-    display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-  }
-  .swatch-wrap{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-  }
+  /* ===== COLORS ===== */
+  .swatch-row{ display:flex; gap:14px; flex-wrap:wrap; }
+  .swatch-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
   .swatch{
-    width:48px; height:48px;
-    border-radius:50%;
-    border:2px solid transparent;
-    cursor:pointer;
-    transition:border-color .25s, transform .25s;
-    position:relative;
-    background:transparent;
-    padding:0;
+    width:48px; height:48px; border-radius:50%;
+    border:2px solid transparent; cursor:pointer;
+    transition:all .25s;
+    position:relative; background:transparent; padding:0;
   }
   .swatch:hover{ transform:scale(1.08); }
   .swatch::before{
-    content:'';
-    position:absolute;
-    inset:4px;
+    content:''; position:absolute; inset:4px;
     border-radius:50%;
     border:1px solid rgba(255,255,255,.08);
     background:var(--swatch-color, #fff);
@@ -262,111 +276,176 @@
   }
   .swatch.selected{ border-color:var(--gold); }
   .swatch-label{
-    font-size:10px;
-    color:var(--ink-soft);
-    letter-spacing:.08em;
-    text-transform:uppercase;
+    font-size:10px; color:var(--ink-soft);
+    letter-spacing:.08em; text-transform:uppercase;
   }
 
   /* ===== SIZES ===== */
-  .size-row{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-  }
+  .size-row{ display:flex; gap:6px; flex-wrap:wrap; }
   .size-pill{
     background:transparent;
     border:1px solid var(--line-strong);
     padding:12px 16px;
-    font-size:12px;
-    font-weight:700;
-    letter-spacing:.08em;
-    color:var(--ink-soft);
-    cursor:pointer;
+    font-size:12px; font-weight:700; letter-spacing:.08em;
+    color:var(--ink-soft); cursor:pointer;
     transition:all .25s;
-    min-width:46px;
-    min-height:44px;
-    text-align:center;
-    font-family:inherit;
+    min-width:46px; min-height:44px;
+    text-align:center; font-family:inherit;
   }
   .size-pill:hover{ color:var(--ink); border-color:var(--ink); }
-  .size-pill.selected{
-    background:var(--ink);
-    color:var(--bg);
-    border-color:var(--ink);
-  }
+  .size-pill.selected{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
 
-  /* ===== DESIGN UPLOAD ===== */
-  .design-zone{
-    border:1px dashed var(--line-strong);
-    background:rgba(0,0,0,.18);
-    padding:18px;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    gap:10px;
-    transition:border-color .25s, background .25s;
-    text-align:center;
+  /* ===== DESIGN STUDIO ===== */
+  .studio-actions{
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin-bottom:14px;
   }
-  .design-zone:hover{ border-color:var(--gold-soft); }
-  .design-zone.has-design{
-    border-style:solid;
-    border-color:rgba(184,137,61,.4);
-    background:rgba(184,137,61,.06);
-  }
-  .design-upload-btn{
+  .studio-btn{
     background:rgba(184,137,61,.12);
-    border:1px solid rgba(184,137,61,.45);
+    border:1px solid rgba(184,137,61,.4);
     color:var(--gold-soft);
     font-family:inherit;
-    font-size:12px;
-    font-weight:700;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    padding:11px 18px;
+    font-size:12px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:10px 14px;
     cursor:pointer;
     transition:background .2s;
-    display:inline-flex; align-items:center; gap:8px;
-    min-height:44px;
+    display:inline-flex; align-items:center; gap:6px;
+    min-height:42px;
   }
-  .design-upload-btn:hover{ background:rgba(184,137,61,.2); }
-  .design-upload-btn svg{ width:14px; height:14px; }
-  .design-zone .preview-thumb{
-    width:80px; height:80px;
-    background:#fafaf5;
-    border:1px solid var(--line);
-    overflow:hidden;
-    display:grid; place-items:center;
-  }
-  .design-zone .preview-thumb img{
-    max-width:100%;
-    max-height:100%;
-    object-fit:contain;
-  }
-  .design-zone-actions{
-    display:flex; gap:8px;
-    flex-wrap:wrap;
-    justify-content:center;
-  }
-  .design-zone-text{
-    font-size:12px;
+  .studio-btn:hover{ background:rgba(184,137,61,.2); }
+  .studio-btn svg{ width:14px; height:14px; }
+  .studio-btn.secondary{
+    background:transparent;
     color:var(--ink-soft);
-    line-height:1.5;
-    max-width:260px;
+    border-color:var(--line-strong);
   }
-  .design-zone .secondary-btn{
+  .studio-btn.secondary:hover{ color:var(--ink); border-color:var(--ink); }
+
+  /* Text editor panel */
+  .text-editor{
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.2);
+    padding:14px;
+    margin-bottom:14px;
+    display:none;
+  }
+  .text-editor.open{ display:block; }
+  .text-editor input[type="text"]{
+    width:100%; padding:11px 13px;
+    font-size:16px;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    color:var(--ink);
+    font-family:inherit;
+    outline:none;
+    margin-bottom:12px;
+  }
+  .text-editor input[type="text"]:focus{ border-color:var(--gold); }
+  .text-style-row{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    margin-bottom:12px;
+  }
+  .text-style-label{
+    font-size:10px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted);
+    margin-right:4px; font-weight:600;
+  }
+  .text-color{
+    width:30px; height:30px; border-radius:50%;
+    border:2px solid transparent;
+    cursor:pointer;
+    background:var(--text-color);
+    box-shadow:inset 0 -2px 6px rgba(0,0,0,.25);
+    padding:0;
+  }
+  .text-color.selected{ border-color:var(--gold); }
+  .text-weight-pill{
     background:transparent;
     border:1px solid var(--line-strong);
     color:var(--ink-soft);
     font-family:inherit;
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    padding:9px 14px;
+    font-size:11px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:8px 12px;
     cursor:pointer;
-    transition:color .2s, border-color .2s;
+    transition:all .2s;
+    min-height:36px;
   }
-  .design-zone .secondary-btn:hover{ color:var(--ink); border-color:var(--ink); }
+  .text-weight-pill.selected{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .text-editor-actions{ display:flex; gap:8px; justify-content:flex-end; }
+
+  /* Layers panel */
+  .layers-panel{
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.18);
+    margin-top:8px;
+    max-height:240px;
+    overflow-y:auto;
+  }
+  .layers-panel:empty{ display:none; }
+  .layer-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    transition:background .2s;
+  }
+  .layer-row:last-child{ border-bottom:none; }
+  .layer-row:hover{ background:rgba(255,255,255,.03); }
+  .layer-row.selected{ background:rgba(184,137,61,.08); }
+  .layer-thumb{
+    width:36px; height:36px;
+    background:#fafaf5;
+    border:1px solid var(--line);
+    overflow:hidden;
+    display:grid; place-items:center;
+    flex-shrink:0;
+  }
+  .layer-thumb img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .layer-thumb.text{
+    background:#08080a;
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    text-align:center;
+    line-height:34px;
+  }
+  .layer-row-name{
+    flex:1;
+    font-size:12px;
+    color:var(--ink);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .layer-row-meta{
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  .layer-row-remove{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    width:28px; height:28px;
+    border-radius:4px;
+    transition:color .2s, background .2s;
+    font-size:18px;
+    line-height:1;
+    padding:0;
+  }
+  .layer-row-remove:hover{ color:#e8505b; background:rgba(232,80,91,.12); }
+  .layers-empty{
+    padding:18px;
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
 
   /* ===== QUOTE / SUBMIT ===== */
   .quote-card{
@@ -376,35 +455,34 @@
     border:1px solid var(--line);
   }
   .quote-row{
-    display:flex;
-    justify-content:space-between;
+    display:flex; justify-content:space-between;
     padding:9px 0;
-    font-size:13px;
-    color:var(--ink-soft);
+    font-size:13px; color:var(--ink-soft);
     gap:12px;
   }
-  .quote-row .value{
-    color:var(--ink);
-    font-weight:500;
-    text-align:right;
-  }
+  .quote-row .value{ color:var(--ink); font-weight:500; text-align:right; }
   .quote-row.total{
     border-top:1px solid var(--line);
-    padding-top:14px;
-    margin-top:8px;
-    font-weight:700;
-    color:var(--ink);
-    font-size:16px;
+    padding-top:14px; margin-top:8px;
+    font-weight:700; color:var(--ink); font-size:16px;
   }
   .quote-row.total .value{ color:var(--gold-soft); font-weight:800; }
-
+  .quote-email{
+    margin-top:18px;
+    width:100%;
+    padding:13px 14px;
+    font-size:16px;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    color:var(--ink);
+    font-family:inherit;
+    outline:none;
+  }
+  .quote-email:focus{ border-color:var(--gold); }
   .submit-status{
-    font-size:12px;
-    color:var(--ink-soft);
-    margin-top:14px;
-    min-height:18px;
-    text-align:center;
-    line-height:1.5;
+    font-size:12px; color:var(--ink-soft);
+    margin-top:14px; min-height:18px;
+    text-align:center; line-height:1.5;
   }
   .submit-status.error{ color:#f3a4a8; }
   .submit-status.success{ color:var(--gold-soft); }
@@ -421,7 +499,10 @@
     .size-pill{ padding:11px 14px; font-size:11px; min-width:42px }
     .size-row{ gap:5px }
     .quote-card{ padding:20px; margin-top:24px }
-    .design-overlay{ width:38% }
+    .layer-handle{ width:32px; height:32px; }
+    .layer-handle.resize{ right:-16px; bottom:-16px; }
+    .layer-handle.rotate{ top:-50px; }
+    .layer-delete{ width:32px; height:32px; right:-16px; top:-16px; }
   }
 </style>
 </head>
@@ -444,13 +525,17 @@
 <main class="page-wide" id="main" tabindex="-1">
   <div class="section-marker"><span class="label">Made to order</span></div>
   <h1 class="page-title">Build your own.</h1>
-  <p class="page-sub">Pick a blank piece, choose your color, drop your design on it. We'll print it and ship it to your door in 2–4 weeks.</p>
+  <p class="page-sub">Pick a blank, layer your designs, drag them around. Add text, multiple images, rotate anything. We'll print it in 2–4 weeks.</p>
 
   <div class="config-layout">
 
-    <!-- Live preview — left side on desktop, top on mobile -->
+    <!-- Live preview -->
     <div class="config-preview" id="configPreview">
       <span class="config-preview-label">Preview</span>
+      <div class="side-toggle" id="sideToggle">
+        <button type="button" class="active" data-side="front">Front</button>
+        <button type="button" data-side="back">Back</button>
+      </div>
       <div class="preview-stage" id="previewStage">
         <div class="preview-product" id="previewProduct">
           <div class="preview-empty">Pick a piece below to start</div>
@@ -458,34 +543,28 @@
       </div>
     </div>
 
-    <!-- Configurator — right side on desktop, below preview on mobile -->
+    <!-- Configurator -->
     <div class="config-form">
 
       <!-- Step 1: Product -->
       <div class="config-step">
-        <div class="config-step-head">
-          <span class="config-step-num">Step 01</span>
-        </div>
+        <div class="config-step-head"><span class="config-step-num">Step 01</span></div>
         <div class="config-step-title">Pick a blank</div>
-        <p class="config-step-sub">Each one is cut and sewn to order in your size.</p>
+        <p class="config-step-sub">Cut and sewn to order in your size.</p>
         <div class="product-grid-config" id="productGrid"></div>
       </div>
 
       <!-- Step 2: Color -->
       <div class="config-step">
-        <div class="config-step-head">
-          <span class="config-step-num">Step 02</span>
-        </div>
+        <div class="config-step-head"><span class="config-step-num">Step 02</span></div>
         <div class="config-step-title">Pick a color</div>
-        <p class="config-step-sub">Common basics. The preview updates live.</p>
+        <p class="config-step-sub">The preview repaints live.</p>
         <div class="swatch-row" id="swatchRow"></div>
       </div>
 
       <!-- Step 3: Size -->
       <div class="config-step">
-        <div class="config-step-head">
-          <span class="config-step-num">Step 03</span>
-        </div>
+        <div class="config-step-head"><span class="config-step-num">Step 03</span></div>
         <div class="config-step-title">Select your size</div>
         <p class="config-step-sub">Need help? <a href="/sizing" style="color:var(--gold-soft);text-decoration:underline">Size guide</a>.</p>
         <div class="size-row" id="sizeRow">
@@ -498,54 +577,74 @@
         </div>
       </div>
 
-      <!-- Step 4: Design upload -->
+      <!-- Step 4: Design studio (multi-layer) -->
       <div class="config-step">
         <div class="config-step-head">
           <span class="config-step-num">Step 04</span>
           <span class="config-step-tag">Optional</span>
         </div>
-        <div class="config-step-title">Drop your design</div>
-        <p class="config-step-sub">Upload a logo or graphic. PNG with a transparent background works best. Drag it on the preview to position, drag the gold dot to resize. +$15 per piece.</p>
-        <div class="design-zone" id="designZone">
-          <div class="design-zone-text" id="designZoneText">No design yet — pick a file to add one.</div>
-          <button type="button" class="design-upload-btn" id="designUploadBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
-            Upload design
+        <div class="config-step-title">Design studio</div>
+        <p class="config-step-sub">Add as many images and text as you want. Tap a layer to select it — drag to move, gold dot to resize, top dot to rotate. +$15 if any design is added.</p>
+
+        <div class="studio-actions">
+          <button type="button" class="studio-btn" id="addImageBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Add image
           </button>
-          <input type="file" accept="image/png,image/jpeg,image/webp" id="designFile" hidden />
+          <button type="button" class="studio-btn" id="addTextBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M12 6v14"/></svg>
+            Add text
+          </button>
+          <input type="file" accept="image/png,image/jpeg,image/webp" id="imageFile" hidden multiple />
         </div>
+
+        <!-- Inline text editor (shown after Add Text clicked) -->
+        <div class="text-editor" id="textEditor">
+          <input type="text" id="textInput" placeholder="Type your text" maxlength="60" autocomplete="off" />
+          <div class="text-style-row">
+            <span class="text-style-label">Color</span>
+            <button type="button" class="text-color selected" data-text-color="#ffffff" style="--text-color:#ffffff" aria-label="White"></button>
+            <button type="button" class="text-color" data-text-color="#08080a" style="--text-color:#08080a" aria-label="Black"></button>
+            <button type="button" class="text-color" data-text-color="#d4a558" style="--text-color:#d4a558" aria-label="Gold"></button>
+            <button type="button" class="text-color" data-text-color="#e8505b" style="--text-color:#e8505b" aria-label="Red"></button>
+            <button type="button" class="text-color" data-text-color="#3a78c2" style="--text-color:#3a78c2" aria-label="Blue"></button>
+          </div>
+          <div class="text-style-row">
+            <span class="text-style-label">Weight</span>
+            <button type="button" class="text-weight-pill selected" data-text-weight="700">Bold</button>
+            <button type="button" class="text-weight-pill" data-text-weight="500">Medium</button>
+            <button type="button" class="text-weight-pill" data-text-weight="800">Heavy</button>
+          </div>
+          <div class="text-editor-actions">
+            <button type="button" class="studio-btn secondary" id="textCancel">Cancel</button>
+            <button type="button" class="studio-btn" id="textConfirm">Add to design</button>
+          </div>
+        </div>
+
+        <!-- Layers panel -->
+        <div class="layers-panel" id="layersPanel"></div>
       </div>
 
       <!-- Quote -->
+      <!-- "Other inquiries" CTA — for anything that doesn't fit the
+           configurator (bulk orders, fully bespoke pieces, sponsorship
+           inquiries, etc.). Goes to the standard /contact form. -->
+      <div style="margin-top:18px;padding:18px;border:1px dashed var(--line-strong);background:rgba(0,0,0,.18)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Need something else?</div>
+        <p style="font-size:12px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px">Bulk order, embroidery, a fully custom piece, or anything the studio above can't do? Send us your details and we'll email you back.</p>
+        <a href="/contact?subject=Custom+order+inquiry" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(184,137,61,.4);padding-bottom:3px">Contact us →</a>
+      </div>
+
       <div class="quote-card" id="quoteCard">
-        <div class="quote-row">
-          <span class="label">Item</span>
-          <span class="value" id="qItem">—</span>
-        </div>
-        <div class="quote-row">
-          <span class="label">Color</span>
-          <span class="value" id="qColor">—</span>
-        </div>
-        <div class="quote-row">
-          <span class="label">Size</span>
-          <span class="value" id="qSize">—</span>
-        </div>
+        <div class="quote-row"><span class="label">Item</span><span class="value" id="qItem">—</span></div>
+        <div class="quote-row"><span class="label">Color</span><span class="value" id="qColor">—</span></div>
+        <div class="quote-row"><span class="label">Size</span><span class="value" id="qSize">—</span></div>
         <div class="quote-row" id="qDesignRow" style="display:none">
-          <span class="label">Custom design</span>
+          <span class="label">Custom design (<span id="qLayerCount">0</span> layer<span id="qLayerCountS"></span>)</span>
           <span class="value">+$15</span>
         </div>
-        <div class="quote-row total">
-          <span class="label">Estimated total</span>
-          <span class="value" id="qTotal">—</span>
-        </div>
-        <input
-          type="email"
-          class="form-input"
-          id="customEmail"
-          placeholder="your@email.com"
-          autocomplete="email"
-          style="margin-top:18px;width:100%;padding:13px 14px;font-size:16px;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink);font-family:inherit;outline:none"
-        />
+        <div class="quote-row total"><span class="label">Estimated total</span><span class="value" id="qTotal">—</span></div>
+        <input type="email" class="quote-email" id="customEmail" placeholder="your@email.com" autocomplete="email" />
         <button type="button" class="btn btn-primary btn-block" id="requestBtn" style="margin-top:12px" disabled>
           Request your build
         </button>
@@ -567,18 +666,22 @@
   'use strict';
 
   // ===== STATE =====
+  // layers each have side: 'front' | 'back'. activeSide controls which
+  // ones the preview + layer panel show, and which side new layers
+  // are added to.
   const state = {
     product: null,
     color: null,
     size: null,
-    designDataUrl: null,    // base64 preview, in-browser only
-    designUrl: null,         // public URL after upload to Storage
-    designUploading: false,
-    // Live position/scale of the design overlay on the product
-    design: { left: 50, top: 38, width: 34 } // percentages of preview-product
+    activeSide: 'front',
+    layers: [],            // [{ id, type, side, ...payload, x, y, width, rotation }]
+    selectedLayerId: null,
+    nextLayerId: 1,
+    textDraft: { text: '', color: '#ffffff', weight: 700 },
+    submitting: false
   };
 
-  // ===== CATALOG (basic blanks) =====
+  // ===== CATALOG =====
   const PRODUCTS = [
     { id:'blank-hoodie',     name:'Blank Hoodie',     price:50, type:'hoodie' },
     { id:'blank-tee',        name:'Blank T-Shirt',    price:25, type:'tee' },
@@ -586,7 +689,6 @@
     { id:'blank-sweatpants', name:'Blank Sweatpants', price:45, type:'sweatpants' }
   ];
 
-  // ===== COLORS (common basics) =====
   const COLORS = [
     { id:'black',    name:'Black',         hex:'#1a1a1a' },
     { id:'charcoal', name:'Charcoal',      hex:'#3a3a3c' },
@@ -598,7 +700,7 @@
 
   const DESIGN_FEE = 15;
 
-  // ===== ICONS for product picker =====
+  // ===== ICONS / SVG SILHOUETTES =====
   function getProductIcon(type) {
     if (type === 'hoodie') return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 10 Q20 6 28 10 L32 16 L30 22 L30 36 L10 36 L10 22 L8 16 Z"/><path d="M15 10 Q20 14 25 10 L24 18 Q20 20 16 18 Z"/></svg>';
     if (type === 'tee')    return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 12 L16 9 Q20 11 24 9 L29 12 L32 18 L28 20 L28 35 L12 35 L12 20 L8 18 Z"/></svg>';
@@ -607,92 +709,58 @@
     return '';
   }
 
-  // ===== BIG PRODUCT SVG (the live preview) =====
-  // Each one is a flat-colored silhouette with subtle interior shading so
-  // the user's design has a visible surface. fillHex sets the body color.
   function getProductPreviewSVG(type, fillHex){
     const dark   = shade(fillHex, -22);
     const darker = shade(fillHex, -38);
     const light  = shade(fillHex, +12);
-
     if (type === 'hoodie') {
       return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="hShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".22"/><stop offset="1" stop-color="${darker}" stop-opacity=".4"/></linearGradient>
-        </defs>
-        <!-- Sleeves -->
+        <defs><linearGradient id="hShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".22"/><stop offset="1" stop-color="${darker}" stop-opacity=".4"/></linearGradient></defs>
         <path d="M40 90 L80 60 L120 80 L100 200 L60 220 Z" fill="${fillHex}"/>
         <path d="M280 90 L240 60 L200 80 L220 200 L260 220 Z" fill="${fillHex}"/>
-        <!-- Body -->
         <path d="M80 60 Q160 35 240 60 L260 110 L255 340 L65 340 L60 110 Z" fill="${fillHex}"/>
-        <!-- Hood -->
         <path d="M115 50 Q160 18 205 50 L210 95 Q160 115 110 95 Z" fill="${dark}"/>
-        <!-- Pocket -->
         <path d="M100 220 Q160 200 220 220 L220 280 L100 280 Z" fill="none" stroke="${darker}" stroke-width="1.2" opacity=".5"/>
-        <!-- Shading overlay -->
         <path d="M80 60 Q160 35 240 60 L260 110 L255 340 L65 340 L60 110 Z" fill="url(#hShade)"/>
-        <!-- Drawstrings -->
         <path d="M148 60 v40 M172 60 v40" stroke="${darker}" stroke-width="1.2" opacity=".7"/>
       </svg>`;
     }
     if (type === 'tee') {
       return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="tShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".18"/><stop offset="1" stop-color="${darker}" stop-opacity=".35"/></linearGradient>
-        </defs>
-        <!-- Sleeves -->
+        <defs><linearGradient id="tShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".18"/><stop offset="1" stop-color="${darker}" stop-opacity=".35"/></linearGradient></defs>
         <path d="M50 90 L100 60 L130 90 L100 130 L60 120 Z" fill="${fillHex}"/>
         <path d="M270 90 L220 60 L190 90 L220 130 L260 120 Z" fill="${fillHex}"/>
-        <!-- Body -->
         <path d="M100 60 L130 75 Q160 85 190 75 L220 60 L240 95 L215 110 L215 340 L105 340 L105 110 L80 95 Z" fill="${fillHex}"/>
-        <!-- Neckline -->
         <path d="M130 75 Q160 95 190 75 L185 95 Q160 105 135 95 Z" fill="${darker}" opacity=".55"/>
-        <!-- Shading overlay -->
         <path d="M100 60 L130 75 Q160 85 190 75 L220 60 L240 95 L215 110 L215 340 L105 340 L105 110 L80 95 Z" fill="url(#tShade)"/>
       </svg>`;
     }
     if (type === 'crew') {
       return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="cShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".2"/><stop offset="1" stop-color="${darker}" stop-opacity=".4"/></linearGradient>
-        </defs>
-        <!-- Sleeves -->
+        <defs><linearGradient id="cShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".2"/><stop offset="1" stop-color="${darker}" stop-opacity=".4"/></linearGradient></defs>
         <path d="M40 95 L90 65 L120 90 L100 210 L55 220 Z" fill="${fillHex}"/>
         <path d="M280 95 L230 65 L200 90 L220 210 L265 220 Z" fill="${fillHex}"/>
-        <!-- Body -->
         <path d="M90 65 L130 80 Q160 90 190 80 L230 65 L255 110 L250 340 L70 340 L65 110 Z" fill="${fillHex}"/>
-        <!-- Crew neck -->
         <path d="M125 70 Q160 88 195 70 L195 90 Q160 100 125 90 Z" fill="${darker}" opacity=".6"/>
-        <!-- Ribbed cuffs + hem -->
         <rect x="70" y="332" width="180" height="8" fill="${darker}" opacity=".4"/>
-        <!-- Shading overlay -->
         <path d="M90 65 L130 80 Q160 90 190 80 L230 65 L255 110 L250 340 L70 340 L65 110 Z" fill="url(#cShade)"/>
       </svg>`;
     }
     if (type === 'sweatpants') {
       return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="sShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".18"/><stop offset="1" stop-color="${darker}" stop-opacity=".35"/></linearGradient>
-        </defs>
-        <!-- Waistband -->
+        <defs><linearGradient id="sShade" x1="0" x2="1"><stop offset="0" stop-color="${dark}" stop-opacity=".0"/><stop offset=".5" stop-color="${light}" stop-opacity=".18"/><stop offset="1" stop-color="${darker}" stop-opacity=".35"/></linearGradient></defs>
         <rect x="100" y="20" width="120" height="22" fill="${darker}" opacity=".7"/>
-        <!-- Body -->
         <path d="M100 42 L220 42 L228 130 L218 340 L182 340 L168 160 L160 165 L152 160 L138 340 L102 340 L92 130 Z" fill="${fillHex}"/>
-        <!-- Center seam -->
         <path d="M160 42 L160 165" stroke="${darker}" stroke-width="1.2" opacity=".5"/>
-        <!-- Cuffs -->
         <rect x="102" y="332" width="36" height="8" fill="${darker}" opacity=".5"/>
         <rect x="182" y="332" width="36" height="8" fill="${darker}" opacity=".5"/>
-        <!-- Shading overlay -->
         <path d="M100 42 L220 42 L228 130 L218 340 L182 340 L168 160 L160 165 L152 160 L138 340 L102 340 L92 130 Z" fill="url(#sShade)"/>
-        <!-- Drawstring -->
         <path d="M150 25 q5 10 0 14 M170 25 q-5 10 0 14" stroke="${darker}" stroke-width="1.2" opacity=".7"/>
       </svg>`;
     }
     return '';
   }
 
-  // Subtle hex darken/lighten — "lum" is +/- amount on each RGB channel
   function shade(hex, lum) {
     let r = parseInt(hex.slice(1,3), 16);
     let g = parseInt(hex.slice(3,5), 16);
@@ -708,12 +776,12 @@
     renderProductPicker();
     renderSwatches();
     renderPreview();
+    renderLayersPanel();
     renderQuote();
   }
 
   function renderProductPicker() {
-    const grid = document.getElementById('productGrid');
-    grid.innerHTML = PRODUCTS.map(p => `
+    document.getElementById('productGrid').innerHTML = PRODUCTS.map(p => `
       <button type="button" class="product-option ${state.product?.id === p.id ? 'selected' : ''}" data-id="${p.id}">
         <span class="product-option-icon">${getProductIcon(p.type)}</span>
         <span class="product-option-text">
@@ -725,8 +793,7 @@
   }
 
   function renderSwatches() {
-    const row = document.getElementById('swatchRow');
-    row.innerHTML = COLORS.map(c => `
+    document.getElementById('swatchRow').innerHTML = COLORS.map(c => `
       <div class="swatch-wrap">
         <button type="button" class="swatch ${state.color?.id === c.id ? 'selected' : ''}" data-color="${c.id}" style="--swatch-color:${c.hex}" aria-label="${c.name}"></button>
         <span class="swatch-label">${c.name}</span>
@@ -746,22 +813,82 @@
 
     const fillHex = state.color?.hex || '#dcd9d0';
     const svg = getProductPreviewSVG(state.product.type, fillHex);
+    stage.style.background = `linear-gradient(160deg, ${shade(fillHex, -110)} 0%, #0d0c0a 100%)`;
 
-    // Background subtly tints based on color, dimmer than the product
-    const bgStop = shade(fillHex, -110);
-    stage.style.background = `linear-gradient(160deg, ${bgStop} 0%, #0d0c0a 100%)`;
+    // Build layers — only those on the active side
+    const visibleLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
+    const layersHtml = visibleLayers.map(l => {
+      const selected = state.selectedLayerId === l.id ? 'selected' : '';
+      const transform = `translate(-50%, -50%) rotate(${l.rotation || 0}deg)`;
+      const inner = l.type === 'image'
+        ? `<img src="${escapeAttr(l.dataUrl)}" alt=""/>`
+        : `<div class="layer-text" style="color:${escapeAttr(l.color)};font-weight:${l.weight};font-size:calc(var(--layer-w, 30) * 0.4px);">${escapeHtml(l.text)}</div>`;
+      return `<div class="layer ${selected}" data-layer-id="${l.id}" data-layer-type="${l.type}"
+        style="left:${l.x}%;top:${l.y}%;width:${l.width}%;transform:${transform};--layer-w:${l.width};">
+        ${inner}
+        <button type="button" class="layer-delete" data-delete-layer="${l.id}" aria-label="Delete">×</button>
+        <div class="layer-handle rotate" data-handle="rotate"></div>
+        <div class="layer-handle resize" data-handle="resize"></div>
+      </div>`;
+    }).join('');
 
-    // Build the SVG + design overlay (preserving the design while user
-    // changes products / colors)
-    const designHtml = state.designDataUrl
-      ? `<div class="design-overlay has-design" id="designOverlay" style="left:${state.design.left}%;top:${state.design.top}%;width:${state.design.width}%">
-           <img src="${state.designDataUrl}" alt="" />
-           <div class="design-resize" id="designResize"></div>
-         </div>`
+    product.innerHTML = svg + layersHtml;
+
+    // Update text-layer font sizes based on actual rendered width
+    syncTextLayerSizes();
+    wireLayerInteractions();
+  }
+
+  // Compute font size for text layers based on the rendered width of
+  // the layer container. This way "size 30%" always looks the same
+  // regardless of preview-product's px width.
+  function syncTextLayerSizes() {
+    const product = document.getElementById('previewProduct');
+    document.querySelectorAll('.layer[data-layer-type="text"]').forEach(el => {
+      const id = parseInt(el.dataset.layerId, 10);
+      const layer = state.layers.find(l => l.id === id);
+      if (!layer) return;
+      const widthPx = el.getBoundingClientRect().width;
+      const textEl = el.querySelector('.layer-text');
+      if (textEl && widthPx > 0) {
+        // Crude: aim for ~25-30% of the layer's box width as font-size
+        textEl.style.fontSize = Math.round(widthPx * 0.32) + 'px';
+      }
+    });
+  }
+
+  function renderLayersPanel() {
+    const panel = document.getElementById('layersPanel');
+    const sideLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
+    const otherCount = state.layers.length - sideLayers.length;
+
+    if (state.layers.length === 0) {
+      panel.innerHTML = '<div class="layers-empty">No layers yet. Use Add image or Add text above.</div>';
+      return;
+    }
+    if (sideLayers.length === 0) {
+      panel.innerHTML = `<div class="layers-empty">No layers on the <strong>${state.activeSide}</strong> yet.<br>${otherCount} layer${otherCount===1?'':'s'} on the other side.</div>`;
+      return;
+    }
+    // Display newest layer at top of list
+    const items = sideLayers.slice().reverse().map(l => {
+      const sel = state.selectedLayerId === l.id ? 'selected' : '';
+      const thumb = l.type === 'image'
+        ? `<div class="layer-thumb"><img src="${escapeAttr(l.dataUrl)}" alt=""/></div>`
+        : `<div class="layer-thumb text" style="color:${escapeAttr(l.color)}">${escapeHtml((l.text || '').charAt(0).toUpperCase() || 'T')}</div>`;
+      const name = l.type === 'image' ? 'Image' : `"${truncate(l.text, 24)}"`;
+      const meta = l.type === 'image' ? 'IMG' : 'TEXT';
+      return `<div class="layer-row ${sel}" data-layer-id="${l.id}">
+        ${thumb}
+        <div class="layer-row-name">${escapeHtml(name)}</div>
+        <span class="layer-row-meta">${meta}</span>
+        <button type="button" class="layer-row-remove" data-delete-layer="${l.id}" aria-label="Remove">×</button>
+      </div>`;
+    }).join('');
+    const footer = otherCount > 0
+      ? `<div class="layers-empty" style="border-top:1px solid var(--line);padding:10px 12px;font-size:11px">+ ${otherCount} layer${otherCount===1?'':'s'} on the ${state.activeSide === 'front' ? 'back' : 'front'}</div>`
       : '';
-    product.innerHTML = svg + designHtml;
-
-    if (state.designDataUrl) wireDesignDrag();
+    panel.innerHTML = items + footer;
   }
 
   function renderQuote() {
@@ -770,75 +897,163 @@
     document.getElementById('qSize').textContent  = state.size || '—';
 
     const designRow = document.getElementById('qDesignRow');
-    designRow.style.display = state.designDataUrl ? 'flex' : 'none';
+    designRow.style.display = state.layers.length > 0 ? 'flex' : 'none';
+    document.getElementById('qLayerCount').textContent = String(state.layers.length);
+    document.getElementById('qLayerCountS').textContent = state.layers.length === 1 ? '' : 's';
 
     let total = 0;
     if (state.product) total += state.product.price;
-    if (state.designDataUrl) total += DESIGN_FEE;
+    if (state.layers.length > 0) total += DESIGN_FEE;
     document.getElementById('qTotal').textContent = total ? `$${total}` : '—';
 
     const btn = document.getElementById('requestBtn');
-    btn.disabled = !(state.product && state.color && state.size) || state.designUploading;
-    if (state.designUploading) btn.textContent = 'Uploading design…';
-    else btn.textContent = 'Request your build';
+    btn.disabled = !(state.product && state.color && state.size) || state.submitting;
+    btn.textContent = state.submitting ? 'Sending…' : 'Request your build';
   }
 
-  // ===== DESIGN OVERLAY DRAG / RESIZE =====
-  function wireDesignDrag() {
-    const overlay = document.getElementById('designOverlay');
-    const handle = document.getElementById('designResize');
-    if (!overlay || !handle) return;
+  // ===== LAYER INTERACTION =====
+  function wireLayerInteractions() {
+    document.querySelectorAll('.layer').forEach(el => {
+      const id = parseInt(el.dataset.layerId, 10);
+      let mode = null; // 'drag' | 'resize' | 'rotate'
+      let start = null;
 
-    const product = document.getElementById('previewProduct');
-    let mode = null; // 'drag' | 'resize'
-    let start = null;
+      el.addEventListener('pointerdown', (e) => {
+        // Don't fire for the delete button
+        if (e.target.closest('.layer-delete')) return;
+        e.preventDefault();
+        e.stopPropagation();
 
-    const onDown = (e, modeType) => {
-      e.preventDefault();
-      e.stopPropagation();
-      mode = modeType;
-      const rect = product.getBoundingClientRect();
-      start = {
-        x: e.clientX, y: e.clientY,
-        left: state.design.left,
-        top: state.design.top,
-        width: state.design.width,
-        rectW: rect.width,
-        rectH: rect.height
-      };
-      overlay.setPointerCapture(e.pointerId);
-    };
+        // Select this layer
+        if (state.selectedLayerId !== id) {
+          state.selectedLayerId = id;
+          render();
+          return;
+        }
 
-    overlay.addEventListener('pointerdown', (e) => {
-      if (e.target === handle) return; // resize handler picks this up
-      onDown(e, 'drag');
+        const handle = e.target.closest('.layer-handle');
+        mode = handle ? handle.dataset.handle : 'drag';
+
+        const layer = state.layers.find(l => l.id === id);
+        if (!layer) return;
+
+        const product = document.getElementById('previewProduct');
+        const rect = product.getBoundingClientRect();
+        const layerRect = el.getBoundingClientRect();
+
+        start = {
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+          x: layer.x, y: layer.y,
+          width: layer.width,
+          rotation: layer.rotation || 0,
+          rectW: rect.width,
+          rectH: rect.height,
+          // Center of the layer in screen coords (for rotate calc)
+          centerX: layerRect.left + layerRect.width / 2,
+          centerY: layerRect.top + layerRect.height / 2
+        };
+
+        try { (handle || el).setPointerCapture(e.pointerId); } catch {}
+      });
+
+      el.addEventListener('pointermove', (e) => {
+        if (!mode || !start) return;
+        const layer = state.layers.find(l => l.id === id);
+        if (!layer) return;
+
+        if (mode === 'drag') {
+          const dx = (e.clientX - start.pointerX) / start.rectW * 100;
+          const dy = (e.clientY - start.pointerY) / start.rectH * 100;
+          layer.x = Math.max(5, Math.min(95, start.x + dx));
+          layer.y = Math.max(5, Math.min(95, start.y + dy));
+          el.style.left = layer.x + '%';
+          el.style.top  = layer.y + '%';
+        } else if (mode === 'resize') {
+          const dx = (e.clientX - start.pointerX) / start.rectW * 100;
+          const dy = (e.clientY - start.pointerY) / start.rectH * 100;
+          const delta = Math.max(dx, dy);
+          layer.width = Math.max(8, Math.min(90, start.width + delta));
+          el.style.width = layer.width + '%';
+          el.style.setProperty('--layer-w', layer.width);
+          if (layer.type === 'text') syncTextLayerSizes();
+        } else if (mode === 'rotate') {
+          // Angle from layer-center to pointer position
+          const angle = Math.atan2(e.clientY - start.centerY, e.clientX - start.centerX) * 180 / Math.PI;
+          // The rotate handle sits ABOVE the center, so 0° rotation = -90°
+          // angle (pointer above center). Subtract 90° to align.
+          let rot = angle + 90;
+          // Snap to 15° increments while shift is held? Skip for now.
+          layer.rotation = rot;
+          el.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+        }
+      });
+
+      const finish = () => { mode = null; start = null; };
+      el.addEventListener('pointerup', finish);
+      el.addEventListener('pointercancel', finish);
     });
-    handle.addEventListener('pointerdown', (e) => onDown(e, 'resize'));
 
-    overlay.addEventListener('pointermove', (e) => {
-      if (!mode || !start) return;
-      const dx = (e.clientX - start.x) / start.rectW * 100;
-      const dy = (e.clientY - start.y) / start.rectH * 100;
-      if (mode === 'drag') {
-        state.design.left = Math.max(8, Math.min(92, start.left + dx));
-        state.design.top  = Math.max(8, Math.min(92, start.top  + dy));
-      } else if (mode === 'resize') {
-        // Use the larger of dx/dy so dragging diagonally feels natural
-        const delta = Math.max(dx, dy);
-        state.design.width = Math.max(10, Math.min(80, start.width + delta));
+    // Click empty preview area to deselect
+    const stage = document.getElementById('previewStage');
+    stage.addEventListener('pointerdown', (e) => {
+      if (e.target === stage || e.target.tagName === 'svg' || e.target.tagName === 'path' || e.target.tagName === 'rect' || e.target.id === 'previewProduct') {
+        if (state.selectedLayerId !== null) {
+          state.selectedLayerId = null;
+          render();
+        }
       }
-      overlay.style.left  = state.design.left  + '%';
-      overlay.style.top   = state.design.top   + '%';
-      overlay.style.width = state.design.width + '%';
     });
+  }
 
-    const finish = () => { mode = null; start = null; };
-    overlay.addEventListener('pointerup', finish);
-    overlay.addEventListener('pointercancel', finish);
+  // ===== ADD LAYERS =====
+  function addImageLayer(dataUrl) {
+    const id = state.nextLayerId++;
+    state.layers.push({
+      id, type:'image',
+      side: state.activeSide,
+      dataUrl,
+      x: 50, y: 38, width: 32, rotation: 0
+    });
+    state.selectedLayerId = id;
+    render();
+    setStatus(`Image added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
+  }
+
+  function addTextLayer(text, color, weight) {
+    const id = state.nextLayerId++;
+    state.layers.push({
+      id, type:'text',
+      side: state.activeSide,
+      text: text.slice(0, 60),
+      color, weight,
+      x: 50, y: 55, width: 50, rotation: 0
+    });
+    state.selectedLayerId = id;
+    render();
+    setStatus(`Text added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
+  }
+
+  function deleteLayer(id) {
+    state.layers = state.layers.filter(l => l.id !== id);
+    if (state.selectedLayerId === id) state.selectedLayerId = null;
+    render();
+  }
+
+  function setActiveSide(side) {
+    if (side !== 'front' && side !== 'back') return;
+    state.activeSide = side;
+    state.selectedLayerId = null;
+    document.querySelectorAll('#sideToggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.side === side);
+    });
+    render();
   }
 
   // ===== EVENTS =====
   document.addEventListener('click', (e) => {
+    const sideBtn = e.target.closest('#sideToggle button');
+    if (sideBtn) { setActiveSide(sideBtn.dataset.side); return; }
     const product = e.target.closest('.product-option');
     if (product) {
       state.product = PRODUCTS.find(p => p.id === product.dataset.id);
@@ -859,12 +1074,52 @@
       renderQuote();
       return;
     }
-    if (e.target.id === 'designUploadBtn' || e.target.closest('#designUploadBtn')) {
-      document.getElementById('designFile').click();
+    if (e.target.id === 'addImageBtn' || e.target.closest('#addImageBtn')) {
+      document.getElementById('imageFile').click();
       return;
     }
-    if (e.target.id === 'designRemoveBtn') {
-      removeDesign();
+    if (e.target.id === 'addTextBtn' || e.target.closest('#addTextBtn')) {
+      document.getElementById('textEditor').classList.add('open');
+      document.getElementById('textInput').focus();
+      return;
+    }
+    if (e.target.id === 'textCancel') {
+      document.getElementById('textEditor').classList.remove('open');
+      document.getElementById('textInput').value = '';
+      return;
+    }
+    if (e.target.id === 'textConfirm') {
+      const text = document.getElementById('textInput').value.trim();
+      if (text.length === 0) { setStatus('Type something first.', 'error'); return; }
+      addTextLayer(text, state.textDraft.color, state.textDraft.weight);
+      document.getElementById('textEditor').classList.remove('open');
+      document.getElementById('textInput').value = '';
+      return;
+    }
+    const colorBtn = e.target.closest('[data-text-color]');
+    if (colorBtn) {
+      state.textDraft.color = colorBtn.dataset.textColor;
+      document.querySelectorAll('.text-color').forEach(b => b.classList.remove('selected'));
+      colorBtn.classList.add('selected');
+      return;
+    }
+    const weightBtn = e.target.closest('[data-text-weight]');
+    if (weightBtn) {
+      state.textDraft.weight = parseInt(weightBtn.dataset.textWeight, 10);
+      document.querySelectorAll('.text-weight-pill').forEach(b => b.classList.remove('selected'));
+      weightBtn.classList.add('selected');
+      return;
+    }
+    const del = e.target.closest('[data-delete-layer]');
+    if (del) {
+      e.stopPropagation();
+      deleteLayer(parseInt(del.dataset.deleteLayer, 10));
+      return;
+    }
+    const layerRow = e.target.closest('.layer-row');
+    if (layerRow && !e.target.closest('[data-delete-layer]')) {
+      state.selectedLayerId = parseInt(layerRow.dataset.layerId, 10);
+      render();
       return;
     }
     if (e.target.id === 'requestBtn' && !e.target.disabled) {
@@ -872,93 +1127,133 @@
     }
   });
 
-  document.getElementById('designFile').addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (!/^image\//.test(file.type)) {
-      setStatus('Pick an image file (PNG / JPEG / WebP).', 'error');
-      return;
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      setStatus('Image is too large — keep under 8 MB.', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => loadDesign(reader.result);
-    reader.onerror = () => setStatus('Could not read that file.', 'error');
-    reader.readAsDataURL(file);
+  // Image file input — supports multiple at once
+  document.getElementById('imageFile').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    let pending = files.length;
+    files.forEach(file => {
+      if (!/^image\//.test(file.type)) {
+        setStatus('Skipped a non-image file.', 'error');
+        if (--pending === 0) e.target.value = '';
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        setStatus(`Skipped ${file.name} (over 8 MB).`, 'error');
+        if (--pending === 0) e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        addImageLayer(reader.result);
+        if (--pending === 0) e.target.value = '';
+      };
+      reader.onerror = () => {
+        setStatus('Could not read a file.', 'error');
+        if (--pending === 0) e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
   });
-
-  function loadDesign(dataUrl) {
-    state.designDataUrl = dataUrl;
-    state.designUrl = null; // not yet uploaded — will upload on submit
-    state.design = { left: 50, top: 38, width: 34 }; // reset position
-    renderDesignZone();
-    renderPreview();
-    renderQuote();
-    setStatus('Design loaded. Drag it on the preview to position, drag the gold dot to resize.', '');
-  }
-
-  function removeDesign() {
-    state.designDataUrl = null;
-    state.designUrl = null;
-    document.getElementById('designFile').value = '';
-    renderDesignZone();
-    renderPreview();
-    renderQuote();
-    setStatus('', '');
-  }
-
-  function renderDesignZone() {
-    const zone = document.getElementById('designZone');
-    if (state.designDataUrl) {
-      zone.classList.add('has-design');
-      zone.innerHTML = `
-        <div class="preview-thumb"><img src="${state.designDataUrl}" alt="Your design"/></div>
-        <div class="design-zone-text">Looks good. You can position it on the preview, or replace it.</div>
-        <div class="design-zone-actions">
-          <button type="button" class="design-upload-btn" id="designUploadBtn">Replace</button>
-          <button type="button" class="secondary-btn" id="designRemoveBtn">Remove</button>
-        </div>
-        <input type="file" accept="image/png,image/jpeg,image/webp" id="designFile" hidden />
-      `;
-      // Re-attach the file input listener since we replaced the element
-      document.getElementById('designFile').addEventListener('change', onFileChange);
-    } else {
-      zone.classList.remove('has-design');
-      zone.innerHTML = `
-        <div class="design-zone-text">No design yet — pick a file to add one. PNG with a transparent background works best.</div>
-        <button type="button" class="design-upload-btn" id="designUploadBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
-          Upload design
-        </button>
-        <input type="file" accept="image/png,image/jpeg,image/webp" id="designFile" hidden />
-      `;
-      document.getElementById('designFile').addEventListener('change', onFileChange);
-    }
-  }
-
-  function onFileChange(e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (!/^image\//.test(file.type)) {
-      setStatus('Pick an image file (PNG / JPEG / WebP).', 'error');
-      return;
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      setStatus('Image is too large — keep under 8 MB.', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => loadDesign(reader.result);
-    reader.onerror = () => setStatus('Could not read that file.', 'error');
-    reader.readAsDataURL(file);
-  }
 
   function setStatus(msg, kind) {
     const el = document.getElementById('submitStatus');
     el.textContent = msg;
     el.className = 'submit-status' + (kind ? ' ' + kind : '');
+  }
+
+  // ===== COMPOSITE RENDER (for admin email) =====
+  // Draws the product silhouette + all layers for ONE side onto a
+  // 1000x1000 canvas, returns a JPEG data URL. Called once for front
+  // and once for back so the admin gets two preview images.
+  async function renderCompositeForSide(side) {
+    if (!state.product || !state.color) return null;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1000;
+      canvas.height = 1000;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#0d0c0a';
+      ctx.fillRect(0, 0, 1000, 1000);
+
+      // Draw a small "FRONT" / "BACK" badge in the corner so admin can
+      // tell the two preview images apart at a glance.
+      const svgString = getProductPreviewSVG(state.product.type, state.color.hex);
+      const svgImg = await loadSvgAsImage(svgString);
+      const productW = 720;
+      const productH = 720 * (360/320);
+      const productX = (1000 - productW) / 2;
+      const productY = (1000 - productH) / 2;
+      ctx.drawImage(svgImg, productX, productY, productW, productH);
+
+      const sideLayers = state.layers.filter(l => (l.side || 'front') === side);
+      for (const l of sideLayers) {
+        const cx = productX + (l.x / 100) * productW;
+        const cy = productY + (l.y / 100) * productH;
+        const w  = (l.width / 100) * productW;
+        const rot = ((l.rotation || 0) * Math.PI) / 180;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+
+        if (l.type === 'image') {
+          const img = await loadImage(l.dataUrl);
+          const ratio = img.naturalHeight / img.naturalWidth;
+          ctx.drawImage(img, -w/2, -(w*ratio)/2, w, w*ratio);
+        } else if (l.type === 'text') {
+          const fontSize = w * 0.32;
+          ctx.font = `${l.weight} ${fontSize}px "Space Grotesk", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = l.color;
+          ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 2;
+          ctx.fillText(l.text, 0, 0);
+        }
+
+        ctx.restore();
+      }
+
+      // Side label badge
+      ctx.fillStyle = 'rgba(8,8,10,.85)';
+      ctx.fillRect(24, 24, 130, 40);
+      ctx.strokeStyle = '#d4a558';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(24, 24, 130, 40);
+      ctx.fillStyle = '#d4a558';
+      ctx.font = '700 16px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(side.toUpperCase(), 89, 44);
+
+      return canvas.toDataURL('image/jpeg', 0.88);
+    } catch (err) {
+      console.error(`Composite render failed for ${side}:`, err);
+      return null;
+    }
+  }
+
+  function loadSvgAsImage(svgString) {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
   }
 
   // ===== SUBMIT =====
@@ -971,50 +1266,86 @@
       return;
     }
 
-    let designUrl = state.designUrl;
+    state.submitting = true;
+    renderQuote();
+    setStatus('Building your design previews…', '');
 
-    // Upload design first (if present and not already uploaded)
-    if (state.designDataUrl && !designUrl) {
-      state.designUploading = true;
-      renderQuote();
-      setStatus('Uploading your design…', '');
+    // Wait for the brand font to load so canvas text matches the live preview
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
+
+    // 1) Render composite preview for each side that has layers — or
+    //    just front if there are no layers anywhere (admin still gets
+    //    a clean blank-product image to confirm the order).
+    const sidesToRender = ['front', 'back'].filter(side => {
+      if (state.layers.some(l => (l.side || 'front') === side)) return true;
+      return side === 'front'; // always include front baseline
+    });
+    const compositeUrls = {};
+    for (const side of sidesToRender) {
+      const composite = await renderCompositeForSide(side);
+      if (!composite) continue;
       try {
-        const res = await fetch('/api/customize-upload', {
+        setStatus(`Uploading ${side} preview…`, '');
+        const r = await fetch('/api/customize-upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data_url: state.designDataUrl })
+          body: JSON.stringify({ data_url: composite })
         });
-        const json = await res.json();
-        if (!res.ok || !json.ok) throw new Error(json.error || 'Upload failed.');
-        designUrl = json.url;
-        state.designUrl = designUrl;
-      } catch (err) {
-        setStatus('Couldn\'t upload your design — ' + (err.message || 'try a smaller image'), 'error');
-        state.designUploading = false;
-        renderQuote();
-        return;
-      }
-      state.designUploading = false;
-      renderQuote();
+        const j = await r.json();
+        if (r.ok && j.ok) compositeUrls[side] = j.url;
+      } catch {}
     }
 
-    // Build the request message
-    const designLine = designUrl
-      ? `Design: ${designUrl} (positioned at ${Math.round(state.design.left)}%/${Math.round(state.design.top)}%, scale ${Math.round(state.design.width)}%)`
-      : 'Design: none';
-    const total = state.product.price + (designUrl ? DESIGN_FEE : 0);
-    const message = [
+    // 2) Upload each image layer (best-effort, individual)
+    const imageLayerUrls = [];
+    for (const l of state.layers) {
+      if (l.type !== 'image' || !l.dataUrl) continue;
+      try {
+        const r = await fetch('/api/customize-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data_url: l.dataUrl })
+        });
+        const j = await r.json();
+        if (r.ok && j.ok) imageLayerUrls.push({ id: l.id, url: j.url });
+      } catch {}
+    }
+
+    // 3) Build a request message admin can act on
+    const total = state.product.price + (state.layers.length > 0 ? DESIGN_FEE : 0);
+    const lines = [
       'Custom build request from /customize:',
       '',
-      `Item: ${state.product.name}`,
+      `Item:  ${state.product.name}`,
       `Color: ${state.color.name}`,
-      `Size: ${state.size}`,
-      designLine,
-      '',
-      `Estimated total: $${total}`,
-      '',
-      'Customer wants to confirm details before paying.'
-    ].join('\n');
+      `Size:  ${state.size}`,
+      `Total: $${total}`,
+      ''
+    ];
+    if (compositeUrls.front) lines.push(`Front preview: ${compositeUrls.front}`);
+    if (compositeUrls.back)  lines.push(`Back preview:  ${compositeUrls.back}`);
+    if (compositeUrls.front || compositeUrls.back) lines.push('');
+
+    // List layers grouped by side
+    const renderLayerLines = (side) => {
+      const sideLayers = state.layers.filter(l => (l.side || 'front') === side);
+      if (sideLayers.length === 0) return [];
+      const out = [`${side.toUpperCase()} layers (${sideLayers.length}):`];
+      sideLayers.forEach((l, i) => {
+        const pos = `at ${Math.round(l.x)}%/${Math.round(l.y)}%, ${Math.round(l.width)}% wide, ${Math.round(l.rotation || 0)}°`;
+        if (l.type === 'image') {
+          const url = imageLayerUrls.find(u => u.id === l.id)?.url || '(upload failed)';
+          out.push(`  ${i+1}. Image — ${pos} — ${url}`);
+        } else {
+          out.push(`  ${i+1}. Text "${l.text}" — color ${l.color}, weight ${l.weight} — ${pos}`);
+        }
+      });
+      out.push('');
+      return out;
+    };
+    lines.push(...renderLayerLines('front'));
+    lines.push(...renderLayerLines('back'));
+    lines.push('Customer wants to confirm details before paying.');
 
     setStatus('Sending your request…', '');
     try {
@@ -1025,7 +1356,7 @@
           name: 'Custom build customer',
           email,
           subject: `Custom build: ${state.product.name} (${state.color.name}, ${state.size})`,
-          message
+          message: lines.join('\n')
         })
       });
       const json = await res.json();
@@ -1035,11 +1366,29 @@
       document.getElementById('requestBtn').textContent = 'Request sent ✓';
     } catch (err) {
       setStatus('Couldn\'t send — ' + (err.message || 'try again or use the contact page'), 'error');
+      state.submitting = false;
+      renderQuote();
     }
+  }
+
+  // ===== HELPERS =====
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+  function truncate(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n) + '…' : s;
   }
 
   // ===== INIT =====
   render();
+  // Re-sync text font sizes if window resizes (preview width may change)
+  window.addEventListener('resize', () => {
+    if (state.layers.some(l => l.type === 'text')) syncTextLayerSizes();
+  });
 })();
 </script>
 

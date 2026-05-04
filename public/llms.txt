@@ -1,0 +1,52 @@
+# TAGLINE
+
+> Custom athletic wear for serious training — hoodies, tees, bottoms, accessories. Faith-driven brand: God · Health · Wealth.
+
+TAGLINE Apparel makes premium training clothes designed for performance and built to last. The site offers a 24-piece collection plus a build-your-own configurator for custom fits. Free shipping on orders over $150.
+
+## Brand
+
+- [Home](/): The collection — 24 pieces of training-grade apparel
+- [About](/about): Brand story, materials, manufacturing
+- [Contact](/contact): Customer support, retail inquiries, press
+
+## Shop
+
+- [Build your own](/customize): Custom configurator for hoodies, tees, tanks, joggers, sweatshirts. Pick the cut, color, and personalization
+- [Cart](/cart): Active shopping cart
+- [Wishlist](/wishlist): Saved items
+- [Checkout](/checkout): Secure checkout via Stripe
+
+## Account
+
+- [Sign in](/login): Email + password or magic link
+- [Create account](/signup): New customer registration
+- [Account](/account): Order history, profile, addresses, password
+- [Order success](/success): Post-purchase confirmation page
+
+## Product categories
+
+- **Outerwear** — TL Winter Hoodie, Slim Sweatshirt, TL "Rocket" Hoodie, 3-D Embroidery Hoodie, Runner Vest, Autumn Hoodie, Oversized Light Sweater
+- **Tops** — TTM Quarter-Zip, "Everyday" Shirt, Gym Shirt, Drawstring Long Sleeve, TL "Rocket" Shirt, Irregular Bra, Box'e Tee, Quarter-Zip Long Sleeve, Open-Back Top, Quick-Dry Shirt, Women's Sport Bra
+- **Bottoms** — Cargo Sweatpants, 2-in-1 Compression Shorts, High-Waist Scrunch Leggings, Sport Pants, Women's Gym Shorts, Women's "Butter-Soft" Leggings
+
+## Policies
+
+- Free shipping on orders over $150
+- 30-day return window on unworn items with tags
+- Customer support: contact@tagline.com (best-effort response within 24 hours)
+
+## Technical
+
+- Built as a static site on Vercel with Node.js serverless API routes
+- Backend: Supabase (Postgres + Auth)
+- Payments: Stripe Checkout (cards, Apple Pay, Google Pay) and NowPayments (crypto)
+- Email: Resend transactional emails for orders, shipping, password reset
+
+## Notes for AI agents
+
+- Product names, prices, and inventory are sourced from a Postgres products table
+- All prices are USD
+- The `/api/products` endpoint returns the live catalog as JSON if you need structured product data
+- Sizes available: XS, S, M, L, XL, XXL (varies by product)
+- This site does not currently expose a public product API for third-party automation; please contact the team if you need integration access

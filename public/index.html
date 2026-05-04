@@ -10,21 +10,21 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="color-scheme" content="dark" />
 
-<title>TAGLINE â€” Custom Athletic Wear</title>
+<title>TAGLINE — Custom Athletic Wear</title>
 <meta name="description" content="Custom athletic wear. Shop hoodies, tees, bottoms, footwear, and accessories." />
 
 <!-- Open Graph / social previews -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="TAGLINE â€” Custom Athletic Wear" />
+<meta property="og:title" content="TAGLINE — Custom Athletic Wear" />
 <meta property="og:description" content="Custom athletic wear, made to your fit. God · Health · Wealth." />
 <meta property="og:url" content="https://tagline-ten.vercel.app/" />
 <meta property="og:site_name" content="TAGLINE" />
 <meta property="og:image" content="https://tagline-ten.vercel.app/og-image.svg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="TAGLINE â€” Custom Athletic Wear" />
+<meta property="og:image:alt" content="TAGLINE — Custom Athletic Wear" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="TAGLINE â€” Custom Athletic Wear" />
+<meta name="twitter:title" content="TAGLINE — Custom Athletic Wear" />
 <meta name="twitter:description" content="Custom athletic wear, made to your fit. God · Health · Wealth." />
 <meta name="twitter:image" content="https://tagline-ten.vercel.app/og-image.svg" />
 
@@ -34,14 +34,14 @@
 <!-- ============ STRUCTURED DATA (JSON-LD) ============ -->
 <!-- Organization + WebSite schema for Google's Knowledge Graph and rich
      results. Product ItemList is injected at runtime by tagline-app.js
-     (single source of truth â€” the PRODUCTS object). -->
+     (single source of truth — the PRODUCTS object). -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "TAGLINE",
   "url": "https://tagline-ten.vercel.app/",
-  "description": "Custom athletic wear â€” hoodies, tees, bottoms, footwear, and accessories.",
+  "description": "Custom athletic wear — hoodies, tees, bottoms, footwear, and accessories.",
   "sameAs": [
     "https://instagram.com",
     "https://tiktok.com",
@@ -143,7 +143,7 @@
     .recently-viewed .pcm-image{font-size:36px}
   }
 
-  /* Skip-to-content link â€” first focusable element on the page.
+  /* Skip-to-content link — first focusable element on the page.
      Visually hidden until focused. WCAG 2.4.1 "Bypass Blocks". */
   .skip-link{
     position:absolute;
@@ -191,7 +191,7 @@
     -webkit-tap-highlight-color:transparent;
     touch-action:manipulation;
   }
-  /* Honor reduced motion preference â€” but keep the cross alive (essential to brand) */
+  /* Honor reduced motion preference — but keep the cross alive (essential to brand) */
   @media (prefers-reduced-motion: reduce) {
     *:not(.cross-stage):not(.cross-ring):not(.cross-ring-1):not(.cross-ring-2):not(.cross-ring-3),
     *:not(.cross-stage):not(.cross-ring):not(.cross-ring-1):not(.cross-ring-2):not(.cross-ring-3)::before,
@@ -205,7 +205,7 @@
   /* Prevent horizontal scroll on mobile */
   html, body { overflow-x:hidden; max-width:100vw; }
 
-  /* Image defaults â€” never overflow, never break layout */
+  /* Image defaults — never overflow, never break layout */
   img, svg, video {
     max-width:100%;
     height:auto;
@@ -489,11 +489,11 @@
 
   /* ============ HERO ============ */
   /*
-   * Pure black background. The cross alone â€” no beams, no shafts.
+   * Pure black background. The cross alone — no beams, no shafts.
    * Layers (back to front):
    *   1. Soft warm halo behind cross (breathes with heartbeat)
    *   2. Cross-shaped sonar ping waves expanding outward
-   *   3. The cross itself â€” sharpest, brightest, dimensional
+   *   3. The cross itself — sharpest, brightest, dimensional
    *   4. Subtle radial vignette darkening at edges
    *   5. Hero text content (eyebrow, headline, sub, CTAs)
    */
@@ -509,7 +509,7 @@
     background:#08080a;
   }
 
-  /* Cross stage â€” holds cross, glow, and rings. Beats together. */
+  /* Cross stage — holds cross, glow, and rings. Beats together. */
   .cross-stage{
     position:absolute;
     top:42%; left:50%;
@@ -523,16 +523,16 @@
     animation:heartbeat 2.6s ease-in-out infinite;
   }
   /*
-   * Smooth continuous breathing â€” no plateaus, no dead time.
+   * Smooth continuous breathing — no plateaus, no dead time.
    * The cross expands and contracts in a perfect sine-like wave.
-   * 2.6s cycle = ~23 BPM â€” slow, meditative, but always moving.
+   * 2.6s cycle = ~23 BPM — slow, meditative, but always moving.
    */
   @keyframes heartbeat {
     0%, 100% { transform:translate3d(-50%, -50%, 0) scale(1); }
     50%      { transform:translate3d(-50%, -50%, 0) scale(1.04); }
   }
 
-  /* The bright halo behind the cross â€” synced perfectly with the beat */
+  /* The bright halo behind the cross — synced perfectly with the beat */
   .cross-glow{
     position:absolute;
     top:50%; left:50%;
@@ -559,7 +559,7 @@
     50%      { opacity:1;   transform:translate3d(-50%, -50%, 0) scale(1.06); }
   }
 
-  /* Inner core glow â€” tighter, brighter */
+  /* Inner core glow — tighter, brighter */
   .cross-glow::after{
     content:'';
     position:absolute;
@@ -575,8 +575,8 @@
     filter:blur(16px);
   }
 
-  /* Concentric cross-shaped pings emanating outward â€” synced to heartbeat */
-  /* Cycle is 3 Ã— heartbeat (7.8s), with 2.6s spacing â€” one ring per beat */
+  /* Concentric cross-shaped pings emanating outward — synced to heartbeat */
+  /* Cycle is 3 × heartbeat (7.8s), with 2.6s spacing — one ring per beat */
   .cross-ring{
     position:absolute;
     top:50%; left:50%;
@@ -599,7 +599,7 @@
     100% { transform:translate3d(-50%, -50%, 0) scale(2.8); opacity:0;   filter:blur(10px); }
   }
 
-  /* The cross itself â€” sharpest layer with rich multi-stop glow */
+  /* The cross itself — sharpest layer with rich multi-stop glow */
   .cross-shape{
     position:absolute;
     top:50%; left:50%;
@@ -668,7 +668,7 @@
      * Browser will scale font size down if needed via clamp(). */
     white-space:nowrap;
   }
-  /* Each word gets its own span â€” keeps each word together as a unit
+  /* Each word gets its own span — keeps each word together as a unit
    * and never breaks mid-word. The whole headline stays one row.  */
   .hero-headline .word{
     display:inline;
@@ -752,7 +752,7 @@
     to{opacity:1; transform:translateY(0)}
   }
 
-  /* ============ CROSS ENTRANCE â€” first page load ============
+  /* ============ CROSS ENTRANCE — first page load ============
    * Cross gently materializes with the heartbeat picking up.
    */
   @keyframes crossEnter{ from{opacity:0; transform:translate3d(-50%,-50%,0) scale(.85)} to{opacity:1; transform:translate3d(-50%,-50%,0) scale(1)} }
@@ -778,7 +778,7 @@
    * triggering a smooth fade-up. Stagger child elements for sequence.
    *
    * IMPORTANT: Animations are opt-in via .reveal-pending class added by JS.
-   * If JS fails / is slow, content stays VISIBLE â€” no blank pages.
+   * If JS fails / is slow, content stays VISIBLE — no blank pages.
    */
   .reveal.reveal-pending{
     opacity:0;
@@ -1036,13 +1036,15 @@
     object-position:center top;
     display:block;
   }
-  /* Soft fade at the bottom so the price text sits on a darker band
-     instead of competing with white pixels in the photo. */
+  /* Strong fade behind the meta strip so the name + price are readable
+     no matter what's in the photo (white-bg, model shots, dark bg, etc).
+     Taller + stronger than a polite tint — the goal is unconditional
+     legibility, not subtlety. */
   .product-card::after{
     content:'';
     position:absolute; left:0; right:0; bottom:0;
-    height:90px;
-    background:linear-gradient(to top, rgba(8,8,10,.92), rgba(8,8,10,0));
+    height:140px;
+    background:linear-gradient(to top, rgba(8,8,10,.96) 0%, rgba(8,8,10,.85) 35%, rgba(8,8,10,.5) 70%, rgba(8,8,10,0) 100%);
     pointer-events:none;
     z-index:2;
     opacity:0;
@@ -1051,31 +1053,36 @@
   .product-card:has(.product-illu.has-image)::after{ opacity:1; }
   .product-meta{
     position:absolute; left:0; right:0; bottom:0;
-    padding:16px;
+    padding:18px 16px;
     display:flex; justify-content:space-between; align-items:flex-end;
     gap:12px;
     z-index:3;
   }
   .product-meta .name{
-    font-size:13px; font-weight:600; color:var(--ink);
+    font-size:14px; font-weight:700; color:#fff;
     letter-spacing:0;
-    line-height:1.2;
+    line-height:1.25;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);
   }
   .product-meta .name-sub{
     display:block;
-    font-size:11px; font-weight:400;
-    color:var(--muted);
-    letter-spacing:.02em;
-    margin-top:4px;
+    font-size:11px; font-weight:500;
+    color:rgba(255,255,255,.72);
+    letter-spacing:.04em;
+    margin-top:5px;
+    text-shadow:0 1px 2px rgba(0,0,0,.5);
   }
   .product-meta .price{
-    font-size:13px; font-weight:600; color:var(--ink);
+    font-size:14px; font-weight:700;
+    color:var(--gold-soft, #e2b56b);
     font-family:'Inter', sans-serif;
     letter-spacing:0;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);
+    white-space:nowrap;
   }
 
   /* ============ PRODUCT CARD INTERACTION ============ */
-  /* The whole card is clickable â€” opens the quick-view drawer */
+  /* The whole card is clickable — opens the quick-view drawer */
   .product-card{
     position:relative;
     cursor:pointer;
@@ -1159,7 +1166,7 @@
   }
   .product-card:hover::after{ transform:scaleX(1); }
 
-  /* Sold out cards â€” visually different, no cursor pointer */
+  /* Sold out cards — visually different, no cursor pointer */
   .product-card.sold-out{
     cursor:not-allowed;
     opacity:.6;
@@ -1184,7 +1191,7 @@
     pointer-events:auto;
   }
 
-  /* Drawer itself â€” slides from right on desktop, from bottom on mobile */
+  /* Drawer itself — slides from right on desktop, from bottom on mobile */
   .qv-drawer{
     position:fixed;
     top:0; right:0; bottom:0;
@@ -1900,7 +1907,7 @@
     gap:8px;
   }
   .newsletter-form button::after{
-    content:'â†’';
+    content:'→';
     font-size:14px;
     transition:transform .25s ease;
   }
@@ -2119,8 +2126,8 @@
     .cross-glow::after{width:160px; height:160px}
     .cross-ring{width:115px; height:200px}
     .hero-headline{
-      /* Use vw so it scales with screen width â€” guarantees one-line fit.
-       * 8.5vw â‰ˆ 27px at 320px screen, ~36px at 425px, ~46px at 540px. */
+      /* Use vw so it scales with screen width — guarantees one-line fit.
+       * 8.5vw ≈ 27px at 320px screen, ~36px at 425px, ~46px at 540px. */
       font-size:clamp(26px, 8.5vw, 56px) !important;
       letter-spacing:-0.04em;
     }
@@ -2192,7 +2199,7 @@
     .product-card{aspect-ratio:1/1.1}
   }
 
-  /* Disable expensive bg-effects only â€” keep the cross alive everywhere */
+  /* Disable expensive bg-effects only — keep the cross alive everywhere */
   @media (prefers-reduced-motion: reduce) {
     .cross-stage, .cross-glow, .cross-ring-1, .cross-ring-2, .cross-ring-3 {
       animation-duration: 6s !important;
@@ -2326,14 +2333,14 @@
     <label class="qv-field-label">Quantity</label>
     <div class="qv-qty-row">
       <div class="qv-qty-stepper">
-        <button type="button" class="qv-qty-btn" id="qvQtyMinus" aria-label="Decrease quantity">âˆ’</button>
+        <button type="button" class="qv-qty-btn" id="qvQtyMinus" aria-label="Decrease quantity">−</button>
         <span class="qv-qty-display" id="qvQty">1</span>
         <button type="button" class="qv-qty-btn" id="qvQtyPlus" aria-label="Increase quantity">+</button>
       </div>
       <span class="qv-stock" id="qvStock"></span>
     </div>
 
-    <!-- Style this with â€” populated by tagline-app.js from PRODUCT_PAIRINGS.
+    <!-- Style this with — populated by tagline-app.js from PRODUCT_PAIRINGS.
          Hidden if there are no pairings or the product isn't in the map. -->
     <div class="qv-pairings" id="qvPairings" hidden>
       <div class="qv-pairings-head">
@@ -3011,7 +3018,7 @@
       const prefersReducedMotion = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
-        // Don't add reveal-pending â€” content stays visible without animation
+        // Don't add reveal-pending — content stays visible without animation
         return;
       }
 
@@ -3089,7 +3096,7 @@
       });
     });
 
-    // ============ CATEGORY TILES â†’ FILTER ============
+    // ============ CATEGORY TILES → FILTER ============
     // Clicking a category tile scrolls to shop and applies that category filter
     document.querySelectorAll('.category-tile[data-category]').forEach(tile => {
       tile.addEventListener('click', (e) => {
@@ -3273,14 +3280,14 @@
       });
     });
 
-    // ============ FORMS â€” prevent broken submits ============
+    // ============ FORMS — prevent broken submits ============
     document.querySelectorAll('form').forEach(form => {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = form.querySelector('input[type="email"]');
         const button = form.querySelector('button');
         if (input && input.value && button) {
-          button.textContent = 'Joined âœ“';
+          button.textContent = 'Joined ✓';
           input.value = '';
           input.blur();
           setTimeout(() => {
@@ -3304,7 +3311,7 @@
         else header.classList.remove('scrolled');
       }
 
-      // Progress bar â€” width = how far down the page we are
+      // Progress bar — width = how far down the page we are
       if (progressBar) {
         const scrollHeight = (document.documentElement.scrollHeight || document.body.scrollHeight)
                              - document.documentElement.clientHeight;

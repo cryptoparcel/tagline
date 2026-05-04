@@ -62,18 +62,30 @@
   function probeProductImage(productId, onFound) {
     const key = 'tagline_img_' + productId;
     const targetUrl = getProductImageUrl(productId);
+    // Cache shape: "ok|<url>" or "404|<url>". Tying the result to the URL
+    // means a stale '404' for an old URL doesn't suppress probing the new
+    // one — important when image_url changes between deploys.
     let cached = null;
     try { cached = sessionStorage.getItem(key); } catch {}
-    if (cached === '404') return;        // known-missing, skip
-    if (cached && cached !== '404' && cached === targetUrl) { onFound(targetUrl); return; }
+    if (cached) {
+      const sep = cached.indexOf('|');
+      if (sep > 0) {
+        const status = cached.slice(0, sep);
+        const cachedUrl = cached.slice(sep + 1);
+        if (cachedUrl === targetUrl) {
+          if (status === '404') return;
+          if (status === 'ok') { onFound(targetUrl); return; }
+        }
+      }
+    }
 
     const test = new Image();
     test.onload = () => {
-      try { sessionStorage.setItem(key, targetUrl); } catch {}
+      try { sessionStorage.setItem(key, 'ok|' + targetUrl); } catch {}
       onFound(targetUrl);
     };
     test.onerror = () => {
-      try { sessionStorage.setItem(key, '404'); } catch {}
+      try { sessionStorage.setItem(key, '404|' + targetUrl); } catch {}
     };
     test.src = targetUrl;
   }

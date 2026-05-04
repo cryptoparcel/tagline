@@ -1224,7 +1224,9 @@
           img.src = url;
           img.alt = productName;
           img.loading = 'lazy';
-          img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+          // Sizing/cover handled by .product-illu.has-image img in CSS so
+          // the image fills the card edge-to-edge instead of fighting the
+          // 30px SVG padding.
           illu.appendChild(img);
           illu.classList.add('has-image');
         });

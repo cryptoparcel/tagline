@@ -556,7 +556,7 @@
   // localStorage). image_url overlays the SVG when probeProductImage
   // confirms the URL loads.
   const PRODUCTS = {
-    'ascend-hoodie':  { name:'TL Winter Hoodie',         color:null, price:45, stock:50,  category:'Outerwear', tag:'',
+    'ascend-hoodie':  { name:'TL Winter Hoodie',         color:null, price:45, stock:50,  category:'Outerwear', tag:'Featured',
       description:'Heavyweight winter pullover with the TL signature. Built for cold mornings and casual nights.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828&width=1000' },
     'halo-zip':       { name:'TTM Quarter-Zip',          color:null, price:35, stock:40,  category:'Tops',      tag:'',
@@ -571,8 +571,8 @@
     'vesper-long':    { name:'Drawstring Long Sleeve',   color:null, price:25, stock:60,  category:'Tops',      tag:'',
       description:'Long sleeve tee with adjustable drawstring hem. Layer it open or pull it tight.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512&width=1000' },
-    'path-jogger':    { name:'Cargo Sweatpants',         color:null, price:55, stock:45,  category:'Bottoms',   tag:'',
-      description:'Sweatpants meet cargo pockets. Tapered leg, drawcord waist, six functional pockets.',
+    'path-jogger':    { name:'TL Winter Pants',          color:null, price:55, stock:45,  category:'Bottoms',   tag:'Featured',
+      description:'Heavyweight winter pant with the TL signature. Brushed inside, tapered fit, built for cold-weather training.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457&width=1000' },
     'trial-short':    { name:'2-in-1 Compression Shorts',color:null, price:40, stock:70,  category:'Bottoms',   tag:'',
       description:'Compression liner inside, training short outside. The pair that handles the gym AND the run.',
@@ -580,10 +580,10 @@
     'cloud-crew':     { name:'Slim Sweatshirt',          color:null, price:50, stock:50,  category:'Outerwear', tag:'',
       description:'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs, brushed inside.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0038.jpg?v=1761716083&width=1000' },
-    'crown-cap':      { name:'TL "Rocket" Shirt',        color:null, price:25, stock:70,  category:'Tops',      tag:'Featured',
+    'crown-cap':      { name:'TL "Rocket" Shirt',        color:null, price:25, stock:70,  category:'Tops',      tag:'',
       description:'The Rocket tee. Soft, structured, statement-piece embroidery.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286&width=1000' },
-    'halo-runner':    { name:'TL "Rocket" Hoodie',       color:null, price:55, stock:30,  category:'Outerwear', tag:'Featured',
+    'halo-runner':    { name:'TL "Rocket" Hoodie',       color:null, price:55, stock:30,  category:'Outerwear', tag:'',
       description:'The Rocket hoodie. Heavyweight, embroidered, and unmistakably ours.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983&width=1000' },
     'aether-bra':     { name:'Irregular Bra',            color:null, price:25, stock:60,  category:'Tops',      tag:'',
@@ -592,7 +592,7 @@
     'aether-legging': { name:'High-Waist Scrunch Leggings',color:null,price:25, stock:75,  category:'Bottoms',   tag:'',
       description:'High-rise scrunch-back leggings with four-way stretch. Lifts and supports.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748&width=1000' },
-    'reign-bomber':   { name:'3-D Embroidery Hoodie',    color:null, price:45, stock:35,  category:'Outerwear', tag:'New',
+    'reign-bomber':   { name:'3-D Embroidery Hoodie',    color:null, price:45, stock:35,  category:'Outerwear', tag:'',
       description:'Heavyweight hoodie with raised 3-D embroidery. Premium feel, statement detail.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157&width=1000' },
     'velocity-track': { name:'Runner Vest',              color:null, price:45, stock:30,  category:'Outerwear', tag:'',
@@ -625,7 +625,7 @@
     'pulse-band':     { name:'Women\'s Sport Bra',       color:null, price:30, stock:60,  category:'Tops',      tag:'',
       description:'Medium-support sport bra. Removable pads, racerback design, moisture-wicking.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279&width=1000' },
-    'quill-tote':     { name:'Women\'s "Butter-Soft" Leggings',color:null,price:30,stock:70,category:'Bottoms', tag:'New',
+    'quill-tote':     { name:'Women\'s "Butter-Soft" Leggings',color:null,price:30,stock:70,category:'Bottoms', tag:'',
       description:'Butter-soft fabric, high rise, pocket-equipped. The leggings you\'ll forget you\'re wearing.',
       image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785&width=1000' }
   };

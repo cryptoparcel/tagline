@@ -1036,15 +1036,18 @@
     object-position:center top;
     display:block;
   }
-  /* Strong fade behind the meta strip so the name + price are readable
-     no matter what's in the photo (white-bg, model shots, dark bg, etc).
-     Taller + stronger than a polite tint — the goal is unconditional
-     legibility, not subtlety. */
+  /* Solid bottom band when a photo is loaded. Pure black + tall enough
+     to fully cover the meta strip — no risk of the photo's bottom band
+     making text unreadable. Hidden when no photo (the SVG card already
+     has a dark background everywhere). */
   .product-card::after{
     content:'';
     position:absolute; left:0; right:0; bottom:0;
-    height:140px;
-    background:linear-gradient(to top, rgba(8,8,10,.96) 0%, rgba(8,8,10,.85) 35%, rgba(8,8,10,.5) 70%, rgba(8,8,10,0) 100%);
+    height:64px;
+    background:rgba(8,8,10,.94);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border-top:1px solid rgba(255,255,255,.06);
     pointer-events:none;
     z-index:2;
     opacity:0;
@@ -1053,32 +1056,32 @@
   .product-card:has(.product-illu.has-image)::after{ opacity:1; }
   .product-meta{
     position:absolute; left:0; right:0; bottom:0;
-    padding:18px 16px;
-    display:flex; justify-content:space-between; align-items:flex-end;
+    padding:14px 16px;
+    display:flex; justify-content:space-between; align-items:center;
     gap:12px;
     z-index:3;
   }
   .product-meta .name{
-    font-size:14px; font-weight:700; color:#fff;
+    font-size:14px; font-weight:700; color:#ffffff;
     letter-spacing:0;
-    line-height:1.25;
-    text-shadow:0 1px 3px rgba(0,0,0,.6);
+    line-height:1.2;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
   }
   .product-meta .name-sub{
     display:block;
-    font-size:11px; font-weight:500;
-    color:rgba(255,255,255,.72);
-    letter-spacing:.04em;
-    margin-top:5px;
-    text-shadow:0 1px 2px rgba(0,0,0,.5);
+    font-size:10px; font-weight:500;
+    color:rgba(255,255,255,.6);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-top:4px;
   }
   .product-meta .price{
-    font-size:14px; font-weight:700;
-    color:var(--gold-soft, #e2b56b);
+    font-size:15px; font-weight:800;
+    color:var(--gold-soft, #d4a558);
     font-family:'Inter', sans-serif;
-    letter-spacing:0;
-    text-shadow:0 1px 3px rgba(0,0,0,.6);
+    letter-spacing:.01em;
     white-space:nowrap;
+    flex-shrink:0;
   }
 
   /* ============ PRODUCT CARD INTERACTION ============ */
@@ -1693,7 +1696,7 @@
   }
   .categories-grid{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
+    grid-template-columns:repeat(3, 1fr);
     gap:8px;
   }
   .category-tile{
@@ -2447,14 +2450,13 @@
       <button type="button" class="filter-pill">Tops</button>
       <button type="button" class="filter-pill">Bottoms</button>
       <button type="button" class="filter-pill">Outerwear</button>
-      <button type="button" class="filter-pill">Footwear</button>
-      <button type="button" class="filter-pill">Accessories</button>
     </div>
   </div>
 
   <div class="drops-grid reveal-stagger">
 
     <article class="product-card">
+      <span class="product-tag gold">Featured</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="hood1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dde0e8"/></linearGradient></defs>
@@ -2531,6 +2533,7 @@
     </article>
 
     <article class="product-card">
+      <span class="product-tag gold">Featured</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="jog1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
@@ -2543,7 +2546,7 @@
         </svg>
       </div>
       <div class="product-meta">
-        <div><span class="name">Cargo Sweatpants</span><span class="name-sub">Bottoms</span></div>
+        <div><span class="name">TL Winter Pants</span><span class="name-sub">Bottoms</span></div>
         <span class="price">$55</span>
       </div>
     </article>
@@ -2578,7 +2581,6 @@
     </article>
 
     <article class="product-card">
-      <span class="product-tag gold">Featured</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="cap1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fefefe"/><stop offset="1" stop-color="#d6d9e1"/></linearGradient></defs>
@@ -2595,7 +2597,6 @@
     </article>
 
     <article class="product-card">
-      <span class="product-tag gold">Featured</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="sn1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4d8e0"/></linearGradient></defs>
@@ -2647,7 +2648,6 @@
     </article>
 
     <article class="product-card">
-      <span class="product-tag gold">New</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="bom1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
@@ -2837,7 +2837,6 @@
     </article>
 
     <article class="product-card">
-      <span class="product-tag gold">New</span>
       <div class="product-illu">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="tot1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dadde6"/></linearGradient></defs>
@@ -2856,7 +2855,7 @@
   </div>
 
   <div class="view-all-row">
-    <a href="#all" class="view-all">View all 24 styles
+    <a href="#shop" class="view-all">View all 24 styles
       <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </a>
   </div>
@@ -2889,7 +2888,7 @@
         <path d="M42 33 Q50 39 58 33"/>
       </svg>
       <span class="category-name">Tops</span>
-      <span class="category-count">9 styles</span>
+      <span class="category-count">11 styles</span>
     </a>
     <a href="#shop" class="category-tile" data-category="Bottoms">
       <svg class="category-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2897,7 +2896,7 @@
         <path d="M35 18 Q50 22 65 18"/>
       </svg>
       <span class="category-name">Bottoms</span>
-      <span class="category-count">5 styles</span>
+      <span class="category-count">6 styles</span>
     </a>
     <a href="#shop" class="category-tile" data-category="Outerwear">
       <svg class="category-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2906,15 +2905,7 @@
         <line x1="50" y1="33" x2="50" y2="80"/>
       </svg>
       <span class="category-name">Outerwear</span>
-      <span class="category-count">6 styles</span>
-    </a>
-    <a href="#shop" class="category-tile" data-category="Accessories">
-      <svg class="category-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M25 55 Q30 30 50 30 Q70 30 75 55 L77 60 L23 60 Z"/>
-        <path d="M15 65 Q50 56 85 65 L85 71 Q50 62 15 71 Z"/>
-      </svg>
-      <span class="category-name">Accessories</span>
-      <span class="category-count">4 styles</span>
+      <span class="category-count">7 styles</span>
     </a>
   </div>
 </section>
@@ -3050,30 +3041,32 @@
     }
 
     // ============ FILTER PILLS ============
-    // Maps each product card to its category by reading data-category attribute
-    // (we'll add data-category to each product card via JS).
-    const PRODUCT_CATEGORIES = {
-      'Ascend Hoodie': 'Outerwear', 'Halo Zip': 'Outerwear',
-      'Origin Tee': 'Tops', 'Sigil Tank': 'Tops', 'Vesper Long': 'Tops',
-      'Path Jogger': 'Bottoms', 'Trial Short': 'Bottoms',
-      'Cloud Crew': 'Outerwear', 'Crown Cap': 'Accessories',
-      'Halo Runner': 'Footwear', 'Aether Bra': 'Tops', 'Aether Legging': 'Bottoms',
-      'Reign Bomber': 'Outerwear', 'Velocity Track': 'Outerwear',
-      'Vow Beanie': 'Accessories', 'Anthem Polo': 'Tops',
-      'Lumen Crop': 'Tops', 'Pilgrim Pant': 'Bottoms',
-      'Spirit Shell': 'Outerwear', 'Echo Vest': 'Outerwear',
-      'Verse Henley': 'Tops', 'Sole Sock': 'Accessories',
-      'Pulse Band': 'Accessories', 'Quill Tote': 'Accessories'
-    };
-
-    // Tag each product card with its category for filtering
-    document.querySelectorAll('.product-card').forEach(card => {
-      const nameEl = card.querySelector('.product-meta .name');
-      if (nameEl) {
-        const cat = PRODUCT_CATEGORIES[nameEl.textContent.trim()];
-        if (cat) card.dataset.category = cat;
+    // Tag each card with its category by looking up the live PRODUCTS
+    // data via PRODUCT_NAME_TO_ID. This stays in sync automatically when
+    // a product is renamed or recategorized — no parallel mapping to
+    // forget to update.
+    function tagCardCategories() {
+      const T = window.Tagline;
+      if (!T || !T.PRODUCTS || !T.PRODUCT_NAME_TO_ID) {
+        // tagline-app.js hasn't loaded yet — try again once it has
+        return false;
       }
-    });
+      document.querySelectorAll('.product-card').forEach(card => {
+        const nameEl = card.querySelector('.product-meta .name');
+        if (!nameEl) return;
+        const id = T.PRODUCT_NAME_TO_ID[nameEl.textContent.trim()];
+        const cat = id && T.PRODUCTS[id] && T.PRODUCTS[id].category;
+        if (cat) card.dataset.category = cat;
+      });
+      return true;
+    }
+    if (!tagCardCategories()) {
+      const tagInterval = setInterval(() => {
+        if (tagCardCategories()) clearInterval(tagInterval);
+      }, 50);
+      // Give up after 3s so a broken Tagline import doesn't leak intervals
+      setTimeout(() => clearInterval(tagInterval), 3000);
+    }
 
     function applyFilter(category) {
       // Update which pill is "on"
@@ -3097,14 +3090,23 @@
     });
 
     // ============ CATEGORY TILES → FILTER ============
-    // Clicking a category tile scrolls to shop and applies that category filter
+    // Clicking a category tile scrolls to #shop AND applies that filter.
+    // The tile's href="#shop" handles the scroll; we just set the filter.
     document.querySelectorAll('.category-tile[data-category]').forEach(tile => {
       tile.addEventListener('click', (e) => {
         const cat = tile.dataset.category;
         if (cat) {
+          // Make sure cards are tagged before filtering (race-safe)
+          tagCardCategories();
           applyFilter(cat);
-          // Smooth scroll to shop section happens via the href="#shop"
         }
+      });
+    });
+
+    // ============ "VIEW ALL" RESETS THE FILTER ============
+    document.querySelectorAll('a.view-all').forEach(a => {
+      a.addEventListener('click', (e) => {
+        applyFilter('All');
       });
     });
 

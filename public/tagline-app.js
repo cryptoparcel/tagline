@@ -1192,8 +1192,31 @@
     }, 3500);
   }
 
+  // ============ CARD LAYOUT REWRITE ============
+  // The new card layout puts the name + subtitle ABOVE the image and a
+  // floating gold price pill in the bottom-right of the image. This
+  // function reorders the existing DOM (originally meta-after-illu, with
+  // tags as direct card children) so the CSS layout works without
+  // requiring 24+ HTML edits.
+  function reorderCardLayout() {
+    document.querySelectorAll('.product-card').forEach(card => {
+      if (card.dataset.layoutFixed) return;
+      const meta = card.querySelector(':scope > .product-meta');
+      const illu = card.querySelector(':scope > .product-illu');
+      const tag  = card.querySelector(':scope > .product-tag');
+      if (meta && illu && card.firstElementChild !== meta) {
+        card.insertBefore(meta, card.firstElementChild);
+      }
+      if (tag && illu && tag.parentElement !== illu) {
+        illu.insertBefore(tag, illu.firstChild);
+      }
+      card.dataset.layoutFixed = '1';
+    });
+  }
+
   // ============ PRODUCT CARD CLICK → OPEN QUICK VIEW ============
   function autoWireProductCards() {
+    reorderCardLayout();
     const wishlistItems = Wishlist.get();
     document.querySelectorAll('.product-card').forEach(card => {
       if (card.dataset.wired) return;
@@ -1237,7 +1260,9 @@
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-label', `View ${nameEl.textContent.trim()}`);
 
-      // Add heart button (wishlist) - top-right corner of card
+      // Heart button (wishlist) — top-right corner of the IMAGE area.
+      // Lives inside .product-illu so it doesn't overlap the new name
+      // header above the image.
       const heartBtn = document.createElement('button');
       heartBtn.type = 'button';
       heartBtn.className = 'heart-btn';
@@ -1254,7 +1279,8 @@
         heartBtn.classList.add('pulse');
         setTimeout(() => heartBtn.classList.remove('pulse'), 300);
       });
-      card.appendChild(heartBtn);
+      const heartHost = card.querySelector('.product-illu') || card;
+      heartHost.appendChild(heartBtn);
 
       // Click → open quick view
       card.addEventListener('click', (e) => {

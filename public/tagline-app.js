@@ -547,118 +547,173 @@
   }
 
   // ============ PRODUCT DATA ============
-  // Full data for each product, used by quick-view drawer.
-  // `description` is the editorial brand-voice copy — also flows into
-  // JSON-LD product schema, so it doubles as SEO surface.
-  // 24 product slots from the original homepage design, each populated
-  // with real Tagline Apparel data. Original IDs preserved (so they
-  // stay aligned with the cards' SVG illustrations + cart/wishlist
-  // localStorage). image_url overlays the SVG when probeProductImage
-  // confirms the URL loads.
+  // Full Tagline Apparel catalog — all 33 products from the live store.
+  // The homepage grid is rendered dynamically from this object via
+  // renderProductGrid(). At runtime fetchLiveCatalog() also pulls
+  // /api/products and merges admin edits over these defaults so that
+  // changes made in /admin propagate to the homepage without a deploy.
+  // `description` flows into JSON-LD product schema for SEO.
   const PRODUCTS = {
-    'ascend-hoodie':  { name:'TL Winter Hoodie',         color:null, price:45, stock:50,  category:'Outerwear', tag:'Featured',
-      description:'Heavyweight winter pullover with the TL signature. Built for cold mornings and casual nights.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828&width=1000' },
-    'halo-zip':       { name:'TTM Quarter-Zip',          color:null, price:35, stock:40,  category:'Tops',      tag:'',
-      description:'Quarter-zip pullover with the TTM detail. Athletic cut, brushed inside, pairs with anything.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/B2796E1A-0A02-4370-BC1A-87BDFE471E5A.png?v=1762482462&width=1000' },
-    'origin-tee':     { name:'"Everyday" Shirt',         color:null, price:25, stock:100, category:'Tops',      tag:'',
-      description:'The shirt you grab without thinking. Soft cotton, classic fit, made for daily rotation.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_8c64d9c2-9284-4019-b2f5-cb4ef82f3df6.png?v=1768914448&width=1000' },
-    'sigil-tank':     { name:'Gym Shirt',                color:null, price:25, stock:80,  category:'Tops',      tag:'',
-      description:'Lightweight performance shirt with a mesh-back panel. Built to move, dries fast.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_65a0576e-dbba-443f-a04a-5d91f6d91d20.jpg?v=1775552279&width=1000' },
-    'vesper-long':    { name:'Drawstring Long Sleeve',   color:null, price:25, stock:60,  category:'Tops',      tag:'',
-      description:'Long sleeve tee with adjustable drawstring hem. Layer it open or pull it tight.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512&width=1000' },
-    'path-jogger':    { name:'TL Winter Pants',          color:null, price:55, stock:45,  category:'Bottoms',   tag:'Featured',
-      description:'Heavyweight winter pant with the TL signature. Brushed inside, tapered fit, built for cold-weather training.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457&width=1000' },
-    'trial-short':    { name:'2-in-1 Compression Shorts',color:null, price:40, stock:70,  category:'Bottoms',   tag:'',
-      description:'Compression liner inside, training short outside. The pair that handles the gym AND the run.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0022.jpg?v=1761716083&width=1000' },
-    'cloud-crew':     { name:'Slim Sweatshirt',          color:null, price:50, stock:50,  category:'Outerwear', tag:'',
-      description:'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs, brushed inside.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0038.jpg?v=1761716083&width=1000' },
-    'crown-cap':      { name:'TL "Rocket" Shirt',        color:null, price:25, stock:70,  category:'Tops',      tag:'',
+    // ===== FEATURED =====
+    'ascend-hoodie':     { name:'"TL" Winter Hoodies',         color:null, price:45, stock:5,  category:'Outerwear', tag:'Featured',
+      description:'The TL Winter Hoodies. Heavyweight fleece, brushed inside, runs true to size.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828' },
+    'tl-winter-pants':   { name:'"TL" Winter Sweatpants',      color:null, price:45, stock:8,  category:'Bottoms',   tag:'Featured',
+      description:'Matched to the TL Winter Hoodies. Heavyweight sweatpants, drawstring waist, tapered fit.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_8db61751-179f-4792-94db-fa33145c04eb.jpg?v=1768915828' },
+
+    // ===== TL "ROCKET" SET =====
+    'halo-runner':       { name:'TL "Rocket" Hoodie',          color:null, price:55, stock:6,  category:'Outerwear', tag:'',
+      description:'The Rocket hoodie. Heavyweight, embroidered, unmistakably ours.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983' },
+    'crown-cap':         { name:'TL "Rocket" Shirt',           color:null, price:25, stock:8,  category:'Tops',      tag:'',
       description:'The Rocket tee. Soft, structured, statement-piece embroidery.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286&width=1000' },
-    'halo-runner':    { name:'TL "Rocket" Hoodie',       color:null, price:55, stock:30,  category:'Outerwear', tag:'',
-      description:'The Rocket hoodie. Heavyweight, embroidered, and unmistakably ours.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_b5276775-498d-4315-8251-37c7234be6b4.jpg?v=1768722983&width=1000' },
-    'aether-bra':     { name:'Irregular Bra',            color:null, price:25, stock:60,  category:'Tops',      tag:'',
-      description:'Asymmetric strap design with light support and removable pads. Different on purpose.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/B723BBA2-B00A-4C9A-8283-226AFEB8C698.jpg?v=1761548691&width=1000' },
-    'aether-legging': { name:'High-Waist Scrunch Leggings',color:null,price:25, stock:75,  category:'Bottoms',   tag:'',
-      description:'High-rise scrunch-back leggings with four-way stretch. Lifts and supports.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748&width=1000' },
-    'reign-bomber':   { name:'3-D Embroidery Hoodie',    color:null, price:45, stock:35,  category:'Outerwear', tag:'',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_95ca150e-60c6-4308-90f2-6310c8096b6a.jpg?v=1768722286' },
+
+    // ===== EMBROIDERY =====
+    'reign-bomber':      { name:'3-D Embroidery Hoodie',       color:null, price:45, stock:17, category:'Outerwear', tag:'',
       description:'Heavyweight hoodie with raised 3-D embroidery. Premium feel, statement detail.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157&width=1000' },
-    'velocity-track': { name:'Runner Vest',              color:null, price:45, stock:30,  category:'Outerwear', tag:'',
-      description:'Lightweight running vest with hi-vis trim. Holds your essentials without the bounce.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_0a5e02aa-8e81-4e92-963d-cee6741b086c.jpg?v=1775536851&width=1000' },
-    'vow-beanie':     { name:'Box\'e Tee',               color:null, price:20, stock:90,  category:'Tops',      tag:'',
-      description:'Boxy-cut tee in heavyweight cotton. Loose through the chest and shoulders, slightly cropped.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_935aa918-1d27-4cb2-96fb-e191e14f38f3.jpg?v=1775552279&width=1000' },
-    'anthem-polo':    { name:'Quarter-Zip Long Sleeve',  color:null, price:35, stock:45,  category:'Tops',      tag:'',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_4981aa0e-9864-43bd-9e9e-c30e28e472b3.jpg?v=1775531157' },
+    'embroidery-tee':    { name:'3-D Embroidery T-Shirt',      color:null, price:30, stock:9,  category:'Tops',      tag:'',
+      description:'The 3-D embroidery in tee form. Premium cotton, bold raised detail.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_caac77bf-a368-4c9f-8dba-f96b475ed42c.jpg?v=1775534730' },
+
+    // ===== TOPS =====
+    'halo-zip':          { name:'"TTM" Quarter-Zip',           color:null, price:35, stock:9,  category:'Tops',      tag:'',
+      description:'Quarter-zip pullover with the TTM detail. Athletic cut, brushed inside.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/B2796E1A-0A02-4370-BC1A-87BDFE471E5A.png?v=1762482462' },
+    'origin-tee':        { name:'"Everyday" Shirt',            color:null, price:25, stock:30, category:'Tops',      tag:'',
+      description:'The shirt you grab without thinking. Soft cotton, classic fit, made for daily rotation.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_8c64d9c2-9284-4019-b2f5-cb4ef82f3df6.png?v=1768914448' },
+    'sigil-tank':        { name:'Men\'s Gym Shirt',            color:null, price:25, stock:25, category:'Tops',      tag:'',
+      description:'Lightweight performance shirt. Built to move, dries fast.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_65a0576e-dbba-443f-a04a-5d91f6d91d20.jpg?v=1775552279' },
+    'vesper-long':       { name:'Drawstring Long Sleeve Shirt',color:null, price:25, stock:8,  category:'Tops',      tag:'',
+      description:'Long sleeve tee with adjustable drawstring hem. Layer it open or pull it tight.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/4898461D-4ABC-445E-92D5-6D19078CD198.jpg?v=1761724512' },
+    'anthem-polo':       { name:'Quarter-Zip Long Sleeve',     color:null, price:35, stock:4,  category:'Tops',      tag:'',
       description:'Quarter-zip long sleeve in soft jersey. Layer-friendly, runs true to size.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/IMG-0025.jpg?v=1761716083&width=1000' },
-    'lumen-crop':     { name:'Open-Back Top',            color:null, price:15, stock:65,  category:'Tops',      tag:'',
-      description:'Strappy open-back top for studio workouts. Light support, ample airflow.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096&width=1000' },
-    'pilgrim-pant':   { name:'Sport Pants',              color:null, price:55, stock:30,  category:'Bottoms',   tag:'',
-      description:'Premium sport pant with side stripes. Tapered fit, drawcord waist, finished hem.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/BD848E54-21F0-4255-B1F1-7D0A533C1E35.jpg?v=1761554034&width=1000' },
-    'spirit-shell':   { name:'Autumn Hoodie',            color:null, price:40, stock:45,  category:'Outerwear', tag:'',
-      description:'Mid-weight pullover for transitional weather. Soft inside, structured outside.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/F927811C-A783-41CF-8491-3BB00D16D998.jpg?v=1762497681&width=1000' },
-    'echo-vest':      { name:'Oversized Light Sweater',  color:null, price:65, stock:25,  category:'Outerwear', tag:'',
-      description:'Soft-weave oversized sweater. Drapes long, layers easy, finishes any outfit.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/F329367F-4612-4CBE-A66D-A7BD3BC84DC1.jpg?v=1761553089&width=1000' },
-    'verse-henley':   { name:'Quick-Dry Shirt',          color:null, price:20, stock:80,  category:'Tops',      tag:'',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/IMG-0025.jpg?v=1761716083' },
+    'verse-henley':      { name:'Quick-Dry Shirt',             color:null, price:20, stock:7,  category:'Tops',      tag:'',
       description:'Performance shirt that dries in minutes. Anti-odor finish, low-profile fit.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/7E62E8C7-9832-4D8F-B46A-AE8249EDD544.jpg?v=1761546662&width=1000' },
-    'sole-sock':      { name:'Women\'s Gym Shorts',      color:null, price:20, stock:80,  category:'Bottoms',   tag:'',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/7E62E8C7-9832-4D8F-B46A-AE8249EDD544.jpg?v=1761546662' },
+    'vow-beanie':        { name:'Box\'e Tee\'s',               color:null, price:20, stock:27, category:'Tops',      tag:'',
+      description:'Boxy-cut tee in heavyweight cotton. Loose through the chest and shoulders, slightly cropped.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_935aa918-1d27-4cb2-96fb-e191e14f38f3.jpg?v=1775552279' },
+
+    // ===== OUTERWEAR =====
+    'cloud-crew':        { name:'Slim Sweatshirt',             color:null, price:50, stock:3,  category:'Outerwear', tag:'',
+      description:'Slim-cut crewneck sweatshirt. Tailored shoulder, ribbed cuffs, brushed inside.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/IMG-0038.jpg?v=1761716083' },
+    'spirit-shell':      { name:'Autumn Hoodie',               color:null, price:40, stock:2,  category:'Outerwear', tag:'',
+      description:'Mid-weight pullover for transitional weather. Soft inside, structured outside.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/F927811C-A783-41CF-8491-3BB00D16D998.jpg?v=1762497681' },
+    'echo-vest':         { name:'Oversized Light Sweater',     color:null, price:65, stock:3,  category:'Outerwear', tag:'',
+      description:'Soft-weave oversized sweater. Drapes long, layers easy, finishes any outfit.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/F329367F-4612-4CBE-A66D-A7BD3BC84DC1.jpg?v=1761553089' },
+    'velocity-track':    { name:'Men\'s Runner Vest',          color:null, price:45, stock:8,  category:'Outerwear', tag:'',
+      description:'Lightweight running vest with hi-vis trim. Holds your essentials without the bounce.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_0a5e02aa-8e81-4e92-963d-cee6741b086c.jpg?v=1775536851' },
+    'womens-hoodie':     { name:'Women\'s Hoodie',             color:null, price:35, stock:8,  category:'Outerwear', tag:'',
+      description:'Soft-fleece hoodie cut for the women\'s fit. Light cream, gray, rose gold and black.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/A610FF16-6BA4-4255-90B0-F42AB7246271.jpg?v=1762317317' },
+
+    // ===== BOTTOMS — MEN'S =====
+    'path-jogger':       { name:'Cargo Sweatpants',            color:null, price:55, stock:4,  category:'Bottoms',   tag:'',
+      description:'Sweatpants meet cargo pockets. Tapered leg, drawcord waist, six functional pockets.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_7c4f5b99-50af-43eb-ac4e-81ff780a2b4b.jpg?v=1768725457' },
+    'trial-short':       { name:'2 in 1 Compression Shorts',   color:null, price:40, stock:6,  category:'Bottoms',   tag:'',
+      description:'Compression liner inside, training short outside. The pair that handles the gym AND the run.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/IMG-0022.jpg?v=1761716083' },
+    'pilgrim-pant':      { name:'Sport Pants',                 color:null, price:55, stock:5,  category:'Bottoms',   tag:'',
+      description:'Premium sport pant with side stripes. Tapered fit, drawcord waist, finished hem.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/BD848E54-21F0-4255-B1F1-7D0A533C1E35.jpg?v=1761554034' },
+    'sport-pants-light': { name:'Sport Pants (Light)',         color:null, price:35, stock:7,  category:'Bottoms',   tag:'',
+      description:'Lighter-weight sport pant. Cream, black, hard grey. Tapered fit, drawcord waist.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/ECE25F92-576E-4A30-B8F5-CCD44DB470B0.jpg?v=1761627349' },
+    'running-pants':     { name:'Men\'s Running Pants',        color:null, price:30, stock:6,  category:'Bottoms',   tag:'',
+      description:'Built-for-running pant. Quick-dry, drawcord waist, zip pockets.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_570552c0-1a69-472d-9320-398747b35f08.jpg?v=1775536043' },
+    'basketball-shorts': { name:'Men\'s Basketball Shorts',    color:null, price:25, stock:15, category:'Bottoms',   tag:'',
+      description:'Court-ready shorts. Mesh-back, side pockets, full range of motion.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_59c8766e-4591-468f-8075-8b4287f30a9f.jpg?v=1775535578' },
+    'slim-fit-pants':    { name:'Slim-Fit "scrubs"',           color:null, price:35, stock:6,  category:'Bottoms',   tag:'',
+      description:'Slim-fit flex pants. Stretch fabric, modern cut, four-color run.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/8C4F7825-DEEA-4CEF-955E-C5432C6FB34B.jpg?v=1761544634' },
+
+    // ===== BOTTOMS — WOMEN'S =====
+    'sole-sock':         { name:'Women\'s Gym Shorts',         color:null, price:20, stock:24, category:'Bottoms',   tag:'',
       description:'Light, breathable gym shorts with built-in liner. Quick-drying, doesn\'t ride.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_1210f229-9c09-47f0-9203-2aa876bb70fb.jpg?v=1775552279&width=1000' },
-    'pulse-band':     { name:'Women\'s Sport Bra',       color:null, price:30, stock:60,  category:'Tops',      tag:'',
-      description:'Medium-support sport bra. Removable pads, racerback design, moisture-wicking.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279&width=1000' },
-    'quill-tote':     { name:'Women\'s "Butter-Soft" Leggings',color:null,price:30,stock:70,category:'Bottoms', tag:'',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_1210f229-9c09-47f0-9203-2aa876bb70fb.jpg?v=1775552279' },
+    'womens-2in1-shorts':{ name:'Women\'s 2-1 Shorts',         color:null, price:30, stock:10, category:'Bottoms',   tag:'',
+      description:'2-in-1 women\'s training short. Compression liner, breathable shell.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_26e60b6f-49f2-4a3a-b34d-2140bfdf784e.jpg?v=1775536820' },
+    'aether-legging':    { name:'High Waist Scrunch Leggings', color:null, price:25, stock:4,  category:'Bottoms',   tag:'',
+      description:'High-rise scrunch-back leggings with four-way stretch. Lifts and supports.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/10E1634C-49D7-4DD4-807E-47C10E802785.jpg?v=1762342748' },
+    'quill-tote':        { name:'Women\'s "Butter-Soft" Leggings', color:null, price:30, stock:8, category:'Bottoms', tag:'',
       description:'Butter-soft fabric, high rise, pocket-equipped. The leggings you\'ll forget you\'re wearing.',
-      image_url:'https://taglineapparel.myshopify.com/cdn/shop/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785&width=1000' }
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/AEEB6281-985A-423A-AAA8-097D87601F6D.jpg?v=1762231785' },
+    'vback-leggings':    { name:'Women\'s V-Back Leggings',    color:null, price:30, stock:4,  category:'Bottoms',   tag:'',
+      description:'V-back detail at the waistband. Squat-proof fabric, high rise, light blue.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/C9A62656-04B4-4D2A-9E0D-198664A3B7C2.jpg?v=1762498097' },
+
+    // ===== WOMEN'S TOPS / BRAS =====
+    'aether-bra':        { name:'Irregular Bra',               color:null, price:25, stock:6,  category:'Tops',      tag:'',
+      description:'Asymmetric strap design with light support and removable pads. Different on purpose.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/B723BBA2-B00A-4C9A-8283-226AFEB8C698.jpg?v=1761548691' },
+    'pulse-band':        { name:'Women\'s Sport Bra',          color:null, price:30, stock:20, category:'Tops',      tag:'',
+      description:'Medium-support sport bra. Removable pads, racerback design, moisture-wicking.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/rn-image_picker_lib_temp_70148a65-ac5c-4e67-b9c8-10d2ad789c1c.jpg?v=1775552279' },
+    'lumen-crop':        { name:'Open-Back Top',               color:null, price:15, stock:4,  category:'Tops',      tag:'',
+      description:'Strappy open-back top for studio workouts. Light support, ample airflow.',
+      image_url:'https://cdn.shopify.com/s/files/1/0697/8365/0480/files/12F0C544-CB97-40D1-88BC-116B7BEBE75E.jpg?v=1762498096' }
   };
 
   // Hand-curated outfit pairings — what to wear with each piece.
   // Shown in the quick-view drawer as a "Style this with" carousel.
-  // Curate-don't-compute: at 24 products, hand-picking beats any
-  // recommendation algorithm. Edit freely as the catalog evolves.
   const PRODUCT_PAIRINGS = {
-    'ascend-hoodie':  ['path-jogger',    'crown-cap',     'sole-sock'],
-    'halo-zip':       ['origin-tee',     'path-jogger',   'crown-cap'],
-    'origin-tee':     ['path-jogger',    'crown-cap',     'sole-sock'],
-    'sigil-tank':     ['trial-short',    'pulse-band',    'sole-sock'],
-    'vesper-long':    ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
-    'path-jogger':    ['origin-tee',     'halo-zip',      'sole-sock'],
-    'trial-short':    ['sigil-tank',     'pulse-band',    'sole-sock'],
-    'cloud-crew':     ['pilgrim-pant',   'vow-beanie',    'crown-cap'],
-    'crown-cap':      ['ascend-hoodie',  'origin-tee',    'path-jogger'],
-    'halo-runner':    ['sole-sock',      'trial-short',   'sigil-tank'],
-    'aether-bra':     ['aether-legging', 'pulse-band',    'sole-sock'],
-    'aether-legging': ['aether-bra',     'sigil-tank',    'sole-sock'],
-    'reign-bomber':   ['origin-tee',     'pilgrim-pant',  'vow-beanie'],
-    'velocity-track': ['path-jogger',    'origin-tee',    'crown-cap'],
-    'vow-beanie':     ['cloud-crew',     'vesper-long',   'pilgrim-pant'],
-    'anthem-polo':    ['pilgrim-pant',   'crown-cap',     'sole-sock'],
-    'lumen-crop':     ['aether-legging', 'crown-cap',     'sole-sock'],
-    'pilgrim-pant':   ['vesper-long',    'vow-beanie',    'crown-cap'],
-    'spirit-shell':   ['origin-tee',     'path-jogger',   'sole-sock'],
-    'echo-vest':      ['verse-henley',   'pilgrim-pant',  'vow-beanie'],
-    'verse-henley':   ['pilgrim-pant',   'vow-beanie',    'sole-sock'],
-    'sole-sock':      ['trial-short',    'halo-runner',   'pulse-band'],
-    'pulse-band':     ['sigil-tank',     'trial-short',   'sole-sock'],
-    'quill-tote':     ['origin-tee',     'crown-cap',     'sole-sock']
+    // Featured set
+    'ascend-hoodie':      ['tl-winter-pants', 'origin-tee',       'path-jogger'],
+    'tl-winter-pants':    ['ascend-hoodie',   'origin-tee',       'crown-cap'],
+    // TL "Rocket" set
+    'halo-runner':        ['tl-winter-pants', 'crown-cap',        'path-jogger'],
+    'crown-cap':          ['halo-runner',     'tl-winter-pants',  'path-jogger'],
+    // Embroidery
+    'reign-bomber':       ['embroidery-tee',  'path-jogger',      'tl-winter-pants'],
+    'embroidery-tee':     ['reign-bomber',    'path-jogger',      'pilgrim-pant'],
+    // Tops
+    'halo-zip':           ['origin-tee',      'pilgrim-pant',     'crown-cap'],
+    'origin-tee':         ['path-jogger',     'crown-cap',        'tl-winter-pants'],
+    'sigil-tank':         ['trial-short',     'basketball-shorts','running-pants'],
+    'vesper-long':        ['pilgrim-pant',    'vow-beanie',       'sport-pants-light'],
+    'anthem-polo':        ['pilgrim-pant',    'crown-cap',        'sport-pants-light'],
+    'verse-henley':       ['pilgrim-pant',    'vow-beanie',       'running-pants'],
+    'vow-beanie':         ['cloud-crew',      'vesper-long',      'pilgrim-pant'],
+    // Outerwear
+    'cloud-crew':         ['pilgrim-pant',    'vow-beanie',       'sport-pants-light'],
+    'spirit-shell':       ['origin-tee',      'path-jogger',      'sport-pants-light'],
+    'echo-vest':          ['verse-henley',    'pilgrim-pant',     'vow-beanie'],
+    'velocity-track':     ['running-pants',   'sigil-tank',       'trial-short'],
+    'womens-hoodie':      ['quill-tote',      'aether-legging',   'lumen-crop'],
+    // Bottoms — men's
+    'path-jogger':        ['origin-tee',      'halo-zip',         'crown-cap'],
+    'trial-short':        ['sigil-tank',      'velocity-track',   'verse-henley'],
+    'pilgrim-pant':       ['vesper-long',     'vow-beanie',       'cloud-crew'],
+    'sport-pants-light':  ['origin-tee',      'sigil-tank',       'verse-henley'],
+    'running-pants':      ['sigil-tank',      'verse-henley',     'velocity-track'],
+    'basketball-shorts':  ['sigil-tank',      'verse-henley',     'trial-short'],
+    'slim-fit-pants':     ['origin-tee',      'cloud-crew',       'crown-cap'],
+    // Bottoms — women's
+    'sole-sock':          ['pulse-band',      'lumen-crop',       'aether-bra'],
+    'womens-2in1-shorts': ['pulse-band',      'lumen-crop',       'aether-bra'],
+    'aether-legging':     ['aether-bra',      'pulse-band',       'lumen-crop'],
+    'quill-tote':         ['pulse-band',      'lumen-crop',       'womens-hoodie'],
+    'vback-leggings':     ['lumen-crop',      'pulse-band',       'aether-bra'],
+    // Women's tops/bras
+    'aether-bra':         ['aether-legging',  'sole-sock',        'quill-tote'],
+    'pulse-band':         ['sole-sock',       'aether-legging',   'womens-2in1-shorts'],
+    'lumen-crop':         ['aether-legging',  'quill-tote',       'sole-sock']
   };
 
   // Maps product name to DB product ID
@@ -1192,12 +1247,127 @@
     }, 3500);
   }
 
+  // ============ HOMEPAGE GRID RENDER ============
+  // Renders all 33 products from the PRODUCTS object into #productGrid.
+  // Idempotent — once rendered, calling again is a no-op (relies on
+  // grid.dataset.rendered). Skipped on pages that don't have the grid.
+  function renderProductGrid() {
+    const grid = document.getElementById('productGrid');
+    if (!grid || grid.dataset.rendered === '1') return;
+    const html = Object.keys(PRODUCTS).map(id => {
+      const p = PRODUCTS[id];
+      const tagHtml = p.tag
+        ? '<span class="product-tag gold">' + escapeHtml(p.tag) + '</span>'
+        : '';
+      const initial = (p.name || '?').charAt(0).toUpperCase();
+      return '<article class="product-card" data-product-id="' + escapeHtml(id) + '" data-category="' + escapeHtml(p.category || '') + '">'
+        + '<div class="product-meta">'
+        +   '<div><span class="name">' + escapeHtml(p.name) + '</span>'
+        +   '<span class="name-sub">' + escapeHtml(p.category || '') + '</span></div>'
+        +   '<span class="price">$' + p.price + '</span>'
+        + '</div>'
+        + '<div class="product-illu">'
+        +   tagHtml
+        +   '<div class="product-letter">' + escapeHtml(initial) + '</div>'
+        + '</div>'
+        + '</article>';
+    }).join('');
+    grid.innerHTML = html;
+    grid.dataset.rendered = '1';
+  }
+
+  // ============ LIVE CATALOG SYNC ============
+  // After the page renders with the static PRODUCTS defaults, this fetches
+  // /api/products and merges any admin edits (price/name/image_url/tag/
+  // stock) over the defaults — so changes made in /admin show up on the
+  // homepage without a redeploy. If the API is unreachable (preview /
+  // offline), the static defaults stay visible — graceful fallback.
+  async function fetchLiveCatalog() {
+    try {
+      const res = await fetch('/api/products', { method: 'GET' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const live = (data && data.products) || [];
+      if (!Array.isArray(live)) return;
+      const liveIds = new Set();
+      let mutated = false;
+      for (const row of live) {
+        if (!row || typeof row.id !== 'string') continue;
+        liveIds.add(row.id);
+        const cur = PRODUCTS[row.id];
+        if (!cur) continue; // unknown product — skip (future: render dynamically)
+        // Merge editable fields. price_cents → display dollars.
+        if (typeof row.name === 'string' && row.name.length) cur.name = row.name;
+        if (typeof row.price_cents === 'number') cur.price = Math.round(row.price_cents / 100);
+        if (typeof row.category === 'string' && row.category.length) cur.category = row.category;
+        if (row.tag !== undefined) cur.tag = row.tag || '';
+        if (typeof row.stock === 'number') cur.stock = row.stock;
+        if (typeof row.description === 'string') cur.description = row.description;
+        if (row.image_url !== undefined) cur.image_url = row.image_url || cur.image_url;
+        mutated = true;
+      }
+      // Hide static cards for products that admin has deactivated/deleted —
+      // /api/products only returns active=true rows, so any static ID NOT
+      // in the live response is "hidden by admin". Only do this if we got
+      // a non-empty live response (empty likely means a connection issue,
+      // not "everything was deleted").
+      if (live.length > 0) {
+        document.querySelectorAll('.product-card[data-product-id]').forEach(card => {
+          if (!liveIds.has(card.dataset.productId)) {
+            card.style.display = 'none';
+            card.dataset.adminHidden = '1';
+          } else if (card.dataset.adminHidden === '1') {
+            card.style.display = '';
+            delete card.dataset.adminHidden;
+          }
+        });
+      }
+      if (mutated) {
+        // Re-render the grid card text to reflect live data.
+        document.querySelectorAll('.product-card[data-product-id]').forEach(card => {
+          const id = card.dataset.productId;
+          const p = PRODUCTS[id];
+          if (!p) return;
+          const nameEl = card.querySelector('.product-meta .name');
+          const subEl = card.querySelector('.product-meta .name-sub');
+          const priceEl = card.querySelector('.product-meta .price');
+          const tagEl = card.querySelector('.product-tag');
+          const illu = card.querySelector('.product-illu');
+          if (nameEl) nameEl.textContent = p.name;
+          if (subEl) subEl.textContent = p.category || '';
+          if (priceEl) priceEl.textContent = '$' + p.price;
+          card.dataset.category = p.category || '';
+          // Tag pill: add/remove/update as needed
+          if (p.tag) {
+            if (tagEl) {
+              tagEl.textContent = p.tag;
+            } else if (illu) {
+              const newTag = document.createElement('span');
+              newTag.className = 'product-tag gold';
+              newTag.textContent = p.tag;
+              illu.insertBefore(newTag, illu.firstChild);
+            }
+          } else if (tagEl) {
+            tagEl.remove();
+          }
+        });
+        // Rebuild PRODUCT_NAME_TO_ID since names may have changed
+        Object.keys(PRODUCT_NAME_TO_ID).forEach(k => delete PRODUCT_NAME_TO_ID[k]);
+        Object.keys(PRODUCTS).forEach(id => {
+          PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
+        });
+      }
+    } catch {
+      // Network error — silent. Static defaults remain visible.
+    }
+  }
+
   // ============ CARD LAYOUT REWRITE ============
-  // The new card layout puts the name + subtitle ABOVE the image and a
-  // floating gold price pill in the bottom-right of the image. This
-  // function reorders the existing DOM (originally meta-after-illu, with
-  // tags as direct card children) so the CSS layout works without
-  // requiring 24+ HTML edits.
+  // The card layout puts the name + subtitle ABOVE the image and a
+  // floating gold price pill in the bottom-right of the image. For
+  // dynamically-rendered cards this is a no-op (correct order already);
+  // for any legacy hardcoded cards, this moves .product-meta first and
+  // tucks .product-tag inside .product-illu.
   function reorderCardLayout() {
     document.querySelectorAll('.product-card').forEach(card => {
       if (card.dataset.layoutFixed) return;
@@ -1242,15 +1412,19 @@
       if (illu) {
         const productName = nameEl.textContent.trim();
         probeProductImage(productId, (url) => {
-          while (illu.firstChild) illu.removeChild(illu.firstChild);
+          // Remove ONLY the placeholder elements (letter or original SVG).
+          // Keep .product-tag (Featured pill) and .heart-btn intact —
+          // wiping them was a bug that caused both to disappear once the
+          // photo finished loading. Image inserts as the FIRST child so
+          // it sits beneath the absolutely-positioned tag + heart.
+          illu.querySelectorAll(':scope > .product-letter, :scope > svg').forEach(el => el.remove());
+          const existingImg = illu.querySelector(':scope > img');
+          if (existingImg) existingImg.remove();
           const img = document.createElement('img');
           img.src = url;
           img.alt = productName;
           img.loading = 'lazy';
-          // Sizing/cover handled by .product-illu.has-image img in CSS so
-          // the image fills the card edge-to-edge instead of fighting the
-          // 30px SVG padding.
-          illu.appendChild(img);
+          illu.insertBefore(img, illu.firstChild);
           illu.classList.add('has-image');
         });
       }
@@ -1605,9 +1779,13 @@
     safeInit('updateAuthUI', () => Auth.updateUI());
     safeInit('newsletterForms', () => wireNewsletterForms());
     safeInit('addToCart', () => wireAddToCart());
+    // Render the homepage product grid before wiring it (so cards exist).
+    safeInit('renderProductGrid', () => renderProductGrid());
     safeInit('productCards', () => autoWireProductCards());
     safeInit('quickViewDrawer', () => wireQuickViewDrawer());
     safeInit('jsonLdProducts', () => injectProductJsonLd());
+    // Live-sync admin edits over the static defaults (best-effort, async).
+    fetchLiveCatalog();
     safeInit('emailConfirm', () => handleAuthHash());
     safeInit('recentlyViewed', () => renderRecentlyViewed());
     safeInit('pwToggles', () => wirePasswordToggles());

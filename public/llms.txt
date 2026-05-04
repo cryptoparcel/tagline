@@ -1,8 +1,8 @@
 # TAGLINE
 
-> Custom athletic wear for serious training — hoodies, tees, bottoms, accessories. Faith-driven brand: God · Health · Wealth.
+> Custom athletic wear for serious training — hoodies, tees, bottoms. Faith-driven brand: God · Health · Wealth.
 
-TAGLINE Apparel makes premium training clothes designed for performance and built to last. The site offers a 24-piece collection plus a build-your-own configurator for custom fits. Free shipping on orders over $150.
+TAGLINE Apparel makes premium training clothes designed for performance and built to last. The site offers a 33-piece collection plus a build-your-own configurator for custom fits. Free shipping on orders over $150.
 
 ## Brand
 
@@ -24,11 +24,11 @@ TAGLINE Apparel makes premium training clothes designed for performance and buil
 - [Account](/account): Order history, profile, addresses, password
 - [Order success](/success): Post-purchase confirmation page
 
-## Product categories
+## Product categories (33 styles total)
 
-- **Outerwear** — TL Winter Hoodie, Slim Sweatshirt, TL "Rocket" Hoodie, 3-D Embroidery Hoodie, Runner Vest, Autumn Hoodie, Oversized Light Sweater
-- **Tops** — TTM Quarter-Zip, "Everyday" Shirt, Gym Shirt, Drawstring Long Sleeve, TL "Rocket" Shirt, Irregular Bra, Box'e Tee, Quarter-Zip Long Sleeve, Open-Back Top, Quick-Dry Shirt, Women's Sport Bra
-- **Bottoms** — TL Winter Pants, 2-in-1 Compression Shorts, High-Waist Scrunch Leggings, Sport Pants, Women's Gym Shorts, Women's "Butter-Soft" Leggings
+- **Outerwear (8)** — "TL" Winter Hoodies (Featured), TL "Rocket" Hoodie, 3-D Embroidery Hoodie, Slim Sweatshirt, Autumn Hoodie, Oversized Light Sweater, Men's Runner Vest, Women's Hoodie
+- **Tops (12)** — TL "Rocket" Shirt, 3-D Embroidery T-Shirt, "TTM" Quarter-Zip, "Everyday" Shirt, Men's Gym Shirt, Drawstring Long Sleeve Shirt, Quarter-Zip Long Sleeve, Quick-Dry Shirt, Box'e Tee's, Irregular Bra, Women's Sport Bra, Open-Back Top
+- **Bottoms (13)** — "TL" Winter Sweatpants (Featured), Cargo Sweatpants, 2 in 1 Compression Shorts, Sport Pants, Sport Pants (Light), Men's Running Pants, Men's Basketball Shorts, Slim-Fit "scrubs", Women's Gym Shorts, Women's 2-1 Shorts, High Waist Scrunch Leggings, Women's "Butter-Soft" Leggings, Women's V-Back Leggings
 
 ## Policies
 

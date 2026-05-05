@@ -24,7 +24,9 @@
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/launch", "destination": "/launch.html" }
+    { "source": "/launch", "destination": "/launch.html" },
+    { "source": "/products/:id", "destination": "/product.html" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
   ],
   "headers": [
     {

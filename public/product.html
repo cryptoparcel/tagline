@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<!-- Title + meta filled in by JS once we know which product. Defaults
+     here are used by the parser before JS runs and by crawlers that
+     don't execute JS (rare for product pages but defensive). -->
+<title>Product — TAGLINE</title>
+<meta name="description" content="Custom athletic wear, made to last. God · Health · Wealth." />
+<meta property="og:type" content="product" />
+<meta property="og:title" content="TAGLINE" id="ogTitle" />
+<meta property="og:description" content="Custom athletic wear." id="ogDesc" />
+<meta property="og:image" content="" id="ogImage" />
+<link rel="canonical" href="" id="canonicalLink" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  /* Two-column on desktop, stack on mobile. Image on the left, info on the right. */
+  .pdp-layout{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:48px;
+    align-items:start;
+    margin-top:32px;
+  }
+  @media (max-width:980px){ .pdp-layout{grid-template-columns:1fr;gap:24px} }
+  @media (max-width:640px){ .pdp-layout{gap:18px;margin-top:18px} }
+
+  /* Big product image — sticks while you scroll the right side on desktop. */
+  .pdp-image{
+    position:sticky; top:96px;
+    background:#f3eee4;
+    border:1px solid var(--line);
+    aspect-ratio:1/1.1;
+    overflow:hidden;
+    box-shadow:0 24px 60px -30px rgba(0,0,0,.5);
+  }
+  @media (max-width:980px){ .pdp-image{position:static;aspect-ratio:1/1} }
+  .pdp-image img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .pdp-image-letter{
+    width:100%; height:100%;
+    display:grid; place-items:center;
+    background:linear-gradient(160deg,#1a1814 0%,#0d0c0a 100%);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:120px; font-weight:600;
+    color:rgba(255,255,250,.06);
+    letter-spacing:-0.04em;
+  }
+  .pdp-tag{
+    position:absolute;
+    top:14px; left:14px;
+    background:rgba(8,8,10,.88);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(184,137,61,.4);
+    color:var(--gold-soft);
+    font-size:10px; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase;
+    padding:6px 11px;
+    border-radius:999px;
+    z-index:3;
+    box-shadow:0 4px 16px rgba(0,0,0,.3);
+  }
+
+  /* Right column */
+  .pdp-info{ padding-top:8px; }
+  .pdp-eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .pdp-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:32px; font-weight:600;
+    letter-spacing:-0.025em;
+    color:var(--ink);
+    margin:0 0 12px;
+    line-height:1.1;
+  }
+  @media (max-width:640px){ .pdp-name{font-size:26px} }
+  .pdp-price{
+    font-family:'Inter', sans-serif;
+    font-size:22px; font-weight:800;
+    color:var(--gold-soft);
+    letter-spacing:.02em;
+    margin-bottom:8px;
+  }
+  .pdp-stock{
+    font-size:11px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:24px;
+  }
+  .pdp-stock.low{ color:#e2b56b; }
+  .pdp-stock.out{ color:#f3a4a8; }
+  .pdp-description{
+    font-size:15px;
+    color:var(--ink-soft);
+    line-height:1.7;
+    padding:20px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-bottom:24px;
+  }
+  .pdp-section-label{
+    font-size:11px; font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:12px;
+  }
+  .pdp-size-row{
+    display:flex; gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:24px;
+  }
+  .pdp-size{
+    background:transparent;
+    border:1px solid var(--line-strong);
+    padding:12px 16px;
+    font-size:12px; font-weight:700;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all .25s;
+    min-width:48px; min-height:44px;
+    text-align:center;
+    font-family:inherit;
+  }
+  .pdp-size:hover{ color:var(--ink); border-color:var(--ink); }
+  .pdp-size.selected{
+    background:var(--ink); color:var(--bg);
+    border-color:var(--ink);
+  }
+  .pdp-actions{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .pdp-add{
+    flex:1;
+    min-height:52px;
+    background:var(--ink);
+    color:var(--bg);
+    border:1px solid var(--ink);
+    font-family:inherit;
+    font-size:13px; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .pdp-add:hover:not(:disabled){
+    background:var(--gold);
+    border-color:var(--gold);
+  }
+  .pdp-add:disabled{ opacity:.6; cursor:not-allowed; }
+  .pdp-add.added{ background:var(--gold); border-color:var(--gold); }
+  .pdp-heart{
+    width:52px; height:52px;
+    background:transparent;
+    border:1px solid var(--line-strong);
+    color:var(--ink-soft);
+    display:grid; place-items:center;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .pdp-heart:hover{ color:var(--ink); border-color:var(--ink); }
+  .pdp-heart.active{
+    color:#e8505b;
+    border-color:rgba(232,80,91,.4);
+    background:rgba(232,80,91,.08);
+  }
+  .pdp-heart svg{ width:20px; height:20px; }
+  .pdp-heart.active svg{ fill:currentColor; }
+  .pdp-back{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-soft);
+    text-decoration:none;
+    margin-bottom:24px;
+  }
+  .pdp-back:hover{ color:var(--gold-soft); }
+  .pdp-back svg{ width:14px; height:14px; }
+
+  /* Loading + 404 states */
+  .pdp-loading, .pdp-missing{
+    text-align:center;
+    padding:96px 24px;
+    color:var(--ink-soft);
+  }
+  .pdp-loading h2, .pdp-missing h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:24px;
+    color:var(--ink);
+    margin-bottom:8px;
+  }
+  .pdp-missing a{ color:var(--gold-soft); }
+
+  /* Toast — same look as homepage drawer's add-to-cart confirmation */
+  .toast{
+    position:fixed;
+    bottom:24px; left:50%;
+    transform:translate3d(-50%, 100px, 0);
+    background:linear-gradient(160deg, #14110c 0%, #0d0c0a 100%);
+    border:1px solid var(--gold);
+    color:var(--ink);
+    padding:14px 18px;
+    display:flex; align-items:center; gap:14px;
+    z-index:400;
+    box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 24px rgba(184,137,61,.2);
+    opacity:0;
+    transition:transform .4s cubic-bezier(.22,.61,.36,1), opacity .3s ease;
+    max-width:calc(100vw - 32px);
+  }
+  .toast.show{ transform:translate3d(-50%, 0, 0); opacity:1; }
+  .toast-icon{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--gold); color:var(--bg);
+    display:grid; place-items:center;
+    flex-shrink:0; font-weight:700;
+  }
+  .toast-text{ flex:1; min-width:0; }
+  .toast-title{
+    font-size:13px; font-weight:600; color:var(--ink);
+    margin-bottom:2px;
+  }
+  .toast-sub{
+    font-size:12px; color:var(--ink-soft);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  @media (max-width:480px){
+    .toast{ left:16px; right:16px; transform:translate3d(0, 100px, 0); bottom:16px; width:auto; max-width:none; }
+    .toast.show{ transform:translate3d(0, 0, 0); }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Shop</a>
+    <a href="/customize" class="nav-link">Custom</a>
+    <a href="/contact" class="nav-link">Contact</a>
+    <a href="/wishlist" class="cart-icon-btn" aria-label="Wishlist">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </a>
+    <a href="/cart" class="cart-icon-btn" aria-label="Cart">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12a2 2 0 0 1-2 1.8h-7a2 2 0 0 1-2-1.8L5 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="page-wide" id="main" tabindex="-1">
+  <a href="/" class="pdp-back">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    Back to collection
+  </a>
+  <div id="pdpContent">
+    <div class="pdp-loading">
+      <h2>Loading…</h2>
+      <p>One sec.</p>
+    </div>
+  </div>
+</main>
+
+<!-- Add-to-cart toast (reuses same pattern as homepage) -->
+<div class="toast" id="addToCartToast" role="status" aria-live="polite" hidden>
+  <span class="toast-icon" aria-hidden="true">✓</span>
+  <div class="toast-text">
+    <div class="toast-title">Added to cart</div>
+    <div class="toast-sub" id="toastSub"></div>
+  </div>
+</div>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <div style="display:flex;gap:18px;flex-wrap:wrap"><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+</footer>
+
+<script src="/tagline-app.js" defer></script>
+<script>
+(function(){
+  'use strict';
+
+  // Pull the product ID out of /products/<id>
+  const pathMatch = window.location.pathname.match(/^\/products\/([a-z0-9-]+)$/i);
+  const productId = pathMatch ? pathMatch[1].toLowerCase() : null;
+
+  let selectedSize = null;
+
+  function ready(fn) {
+    if (window.Tagline && window.Tagline.PRODUCTS) return fn();
+    let tries = 0;
+    const id = setInterval(() => {
+      tries++;
+      if (window.Tagline && window.Tagline.PRODUCTS) {
+        clearInterval(id);
+        fn();
+      } else if (tries > 60) {
+        // 3 seconds and no Tagline — give up
+        clearInterval(id);
+        renderMissing('Could not load product catalog. Refresh and try again.');
+      }
+    }, 50);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderMissing(msg) {
+    document.getElementById('pdpContent').innerHTML = `
+      <div class="pdp-missing">
+        <h2>Product not found</h2>
+        <p>${escapeHtml(msg || 'We can\'t find that piece.')}</p>
+        <p style="margin-top:18px"><a href="/">← Back to the collection</a></p>
+      </div>`;
+    document.title = 'Product not found — TAGLINE';
+  }
+
+  function isValidImageUrl(u) {
+    return typeof u === 'string' && /^https?:\/\//i.test(u);
+  }
+
+  function render(p) {
+    if (!p) return renderMissing();
+
+    const SIZES = ['XS','S','M','L','XL','XXL'];
+    const isOut = p.stock === 0;
+    const isLow = !isOut && p.stock <= 10;
+
+    const tagHtml = p.tag
+      ? `<span class="pdp-tag">${escapeHtml(p.tag)}</span>`
+      : '';
+    const imageHtml = isValidImageUrl(p.image_url)
+      ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}" />`
+      : `<div class="pdp-image-letter">${escapeHtml((p.name || '?').charAt(0))}</div>`;
+
+    const stockClass = isOut ? 'out' : (isLow ? 'low' : '');
+    const stockText = isOut ? 'Sold out' : (isLow ? `Only ${p.stock} left` : 'In stock');
+
+    const wishlistOn = window.Tagline?.Wishlist?.has?.(productId) ? 'active' : '';
+    const heartLabel = wishlistOn ? 'Remove from wishlist' : 'Add to wishlist';
+
+    document.getElementById('pdpContent').innerHTML = `
+      <div class="pdp-layout">
+        <div class="pdp-image">
+          ${tagHtml}
+          ${imageHtml}
+        </div>
+        <div class="pdp-info">
+          <div class="pdp-eyebrow">${escapeHtml(p.category || 'TAGLINE')}</div>
+          <h1 class="pdp-name">${escapeHtml(p.name)}</h1>
+          <div class="pdp-price">$${escapeHtml(String(p.price))}</div>
+          <div class="pdp-stock ${stockClass}">${stockText}</div>
+          <div class="pdp-description">${escapeHtml(p.description || 'Premium athletic wear, made to last.')}</div>
+
+          <div class="pdp-section-label">Size</div>
+          <div class="pdp-size-row" id="pdpSizes">
+            ${SIZES.map(s => `<button type="button" class="pdp-size" data-size="${s}" ${isOut ? 'disabled' : ''}>${s}</button>`).join('')}
+          </div>
+
+          <div class="pdp-actions">
+            <button type="button" class="pdp-add" id="pdpAdd" ${isOut ? 'disabled' : ''}>${isOut ? 'Sold out' : 'Select a size'}</button>
+            <button type="button" class="pdp-heart ${wishlistOn}" id="pdpHeart" aria-label="${heartLabel}">
+              <svg fill="${wishlistOn ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    wireActions(p);
+    setMeta(p);
+    injectJsonLd(p);
+  }
+
+  function wireActions(p) {
+    document.querySelectorAll('.pdp-size').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        selectedSize = btn.dataset.size;
+        document.querySelectorAll('.pdp-size').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        const add = document.getElementById('pdpAdd');
+        add.disabled = false;
+        add.textContent = 'Add to cart';
+      });
+    });
+
+    document.getElementById('pdpAdd').addEventListener('click', () => {
+      if (!selectedSize) return;
+      const Cart = window.Tagline?.Cart;
+      if (!Cart) return;
+      const ok = Cart.add(productId, 1, { size: selectedSize });
+      if (ok) {
+        const btn = document.getElementById('pdpAdd');
+        btn.classList.add('added');
+        btn.textContent = 'Added ✓';
+        showToast(p, selectedSize);
+        setTimeout(() => {
+          btn.classList.remove('added');
+          btn.textContent = 'Add to cart';
+        }, 2200);
+      }
+    });
+
+    document.getElementById('pdpHeart').addEventListener('click', () => {
+      const Wishlist = window.Tagline?.Wishlist;
+      if (!Wishlist) return;
+      Wishlist.toggle(productId);
+      const heart = document.getElementById('pdpHeart');
+      const isOn = Wishlist.has(productId);
+      heart.classList.toggle('active', isOn);
+      heart.querySelector('svg').setAttribute('fill', isOn ? 'currentColor' : 'none');
+      heart.setAttribute('aria-label', isOn ? 'Remove from wishlist' : 'Add to wishlist');
+    });
+  }
+
+  function showToast(p, size) {
+    const toast = document.getElementById('addToCartToast');
+    const sub = document.getElementById('toastSub');
+    if (!toast) return;
+    sub.textContent = `${p.name} · Size ${size}`;
+    toast.removeAttribute('hidden');
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.setAttribute('hidden', ''), 300);
+    }, 2200);
+  }
+
+  function setMeta(p) {
+    const title = `${p.name} — TAGLINE`;
+    document.title = title;
+    document.querySelector('meta[name="description"]').setAttribute('content', p.description || `${p.name} from TAGLINE.`);
+    document.getElementById('ogTitle').setAttribute('content', title);
+    document.getElementById('ogDesc').setAttribute('content', p.description || '');
+    if (p.image_url) document.getElementById('ogImage').setAttribute('content', p.image_url);
+    document.getElementById('canonicalLink').setAttribute('href', window.location.origin + window.location.pathname);
+  }
+
+  function injectJsonLd(p) {
+    if (document.getElementById('pdpJsonLd')) return;
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": p.name,
+      "description": p.description || '',
+      "sku": productId,
+      "category": p.category,
+      "brand": { "@type": "Brand", "name": "TAGLINE" },
+      "image": p.image_url ? [p.image_url] : [],
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": "USD",
+        "price": Number(p.price).toFixed(2),
+        "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "itemCondition": "https://schema.org/NewCondition"
+      }
+    };
+    const s = document.createElement('script');
+    s.type = 'application/ld+json';
+    s.id = 'pdpJsonLd';
+    s.textContent = JSON.stringify(data);
+    document.head.appendChild(s);
+  }
+
+  // Init
+  if (!productId) {
+    renderMissing('No product ID in the URL.');
+    return;
+  }
+  ready(() => {
+    const p = window.Tagline.PRODUCTS[productId];
+    if (!p) {
+      renderMissing(`No product with id "${productId}".`);
+      return;
+    }
+    render(p);
+  });
+})();
+</script>
+
+</body>
+</html>

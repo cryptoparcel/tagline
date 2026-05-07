@@ -189,6 +189,25 @@
     });
   });
 
+  // Default to the Sign-up tab if the user landed here via /signup
+  // (vercel.json rewrites /signup → /signin.html; we read the URL to
+  // pick which tab to start on). Same trick if ?tab=signup is in the
+  // query, which is handy for "create your account" CTAs in marketing
+  // emails or banners.
+  (function pickInitialTab(){
+    const params = new URLSearchParams(window.location.search);
+    const wantsSignup =
+      window.location.pathname === '/signup' ||
+      window.location.pathname === '/signup/' ||
+      params.get('tab') === 'signup';
+    if (!wantsSignup) return;
+    const tab = document.querySelector('.auth-tab[data-tab="signup"]');
+    if (!tab) return;
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    switchToForm('signup');
+  })();
+
   // "Forgot password?" link → reveal reset form (no tab; deliberate one-way path)
   document.getElementById('forgotLink').addEventListener('click', () => {
     switchToForm('reset');

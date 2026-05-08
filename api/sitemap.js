@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const siteUrl = (process.env.SITE_URL || 'https://tagline.shop').replace(/\/$/, '');
+  const siteUrl = (process.env.SITE_URL || 'https://tagline.clothing').replace(/\/$/, '');
 
   // Try to load product list. If Supabase fails, sitemap still works
   // with static pages only.

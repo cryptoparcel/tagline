@@ -6,4 +6,4 @@ Disallow: /account
 Disallow: /signin
 Disallow: /success
 
-Sitemap: https://tagline.shop/sitemap.xml
+Sitemap: https://tagline.clothing/sitemap.xml

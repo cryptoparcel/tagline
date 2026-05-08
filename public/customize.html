@@ -50,6 +50,45 @@
     pointer-events:none;
     z-index:1;
   }
+  /* Zoom controls — pinned to bottom-right of preview, opposite the side toggle */
+  .zoom-controls{
+    position:absolute;
+    bottom:14px; right:14px;
+    z-index:5;
+    display:flex; flex-direction:column;
+    background:rgba(8,8,10,.85);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .zoom-controls button{
+    background:transparent;
+    border:none;
+    color:rgba(255,255,250,.75);
+    width:36px; height:36px;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:700;
+    transition:background .15s, color .15s;
+    padding:0;
+  }
+  .zoom-controls button:hover{ background:rgba(255,255,255,.08); color:#fff; }
+  .zoom-controls button:disabled{ opacity:.4; cursor:not-allowed; }
+  .zoom-controls .divider{
+    height:1px;
+    background:rgba(255,255,255,.08);
+  }
+  .zoom-controls .zoom-level{
+    font-size:9px; font-weight:700;
+    letter-spacing:.08em;
+    color:rgba(255,255,250,.6);
+    padding:6px 0;
+    text-align:center;
+    min-width:36px;
+  }
+
   /* Front / Back toggle pinned to the top-right of the preview */
   .side-toggle{
     position:absolute;
@@ -555,6 +594,15 @@
         <button type="button" class="active" data-side="front">Front</button>
         <button type="button" data-side="back">Back</button>
       </div>
+      <div class="zoom-controls" id="zoomControls" aria-label="Zoom in or out">
+        <button type="button" id="zoomIn" aria-label="Zoom in">+</button>
+        <div class="divider"></div>
+        <span class="zoom-level" id="zoomLevel">100%</span>
+        <div class="divider"></div>
+        <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
+        <div class="divider"></div>
+        <button type="button" id="zoomReset" aria-label="Reset zoom" style="font-size:11px">⟳</button>
+      </div>
       <div class="preview-stage" id="previewStage">
         <div class="preview-product" id="previewProduct">
           <div class="preview-empty">Pick a piece below to start</div>
@@ -693,6 +741,7 @@
     color: null,
     size: null,
     activeSide: 'front',
+    zoom: 1,               // 1 = 100%; range .5 (50%) to 2.5 (250%)
     layers: [],            // [{ id, type, side, ...payload, x, y, width, rotation }]
     selectedLayerId: null,
     nextLayerId: 1,
@@ -730,174 +779,287 @@
     return '';
   }
 
-  // Studio-style SVG silhouettes — light comes from upper-left so the
-  // left side of every garment gets a highlight gradient and the right
-  // side gets shadow. Each product also has darker shading at fold
-  // points (under sleeves, inside the hood, under the collar) so even
-  // a flat color reads as cloth instead of a sticker.
+  // Photo-realistic-ish SVG garments. Each silhouette uses 4-5 gradient
+  // stops for body shading + multiple darker zones for fabric folds
+  // and shadow falloff at depth points (under collar, hood interior,
+  // pocket undersides, sleeve attachment, cuff ribbing).
+  // pointer-events:none on every <path> inside the SVG so clicks pass
+  // through to design layers above (was a real bug — SVG paths were
+  // catching pointerdown events before layer handlers could fire).
   function getProductPreviewSVG(type, fillHex){
-    const hi    = shade(fillHex, +22);   // highlight tone (sleeve top, chest)
+    const hi2   = shade(fillHex, +30);   // strong highlight (top of shoulders)
+    const hi    = shade(fillHex, +18);   // soft highlight
     const mid   = fillHex;                // base body
-    const sh    = shade(fillHex, -22);   // gentle shadow
-    const deep  = shade(fillHex, -42);   // deep shadow (hood interior, collar)
-    const stroke = shade(fillHex, -55);  // stitch / outline accent
-    // Defs reused: gradients, etc. Suffix per type so multiple SVGs
-    // on the same page never collide on IDs.
+    const sh    = shade(fillHex, -18);   // light shadow
+    const sh2   = shade(fillHex, -32);   // medium shadow
+    const deep  = shade(fillHex, -45);   // deep shadow (hood interior, collar)
+    const stroke = shade(fillHex, -58);  // stitch / outline accent
+    // Defs reused per product type. Suffix per type so multiple SVGs
+    // never collide on IDs.
     const grad = (id) => `
       <defs>
         <linearGradient id="${id}-body" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="${hi}"/>
-          <stop offset=".4" stop-color="${mid}"/>
-          <stop offset="1" stop-color="${sh}"/>
+          <stop offset="0"   stop-color="${hi2}"/>
+          <stop offset=".25" stop-color="${hi}"/>
+          <stop offset=".55" stop-color="${mid}"/>
+          <stop offset=".85" stop-color="${sh}"/>
+          <stop offset="1"   stop-color="${sh2}"/>
         </linearGradient>
-        <radialGradient id="${id}-hi" cx=".4" cy=".35" r=".55">
-          <stop offset="0" stop-color="rgba(255,255,255,.22)"/>
-          <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+        <radialGradient id="${id}-hi" cx=".4" cy=".3" r=".5">
+          <stop offset="0"  stop-color="rgba(255,255,255,.28)"/>
+          <stop offset=".5" stop-color="rgba(255,255,255,.08)"/>
+          <stop offset="1"  stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+        <radialGradient id="${id}-shdow" cx=".5" cy=".7" r=".6">
+          <stop offset="0"  stop-color="rgba(0,0,0,0)"/>
+          <stop offset=".7" stop-color="rgba(0,0,0,.12)"/>
+          <stop offset="1"  stop-color="rgba(0,0,0,.28)"/>
         </radialGradient>
         <linearGradient id="${id}-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="${stroke}"/>
           <stop offset="1" stop-color="${deep}"/>
         </linearGradient>
+        <linearGradient id="${id}-fold-h" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(0,0,0,0)"/>
+          <stop offset=".5" stop-color="rgba(0,0,0,.08)"/>
+          <stop offset="1" stop-color="rgba(0,0,0,0)"/>
+        </linearGradient>
       </defs>`;
 
     if (type === 'hoodie') {
-      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('hood')}
-        <!-- Sleeves -->
-        <path d="M50 95 Q60 75 92 64 L118 92 L114 222 L72 238 Q56 238 50 222 Z" fill="url(#hood-body)"/>
-        <path d="M270 95 Q260 75 228 64 L202 92 L206 222 L248 238 Q264 238 270 222 Z" fill="url(#hood-body)"/>
-        <!-- Body -->
-        <path d="M88 64 Q160 50 232 64 L246 110 L240 340 Q240 350 230 350 L90 350 Q80 350 80 340 L74 110 Z" fill="url(#hood-body)"/>
-        <!-- Hood (lifted, with depth) -->
-        <path d="M108 76 Q108 30 160 18 Q212 30 212 76 Q198 110 160 110 Q122 110 108 76 Z" fill="url(#hood-deep)"/>
-        <!-- Hood opening shadow -->
-        <ellipse cx="160" cy="86" rx="44" ry="9" fill="${stroke}" opacity=".55"/>
-        <!-- Drawstrings (with aglets) -->
-        <path d="M146 80 v52 M174 80 v52" stroke="${shade(fillHex, -38)}" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
-        <ellipse cx="146" cy="135" rx="3" ry="4" fill="${shade(fillHex, -50)}"/>
-        <ellipse cx="174" cy="135" rx="3" ry="4" fill="${shade(fillHex, -50)}"/>
-        <!-- Kangaroo pocket outline -->
-        <path d="M104 232 Q160 218 216 232 L216 292 L104 292 Z" fill="none" stroke="${shade(fillHex, -28)}" stroke-width="1.4" opacity=".55"/>
-        <!-- Pocket hand-openings (slanted) -->
-        <path d="M114 244 L132 264" stroke="${shade(fillHex, -28)}" stroke-width="1.2" opacity=".55"/>
-        <path d="M206 244 L188 264" stroke="${shade(fillHex, -28)}" stroke-width="1.2" opacity=".55"/>
-        <!-- Ribbed cuffs + waist hem -->
-        <rect x="56" y="223" width="56" height="15" fill="${sh}" opacity=".55"/>
-        <rect x="208" y="223" width="56" height="15" fill="${sh}" opacity=".55"/>
-        <rect x="80" y="335" width="160" height="15" fill="${sh}" opacity=".5"/>
-        <g stroke="${stroke}" stroke-width=".4" opacity=".4">
-          <line x1="58" y1="227" x2="110" y2="227"/>
-          <line x1="58" y1="231" x2="110" y2="231"/>
-          <line x1="58" y1="235" x2="110" y2="235"/>
-          <line x1="210" y1="227" x2="262" y2="227"/>
-          <line x1="210" y1="231" x2="262" y2="231"/>
-          <line x1="210" y1="235" x2="262" y2="235"/>
-          <line x1="82" y1="339" x2="238" y2="339"/>
-          <line x1="82" y1="343" x2="238" y2="343"/>
-          <line x1="82" y1="347" x2="238" y2="347"/>
+        <!-- Drop shadow under the whole garment -->
+        <ellipse cx="160" cy="350" rx="118" ry="6" fill="rgba(0,0,0,.18)"/>
+        <!-- Left sleeve (with shoulder seam suggestion) -->
+        <path d="M48 96 Q58 72 90 60 L120 92 Q116 158 113 222 Q108 232 70 240 Q52 240 48 224 Z" fill="url(#hood-body)"/>
+        <!-- Right sleeve -->
+        <path d="M272 96 Q262 72 230 60 L200 92 Q204 158 207 222 Q212 232 250 240 Q268 240 272 224 Z" fill="url(#hood-body)"/>
+        <!-- Sleeve fold creases -->
+        <path d="M85 90 Q95 130 105 200" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <path d="M235 90 Q225 130 215 200" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <!-- Body (with subtle taper) -->
+        <path d="M88 60 Q160 48 232 60 L248 108 L243 328 Q243 348 226 350 L94 350 Q77 348 77 328 L72 108 Z" fill="url(#hood-body)"/>
+        <!-- Vertical drape lines on body -->
+        <path d="M120 110 Q118 200 122 320" fill="none" stroke="${sh2}" stroke-width=".8" opacity=".18"/>
+        <path d="M200 110 Q202 200 198 320" fill="none" stroke="${sh2}" stroke-width=".8" opacity=".18"/>
+        <!-- Shoulder seam stitch (very faint) -->
+        <path d="M88 60 Q105 65 120 92" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".4"/>
+        <path d="M232 60 Q215 65 200 92" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".4"/>
+        <!-- Hood — outer shape with slight asymmetry, drawn ABOVE body so it covers neckline -->
+        <path d="M104 78 Q108 26 162 18 Q216 26 218 78 L214 100 Q204 116 162 116 Q120 116 106 100 Z" fill="url(#hood-deep)"/>
+        <!-- Hood inner shadow (deep cavity look) -->
+        <ellipse cx="162" cy="92" rx="50" ry="14" fill="${deep}"/>
+        <ellipse cx="162" cy="88" rx="44" ry="8" fill="${stroke}" opacity=".75"/>
+        <!-- Hood lining edge highlight -->
+        <path d="M108 80 Q108 38 162 26 Q218 38 216 80" fill="none" stroke="${hi2}" stroke-width="1.2" opacity=".4"/>
+        <!-- Neck rib — peeking inside hood -->
+        <ellipse cx="162" cy="98" rx="38" ry="3" fill="${sh2}"/>
+        <!-- Drawstrings hanging down — left + right with aglet caps -->
+        <path d="M148 92 Q146 110 149 134" fill="none" stroke="${shade(fillHex, -38)}" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+        <path d="M176 92 Q178 110 175 134" fill="none" stroke="${shade(fillHex, -38)}" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+        <!-- Aglet plastic caps -->
+        <ellipse cx="149" cy="138" rx="2.5" ry="5" fill="${shade(fillHex, -55)}"/>
+        <ellipse cx="175" cy="138" rx="2.5" ry="5" fill="${shade(fillHex, -55)}"/>
+        <!-- Kangaroo pocket — upper opening (curved seam) -->
+        <path d="M100 226 Q160 212 220 226" fill="none" stroke="${stroke}" stroke-width="1.5" opacity=".55"/>
+        <!-- Kangaroo pocket — body (lighter than garment to show it's a layer) -->
+        <path d="M100 226 Q160 220 220 226 L222 296 L98 296 Z" fill="rgba(255,255,255,.04)"/>
+        <!-- Kangaroo pocket — bottom seam -->
+        <path d="M98 296 L222 296" stroke="${stroke}" stroke-width="1" opacity=".5"/>
+        <!-- Hand-warmer slits (slanted, stitched) -->
+        <path d="M115 240 L134 264" stroke="${stroke}" stroke-width="1.4" opacity=".7"/>
+        <path d="M205 240 L186 264" stroke="${stroke}" stroke-width="1.4" opacity=".7"/>
+        <!-- Hand-slit dashed stitch -->
+        <path d="M115 240 L134 264" stroke="${stroke}" stroke-width=".5" stroke-dasharray="2 2" opacity=".7"/>
+        <path d="M205 240 L186 264" stroke="${stroke}" stroke-width=".5" stroke-dasharray="2 2" opacity=".7"/>
+        <!-- Ribbed cuff (left) — multi-line look -->
+        <path d="M52 222 Q56 232 70 238 L114 238 Q120 230 116 222 Z" fill="${sh2}" opacity=".7"/>
+        <g stroke="${stroke}" stroke-width=".7" opacity=".7" fill="none">
+          <line x1="56" y1="226" x2="114" y2="226"/>
+          <line x1="55" y1="230" x2="115" y2="230"/>
+          <line x1="56" y1="234" x2="114" y2="234"/>
         </g>
-        <!-- Soft highlight on chest -->
-        <path d="M88 64 Q160 50 232 64 L246 110 L240 340 L80 340 L74 110 Z" fill="url(#hood-hi)"/>
+        <!-- Ribbed cuff (right) -->
+        <path d="M268 222 Q264 232 250 238 L206 238 Q200 230 204 222 Z" fill="${sh2}" opacity=".7"/>
+        <g stroke="${stroke}" stroke-width=".7" opacity=".7" fill="none">
+          <line x1="206" y1="226" x2="264" y2="226"/>
+          <line x1="205" y1="230" x2="265" y2="230"/>
+          <line x1="206" y1="234" x2="264" y2="234"/>
+        </g>
+        <!-- Ribbed waist hem -->
+        <path d="M77 326 L243 326 L243 348 Q236 350 226 350 L94 350 Q84 350 77 348 Z" fill="${sh2}" opacity=".65"/>
+        <g stroke="${stroke}" stroke-width=".6" opacity=".7" fill="none">
+          <line x1="80" y1="332" x2="240" y2="332"/>
+          <line x1="80" y1="337" x2="240" y2="337"/>
+          <line x1="80" y1="342" x2="240" y2="342"/>
+        </g>
+        <!-- Vertical fabric fold under hood (showing weight) -->
+        <path d="M134 116 Q142 140 148 175" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <path d="M186 116 Q178 140 172 175" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <!-- Soft highlight wash over chest -->
+        <path d="M88 60 Q160 48 232 60 L248 108 L243 328 L77 328 L72 108 Z" fill="url(#hood-hi)"/>
+        <!-- Ambient occlusion under sleeves + hood -->
+        <ellipse cx="160" cy="125" rx="80" ry="22" fill="url(#hood-shdow)" opacity=".5"/>
       </svg>`;
     }
 
     if (type === 'tee') {
-      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('tee')}
-        <!-- Sleeves (short) -->
-        <path d="M50 90 L100 60 L132 100 L112 144 L62 130 Z" fill="url(#tee-body)"/>
-        <path d="M270 90 L220 60 L188 100 L208 144 L258 130 Z" fill="url(#tee-body)"/>
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="352" rx="105" ry="5" fill="rgba(0,0,0,.16)"/>
+        <!-- Left sleeve -->
+        <path d="M48 92 Q56 76 100 60 L132 100 Q126 124 116 144 Q92 144 60 130 Z" fill="url(#tee-body)"/>
+        <!-- Right sleeve -->
+        <path d="M272 92 Q264 76 220 60 L188 100 Q194 124 204 144 Q228 144 260 130 Z" fill="url(#tee-body)"/>
+        <!-- Sleeve hem rolls -->
+        <path d="M60 130 Q86 140 116 144" fill="none" stroke="${stroke}" stroke-width="1" opacity=".5"/>
+        <path d="M260 130 Q234 140 204 144" fill="none" stroke="${stroke}" stroke-width="1" opacity=".5"/>
+        <!-- Sleeve cap shadow -->
+        <path d="M100 60 Q120 86 132 100" fill="none" stroke="${sh2}" stroke-width="1" opacity=".35"/>
+        <path d="M220 60 Q200 86 188 100" fill="none" stroke="${sh2}" stroke-width="1" opacity=".35"/>
         <!-- Body -->
-        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 100 L218 116 L218 350 Q218 354 214 354 L106 354 Q102 354 102 350 L102 116 L78 100 Z" fill="url(#tee-body)"/>
-        <!-- Crew neck collar -->
-        <path d="M132 78 Q160 96 188 78 L185 96 Q160 105 135 96 Z" fill="url(#tee-deep)" opacity=".75"/>
-        <path d="M132 76 Q160 95 188 76" fill="none" stroke="${stroke}" stroke-width="1.2" opacity=".7"/>
-        <!-- Sleeve cuff lines -->
-        <path d="M62 130 L112 144" stroke="${sh}" stroke-width="1" opacity=".55"/>
-        <path d="M258 130 L208 144" stroke="${sh}" stroke-width="1" opacity=".55"/>
-        <!-- Body hem -->
-        <line x1="102" y1="350" x2="218" y2="350" stroke="${sh}" stroke-width="1" opacity=".45"/>
-        <!-- Subtle shoulder seam -->
-        <path d="M100 60 L132 80 M220 60 L188 80" stroke="${sh}" stroke-width=".8" opacity=".4"/>
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 Q218 354 212 354 L108 354 Q102 354 102 348 L102 118 L78 102 Z" fill="url(#tee-body)"/>
+        <!-- Drape lines down body -->
+        <path d="M126 120 Q124 200 128 320" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".22"/>
+        <path d="M194 120 Q196 200 192 320" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".22"/>
+        <!-- Side seam shadows -->
+        <path d="M105 120 Q103 200 105 340" fill="none" stroke="${sh2}" stroke-width="1.5" opacity=".22"/>
+        <path d="M215 120 Q217 200 215 340" fill="none" stroke="${sh2}" stroke-width="1.5" opacity=".22"/>
+        <!-- Crew neckline ribbing (visible band) -->
+        <path d="M132 78 Q160 96 188 78 L186 88 Q160 99 134 88 Z" fill="${sh2}"/>
+        <path d="M132 78 Q160 96 188 78" fill="none" stroke="${stroke}" stroke-width="1.4" opacity=".85"/>
+        <path d="M134 84 Q160 99 186 84" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".6"/>
+        <!-- Body hem stitch (double row) -->
+        <line x1="106" y1="346" x2="214" y2="346" stroke="${stroke}" stroke-width=".6" opacity=".5"/>
+        <line x1="106" y1="349" x2="214" y2="349" stroke="${stroke}" stroke-width=".6" stroke-dasharray="2 2" opacity=".5"/>
+        <!-- Tag bump on inside collar (back) -->
+        <rect x="156" y="84" width="8" height="3" fill="${stroke}" opacity=".4"/>
         <!-- Chest highlight -->
-        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 100 L218 116 L218 350 L102 350 L102 116 L78 100 Z" fill="url(#tee-hi)"/>
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 L102 348 L102 118 L78 102 Z" fill="url(#tee-hi)"/>
+        <!-- Subtle ambient occlusion under arms -->
+        <ellipse cx="160" cy="135" rx="78" ry="20" fill="url(#tee-shdow)" opacity=".4"/>
       </svg>`;
     }
 
     if (type === 'crew') {
-      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('crew')}
-        <!-- Sleeves (long, fuller than tee) -->
-        <path d="M44 95 Q54 75 86 64 L116 92 L112 222 L66 238 Q50 238 44 222 Z" fill="url(#crew-body)"/>
-        <path d="M276 95 Q266 75 234 64 L204 92 L208 222 L254 238 Q270 238 276 222 Z" fill="url(#crew-body)"/>
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="350" rx="118" ry="6" fill="rgba(0,0,0,.18)"/>
+        <!-- Left sleeve (long, fuller weight than tee) -->
+        <path d="M44 95 Q54 73 90 60 L120 92 Q116 158 113 222 Q108 232 70 240 Q50 240 44 224 Z" fill="url(#crew-body)"/>
+        <!-- Right sleeve -->
+        <path d="M276 95 Q266 73 230 60 L200 92 Q204 158 207 222 Q212 232 250 240 Q270 240 276 224 Z" fill="url(#crew-body)"/>
+        <!-- Sleeve fold creases -->
+        <path d="M84 86 Q92 130 100 200" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <path d="M236 86 Q228 130 220 200" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
         <!-- Body -->
-        <path d="M84 64 Q160 50 236 64 L250 110 L246 340 Q246 350 236 350 L84 350 Q74 350 74 340 L70 110 Z" fill="url(#crew-body)"/>
-        <!-- Crew neck collar -->
-        <path d="M130 64 Q160 80 190 64 L188 88 Q160 96 132 88 Z" fill="url(#crew-deep)" opacity=".75"/>
-        <path d="M130 62 Q160 80 190 62" fill="none" stroke="${stroke}" stroke-width="1.4" opacity=".75"/>
-        <!-- Ribbed cuffs + bottom hem (multiple thin lines for ribbing) -->
-        <rect x="50" y="223" width="58" height="16" fill="${sh}" opacity=".5"/>
-        <rect x="212" y="223" width="58" height="16" fill="${sh}" opacity=".5"/>
-        <rect x="76" y="333" width="168" height="17" fill="${sh}" opacity=".48"/>
-        <g stroke="${stroke}" stroke-width=".5" opacity=".5">
-          <line x1="52" y1="227" x2="106" y2="227"/>
-          <line x1="52" y1="231" x2="106" y2="231"/>
-          <line x1="52" y1="235" x2="106" y2="235"/>
-          <line x1="214" y1="227" x2="268" y2="227"/>
-          <line x1="214" y1="231" x2="268" y2="231"/>
-          <line x1="214" y1="235" x2="268" y2="235"/>
-          <line x1="78" y1="337" x2="242" y2="337"/>
-          <line x1="78" y1="341" x2="242" y2="341"/>
-          <line x1="78" y1="345" x2="242" y2="345"/>
+        <path d="M86 60 Q160 48 234 60 L250 108 L246 326 Q246 348 230 350 L90 350 Q74 348 74 326 L70 108 Z" fill="url(#crew-body)"/>
+        <!-- Drape lines -->
+        <path d="M118 110 Q116 200 122 320" fill="none" stroke="${sh2}" stroke-width=".8" opacity=".2"/>
+        <path d="M202 110 Q204 200 198 320" fill="none" stroke="${sh2}" stroke-width=".8" opacity=".2"/>
+        <!-- Shoulder seam -->
+        <path d="M86 60 Q104 65 120 92" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".4"/>
+        <path d="M234 60 Q216 65 200 92" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".4"/>
+        <!-- Ribbed crew neck (raised band, multi-line) -->
+        <path d="M126 60 Q160 78 194 60 L192 90 Q160 100 128 90 Z" fill="${sh2}"/>
+        <path d="M124 60 Q160 78 196 60" fill="none" stroke="${stroke}" stroke-width="1.6" opacity=".8"/>
+        <path d="M127 68 Q160 86 193 68" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".6"/>
+        <path d="M129 75 Q160 92 191 75" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".5"/>
+        <!-- Inner collar shadow -->
+        <ellipse cx="160" cy="86" rx="32" ry="6" fill="${deep}" opacity=".75"/>
+        <!-- Ribbed cuff (left) -->
+        <path d="M48 222 Q54 232 70 238 L114 238 Q120 230 116 222 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".7" opacity=".7" fill="none">
+          <line x1="52" y1="226" x2="114" y2="226"/>
+          <line x1="51" y1="230" x2="115" y2="230"/>
+          <line x1="52" y1="234" x2="114" y2="234"/>
+          <line x1="53" y1="238" x2="113" y2="238"/>
+        </g>
+        <!-- Ribbed cuff (right) -->
+        <path d="M272 222 Q266 232 250 238 L206 238 Q200 230 204 222 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".7" opacity=".7" fill="none">
+          <line x1="206" y1="226" x2="268" y2="226"/>
+          <line x1="205" y1="230" x2="269" y2="230"/>
+          <line x1="206" y1="234" x2="268" y2="234"/>
+          <line x1="207" y1="238" x2="267" y2="238"/>
+        </g>
+        <!-- Ribbed waist hem -->
+        <path d="M74 322 L246 322 L246 348 Q236 350 230 350 L90 350 Q84 350 74 348 Z" fill="${sh2}" opacity=".85"/>
+        <g stroke="${stroke}" stroke-width=".6" opacity=".7" fill="none">
+          <line x1="78" y1="328" x2="242" y2="328"/>
+          <line x1="78" y1="333" x2="242" y2="333"/>
+          <line x1="78" y1="338" x2="242" y2="338"/>
+          <line x1="78" y1="343" x2="242" y2="343"/>
         </g>
         <!-- Chest highlight -->
-        <path d="M84 64 Q160 50 236 64 L250 110 L246 340 L74 340 L70 110 Z" fill="url(#crew-hi)"/>
+        <path d="M86 60 Q160 48 234 60 L250 108 L246 322 L74 322 L70 108 Z" fill="url(#crew-hi)"/>
+        <!-- Ambient occlusion under arms -->
+        <ellipse cx="160" cy="115" rx="80" ry="18" fill="url(#crew-shdow)" opacity=".5"/>
       </svg>`;
     }
 
     if (type === 'sweatpants') {
-      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg">
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('pants')}
-        <!-- Waistband -->
-        <rect x="98" y="18" width="124" height="28" rx="3" fill="url(#pants-deep)"/>
-        <g stroke="${stroke}" stroke-width=".5" opacity=".55">
-          <line x1="103" y1="24" x2="217" y2="24"/>
-          <line x1="103" y1="28" x2="217" y2="28"/>
-          <line x1="103" y1="32" x2="217" y2="32"/>
-          <line x1="103" y1="36" x2="217" y2="36"/>
-          <line x1="103" y1="40" x2="217" y2="40"/>
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="354" rx="80" ry="5" fill="rgba(0,0,0,.18)"/>
+        <!-- Waistband (raised, ribbed) -->
+        <rect x="96" y="14" width="128" height="32" rx="4" fill="url(#pants-deep)"/>
+        <g stroke="${stroke}" stroke-width=".6" opacity=".6" fill="none">
+          <line x1="100" y1="20" x2="220" y2="20"/>
+          <line x1="100" y1="24" x2="220" y2="24"/>
+          <line x1="100" y1="28" x2="220" y2="28"/>
+          <line x1="100" y1="32" x2="220" y2="32"/>
+          <line x1="100" y1="36" x2="220" y2="36"/>
+          <line x1="100" y1="40" x2="220" y2="40"/>
         </g>
-        <!-- Drawstring eyelets -->
-        <circle cx="148" cy="34" r="1.6" fill="${stroke}"/>
-        <circle cx="172" cy="34" r="1.6" fill="${stroke}"/>
-        <!-- Drawstring loops -->
-        <path d="M148 34 Q140 52 152 64" fill="none" stroke="${shade(fillHex, -38)}" stroke-width="1.4" stroke-linecap="round" opacity=".75"/>
-        <path d="M172 34 Q180 52 168 64" fill="none" stroke="${shade(fillHex, -38)}" stroke-width="1.4" stroke-linecap="round" opacity=".75"/>
-        <ellipse cx="152" cy="66" rx="2.5" ry="3.5" fill="${shade(fillHex, -50)}"/>
-        <ellipse cx="168" cy="66" rx="2.5" ry="3.5" fill="${shade(fillHex, -50)}"/>
+        <!-- Waistband bottom seam -->
+        <line x1="96" y1="46" x2="224" y2="46" stroke="${stroke}" stroke-width="1" opacity=".7"/>
+        <!-- Drawstring eyelets (metal grommets) -->
+        <circle cx="148" cy="34" r="2" fill="${stroke}"/>
+        <circle cx="148" cy="34" r="1.2" fill="${deep}"/>
+        <circle cx="172" cy="34" r="2" fill="${stroke}"/>
+        <circle cx="172" cy="34" r="1.2" fill="${deep}"/>
+        <!-- Drawstring loops with knot -->
+        <path d="M148 34 Q140 52 152 64" fill="none" stroke="${shade(fillHex, -35)}" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>
+        <path d="M172 34 Q180 52 168 64" fill="none" stroke="${shade(fillHex, -35)}" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>
+        <ellipse cx="152" cy="66" rx="2.8" ry="4" fill="${shade(fillHex, -55)}"/>
+        <ellipse cx="168" cy="66" rx="2.8" ry="4" fill="${shade(fillHex, -55)}"/>
         <!-- Body / legs -->
-        <path d="M98 46 L222 46 L232 130 L224 340 Q224 348 217 348 L180 348 Q174 348 172 342 L162 168 Q160 162 158 168 L150 342 Q148 348 142 348 L103 348 Q96 348 96 340 L88 130 Z" fill="url(#pants-body)"/>
-        <!-- Center seam -->
-        <line x1="160" y1="46" x2="160" y2="160" stroke="${stroke}" stroke-width="1" opacity=".5"/>
-        <!-- Side pocket curves -->
-        <path d="M100 78 Q92 96 102 116" fill="none" stroke="${sh}" stroke-width="1.2" opacity=".6"/>
-        <path d="M220 78 Q228 96 218 116" fill="none" stroke="${sh}" stroke-width="1.2" opacity=".6"/>
-        <!-- Leg shadow at center -->
-        <path d="M156 200 Q160 280 156 340" fill="none" stroke="${sh}" stroke-width="3" opacity=".25"/>
-        <path d="M164 200 Q160 280 164 340" fill="none" stroke="${sh}" stroke-width="3" opacity=".25"/>
-        <!-- Cuffs (ribbed) -->
-        <rect x="96" y="332" width="50" height="14" fill="${sh}" opacity=".55"/>
-        <rect x="174" y="332" width="50" height="14" fill="${sh}" opacity=".55"/>
-        <g stroke="${stroke}" stroke-width=".5" opacity=".55">
+        <path d="M96 46 L224 46 L234 132 L226 340 Q226 348 218 348 L180 348 Q174 348 172 342 L162 170 Q160 164 158 170 L150 342 Q148 348 142 348 L102 348 Q94 348 94 340 L86 132 Z" fill="url(#pants-body)"/>
+        <!-- Crotch shadow -->
+        <ellipse cx="160" cy="170" rx="22" ry="14" fill="${sh2}" opacity=".4"/>
+        <!-- Center crease -->
+        <line x1="124" y1="60" x2="120" y2="340" stroke="${sh2}" stroke-width=".8" opacity=".25"/>
+        <line x1="196" y1="60" x2="200" y2="340" stroke="${sh2}" stroke-width=".8" opacity=".25"/>
+        <!-- Knee fold suggestion -->
+        <path d="M108 226 Q120 230 130 226" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <path d="M212 226 Q200 230 190 226" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <!-- Side pocket openings (slanted with stitching) -->
+        <path d="M100 76 Q92 100 100 120" fill="none" stroke="${stroke}" stroke-width="1.2" opacity=".7"/>
+        <path d="M101 78 Q94 100 100 118" fill="none" stroke="${stroke}" stroke-width=".5" stroke-dasharray="2 2" opacity=".6"/>
+        <path d="M220 76 Q228 100 220 120" fill="none" stroke="${stroke}" stroke-width="1.2" opacity=".7"/>
+        <path d="M219 78 Q226 100 220 118" fill="none" stroke="${stroke}" stroke-width=".5" stroke-dasharray="2 2" opacity=".6"/>
+        <!-- Inner leg seam -->
+        <line x1="160" y1="170" x2="160" y2="340" stroke="${stroke}" stroke-width=".8" opacity=".5"/>
+        <!-- Ribbed cuffs (left + right) -->
+        <path d="M94 332 L146 332 L146 348 Q140 350 130 348 L102 348 Q96 348 94 344 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".6" opacity=".7" fill="none">
           <line x1="98" y1="336" x2="144" y2="336"/>
           <line x1="98" y1="340" x2="144" y2="340"/>
           <line x1="98" y1="344" x2="144" y2="344"/>
+        </g>
+        <path d="M174 332 L226 332 L226 344 Q224 348 218 348 L190 348 Q180 350 174 348 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".6" opacity=".7" fill="none">
           <line x1="176" y1="336" x2="222" y2="336"/>
           <line x1="176" y1="340" x2="222" y2="340"/>
           <line x1="176" y1="344" x2="222" y2="344"/>
         </g>
-        <!-- Highlight overlay -->
-        <path d="M98 46 L222 46 L232 130 L224 340 L180 340 L160 168 L142 340 L96 340 L88 130 Z" fill="url(#pants-hi)"/>
+        <!-- Highlight wash -->
+        <path d="M96 46 L224 46 L234 132 L226 340 L180 340 L160 170 L142 340 L94 340 L86 132 Z" fill="url(#pants-hi)"/>
       </svg>`;
     }
     return '';
@@ -975,6 +1137,9 @@
     }).join('');
 
     product.innerHTML = svg + layersHtml;
+    // Re-apply zoom transform after innerHTML wipe
+    product.style.transform = `scale(${state.zoom})`;
+    product.style.transformOrigin = 'center center';
 
     // Update text-layer font sizes based on actual rendered width
     syncTextLayerSizes();
@@ -1205,8 +1370,33 @@
     render();
   }
 
+  // Zoom in/out — applies a CSS transform:scale to .preview-product so
+  // the user can inspect their design at higher detail. Layer drag math
+  // already accounts for the rendered size via getBoundingClientRect(),
+  // so dragging works correctly at any zoom level.
+  function setZoom(z) {
+    state.zoom = Math.max(0.5, Math.min(2.5, z));
+    const product = document.getElementById('previewProduct');
+    if (product) {
+      product.style.transform = `scale(${state.zoom})`;
+      product.style.transformOrigin = 'center center';
+    }
+    const label = document.getElementById('zoomLevel');
+    if (label) label.textContent = Math.round(state.zoom * 100) + '%';
+    const inBtn = document.getElementById('zoomIn');
+    const outBtn = document.getElementById('zoomOut');
+    if (inBtn) inBtn.disabled = state.zoom >= 2.5;
+    if (outBtn) outBtn.disabled = state.zoom <= 0.5;
+  }
+  function zoomIn()    { setZoom(state.zoom + 0.25); }
+  function zoomOut()   { setZoom(state.zoom - 0.25); }
+  function zoomReset() { setZoom(1); }
+
   // ===== EVENTS =====
   document.addEventListener('click', (e) => {
+    if (e.target.id === 'zoomIn')    { zoomIn();    return; }
+    if (e.target.id === 'zoomOut')   { zoomOut();   return; }
+    if (e.target.id === 'zoomReset') { zoomReset(); return; }
     const sideBtn = e.target.closest('#sideToggle button');
     if (sideBtn) { setActiveSide(sideBtn.dataset.side); return; }
     const product = e.target.closest('.product-option');

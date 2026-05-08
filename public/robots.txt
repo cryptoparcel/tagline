@@ -1,4 +1,4 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
@@ -6,4 +6,4 @@ Disallow: /account
 Disallow: /signin
 Disallow: /success
 
-Sitemap: https://tagline-ten.vercel.app/sitemap.xml
+Sitemap: https://tagline.shop/sitemap.xml

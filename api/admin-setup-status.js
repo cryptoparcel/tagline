@@ -1,4 +1,4 @@
-// Admin setup-status endpoint.
+﻿// Admin setup-status endpoint.
 //
 // Returns a structured checklist of every integration the site uses,
 // flagging which env vars / connectivity tests are configured + working.
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       missing: present ? [] : ['SITE_URL'],
       hint: present
         ? `Set to ${env.SITE_URL}`
-        : 'Set SITE_URL to your live domain (e.g. https://tagline-ten.vercel.app). Stripe success/cancel URLs use it.',
+        : 'Set SITE_URL to your live domain (e.g. https://tagline.shop). Stripe success/cancel URLs use it.',
       docs_url: 'https://vercel.com/docs/projects/environment-variables'
     });
   }

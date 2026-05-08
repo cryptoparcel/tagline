@@ -1,4 +1,4 @@
-// Dynamic sitemap.xml — replaces the static public/sitemap.xml.
+﻿// Dynamic sitemap.xml — replaces the static public/sitemap.xml.
 // Pulls active products from the DB and generates a sitemap entry for
 // every /products/<id> URL plus the static pages. Crawlers (Google,
 // Bing) hit /sitemap.xml which Vercel rewrites here.
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const siteUrl = (process.env.SITE_URL || 'https://tagline-ten.vercel.app').replace(/\/$/, '');
+  const siteUrl = (process.env.SITE_URL || 'https://tagline.shop').replace(/\/$/, '');
 
   // Try to load product list. If Supabase fails, sitemap still works
   // with static pages only.

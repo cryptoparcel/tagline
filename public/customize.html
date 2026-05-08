@@ -1539,6 +1539,12 @@
   }
 
   // ===== INIT =====
+  // Pre-select sensible defaults so the page is immediately interactive
+  // — landing on /customize used to show an empty stage with "Pick a
+  // piece below to start". Now you see a black hoodie ready to design.
+  // Anything can still be changed; this is just a starting point.
+  state.product = PRODUCTS[0];          // Blank Hoodie
+  state.color   = COLORS[0];            // Black
   wireStageDeselect();
   render();
   // Re-sync text font sizes if window resizes (preview width may change)

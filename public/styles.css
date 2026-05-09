@@ -250,7 +250,7 @@ h1.page-title{
 }
 .form-textarea{
   resize:vertical;
-  min-height:120px;
+  min-height:220px;
   line-height:1.6;
 }
 .form-error{
@@ -361,6 +361,7 @@ footer a:hover{color:var(--ink)}
   .btn{padding:14px 24px; font-size:12px}
   footer{padding:32px 16px 24px;flex-direction:column;align-items:flex-start;gap:10px}
   .form-input, .form-textarea{padding:13px 14px; font-size:16px}
+  .form-textarea{ min-height:200px; }
   /* Keep iOS from zooming on input focus */
   input, textarea, select { font-size:16px }
 }

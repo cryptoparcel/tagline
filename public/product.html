@@ -478,7 +478,25 @@
         "priceCurrency": "USD",
         "price": Number(p.price).toFixed(2),
         "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        "itemCondition": "https://schema.org/NewCondition"
+        "itemCondition": "https://schema.org/NewCondition",
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" },
+          "shippingDestination": { "@type": "DefinedRegion", "addressCountry": ["US", "CA"] },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "businessDays": { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"] },
+            "transitTime": { "@type": "QuantitativeValue", "minValue": 5, "maxValue": 7, "unitCode": "DAY" }
+          }
+        },
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "applicableCountry": "US",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": 30,
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/FreeReturn"
+        }
       }
     };
     const s = document.createElement('script');
@@ -486,6 +504,25 @@
     s.id = 'pdpJsonLd';
     s.textContent = JSON.stringify(data);
     document.head.appendChild(s);
+
+    // BreadcrumbList — helps Google show "Home › Tops › Product" in
+    // search results. Category may be missing on legacy products; in
+    // that case we drop the middle crumb.
+    const crumbs = [{ "@type": "ListItem", "position": 1, "name": "Home", "item": window.location.origin + "/" }];
+    if (p.category) {
+      crumbs.push({ "@type": "ListItem", "position": 2, "name": p.category, "item": window.location.origin + "/#shop" });
+    }
+    crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": p.name, "item": window.location.href });
+    const bc = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": crumbs
+    };
+    const sc = document.createElement('script');
+    sc.type = 'application/ld+json';
+    sc.id = 'pdpBreadcrumbLd';
+    sc.textContent = JSON.stringify(bc);
+    document.head.appendChild(sc);
   }
 
   // Init

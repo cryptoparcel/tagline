@@ -1153,12 +1153,22 @@
     }
 
     const fillHex = state.color?.hex || '#dcd9d0';
-    // Prefer a real photo mockup when one is available for this (type, color).
-    const photoKey = `${state.product.type}-${state.color?.id || ''}`;
-    const photoUrl = PHOTO_MOCKUPS[photoKey];
-    const svg = photoUrl
-      ? `<img src="${escapeAttr(photoUrl)}" alt="" style="width:100%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 16px 24px rgba(0,0,0,.18))" />`
-      : getProductPreviewSVG(state.product.type, fillHex);
+    // Prefer a real photo mockup when ANY photo is mapped for this product
+    // type (any color). The base photo is always the white version; we
+    // tint it to match the chosen color via a multiply-blend overlay.
+    // mix-blend-mode multiplies the picked color into the photo's
+    // brightness, so creases / folds / shadows stay visible.
+    const baseKey = `${state.product.type}-base`;
+    const photoUrl = PHOTO_MOCKUPS[baseKey] || PHOTO_MOCKUPS[`${state.product.type}-white`];
+    let svg;
+    if (photoUrl) {
+      svg = `<div class="photo-wrap" style="position:relative;width:100%">
+        <img src="${escapeAttr(photoUrl)}" alt="" style="width:100%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 16px 24px rgba(0,0,0,.18))" />
+        <div class="photo-tint" style="position:absolute;inset:0;background:${fillHex};mix-blend-mode:multiply;pointer-events:none"></div>
+      </div>`;
+    } else {
+      svg = getProductPreviewSVG(state.product.type, fillHex);
+    }
 
     // Build layers — only those on the active side
     const visibleLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);

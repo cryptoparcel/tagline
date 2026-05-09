@@ -416,8 +416,45 @@
     background:var(--text-color);
     box-shadow:inset 0 -2px 6px rgba(0,0,0,.25);
     padding:0;
+    position:relative;
+    overflow:hidden;
   }
   .text-color.selected{ border-color:var(--gold); }
+  /* Custom color picker — wraps a native <input type=color> */
+  .text-color.custom-color{
+    background:conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    font-weight:700;
+    font-size:18px;
+    text-shadow:0 0 4px rgba(0,0,0,.6);
+  }
+  .text-color.custom-color input[type="color"]{
+    position:absolute; inset:0;
+    opacity:0;
+    cursor:pointer;
+    border:none;
+    padding:0;
+    width:100%; height:100%;
+  }
+  /* Bold / Italic / Underline toggle buttons */
+  .text-format{
+    width:38px; height:36px;
+    border:1px solid var(--line-strong);
+    background:transparent;
+    color:var(--ink-soft);
+    font-family:'Space Grotesk', serif;
+    font-size:15px;
+    cursor:pointer;
+    transition:all .2s;
+    padding:0;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .text-format:hover{ color:var(--ink); border-color:var(--ink); }
+  .text-format.selected{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .text-format b{ font-weight:800; }
+  .text-format i{ font-style:italic; font-family:Georgia, serif; }
+  .text-format u{ text-decoration:underline; }
   .text-weight-pill{
     background:transparent;
     border:1px solid var(--line-strong);
@@ -693,6 +730,14 @@
         <!-- Inline text editor (shown after Add Text clicked) -->
         <div class="text-editor" id="textEditor">
           <input type="text" id="textInput" placeholder="Type your text" maxlength="60" autocomplete="off" />
+          <!-- Format toggles: bold, italic, underline -->
+          <div class="text-style-row">
+            <span class="text-style-label">Style</span>
+            <button type="button" class="text-format selected" data-format="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+            <button type="button" class="text-format" data-format="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+            <button type="button" class="text-format" data-format="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+          </div>
+          <!-- Color: 6 presets + a native color picker for everything else -->
           <div class="text-style-row">
             <span class="text-style-label">Color</span>
             <button type="button" class="text-color selected" data-text-color="#ffffff" style="--text-color:#ffffff" aria-label="White"></button>
@@ -700,11 +745,18 @@
             <button type="button" class="text-color" data-text-color="#d4a558" style="--text-color:#d4a558" aria-label="Gold"></button>
             <button type="button" class="text-color" data-text-color="#e8505b" style="--text-color:#e8505b" aria-label="Red"></button>
             <button type="button" class="text-color" data-text-color="#3a78c2" style="--text-color:#3a78c2" aria-label="Blue"></button>
+            <button type="button" class="text-color" data-text-color="#2d8a4a" style="--text-color:#2d8a4a" aria-label="Green"></button>
+            <label class="text-color custom-color" title="Pick any color">
+              <input type="color" id="textColorPicker" value="#ffffff" />
+              <span aria-hidden="true">+</span>
+            </label>
           </div>
+          <!-- Font weight: 4 levels -->
           <div class="text-style-row">
             <span class="text-style-label">Weight</span>
-            <button type="button" class="text-weight-pill selected" data-text-weight="700">Bold</button>
+            <button type="button" class="text-weight-pill" data-text-weight="400">Regular</button>
             <button type="button" class="text-weight-pill" data-text-weight="500">Medium</button>
+            <button type="button" class="text-weight-pill selected" data-text-weight="700">Bold</button>
             <button type="button" class="text-weight-pill" data-text-weight="800">Heavy</button>
           </div>
           <div class="text-editor-actions">
@@ -770,7 +822,7 @@
     layers: [],            // [{ id, type, side, ...payload, x, y, width, rotation }]
     selectedLayerId: null,
     nextLayerId: 1,
-    textDraft: { text: '', color: '#ffffff', weight: 700 },
+    textDraft: { text: '', color: '#ffffff', weight: 700, italic: false, underline: false, bold: true },
     submitting: false
   };
 
@@ -1177,7 +1229,16 @@
       const transform = `translate(-50%, -50%) rotate(${l.rotation || 0}deg)`;
       const inner = l.type === 'image'
         ? `<img src="${escapeAttr(l.dataUrl)}" alt=""/>`
-        : `<div class="layer-text" style="color:${escapeAttr(l.color)};font-weight:${l.weight};font-size:calc(var(--layer-w, 30) * 0.4px);">${escapeHtml(l.text)}</div>`;
+        : (() => {
+            const styleParts = [
+              `color:${escapeAttr(l.color)}`,
+              `font-weight:${l.weight}`,
+              `font-size:calc(var(--layer-w, 30) * 0.4px)`
+            ];
+            if (l.italic)    styleParts.push('font-style:italic');
+            if (l.underline) styleParts.push('text-decoration:underline');
+            return `<div class="layer-text" style="${styleParts.join(';')}">${escapeHtml(l.text)}</div>`;
+          })();
       return `<div class="layer ${selected}" data-layer-id="${l.id}" data-layer-type="${l.type}"
         style="left:${l.x}%;top:${l.y}%;width:${l.width}%;transform:${transform};--layer-w:${l.width};">
         ${inner}
@@ -1391,13 +1452,16 @@
     setStatus(`Image added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
   }
 
-  function addTextLayer(text, color, weight) {
+  function addTextLayer(text, color, weight, italic, underline) {
     const id = state.nextLayerId++;
     state.layers.push({
       id, type:'text',
       side: state.activeSide,
       text: text.slice(0, 60),
-      color, weight,
+      color,
+      weight: italic === undefined && weight === 700 ? (state.textDraft.bold ? 700 : 400) : weight,
+      italic: !!italic,
+      underline: !!underline,
       x: 50, y: 55, width: 50, rotation: 0
     });
     state.selectedLayerId = id;
@@ -1487,9 +1551,27 @@
     if (e.target.id === 'textConfirm') {
       const text = document.getElementById('textInput').value.trim();
       if (text.length === 0) { setStatus('Type something first.', 'error'); return; }
-      addTextLayer(text, state.textDraft.color, state.textDraft.weight);
+      addTextLayer(text, state.textDraft.color, state.textDraft.weight,
+                   state.textDraft.italic, state.textDraft.underline);
       document.getElementById('textEditor').classList.remove('open');
       document.getElementById('textInput').value = '';
+      return;
+    }
+    // Bold / Italic / Underline toggle buttons
+    const fmtBtn = e.target.closest('[data-format]');
+    if (fmtBtn) {
+      const fmt = fmtBtn.dataset.format;
+      const next = !fmtBtn.classList.contains('selected');
+      fmtBtn.classList.toggle('selected', next);
+      if (fmt === 'bold')      { state.textDraft.bold = next; state.textDraft.weight = next ? 700 : 400; }
+      if (fmt === 'italic')    { state.textDraft.italic = next; }
+      if (fmt === 'underline') { state.textDraft.underline = next; }
+      // Sync the Weight pill row when bold toggles
+      if (fmt === 'bold') {
+        document.querySelectorAll('.text-weight-pill').forEach(b => {
+          b.classList.toggle('selected', parseInt(b.dataset.textWeight, 10) === state.textDraft.weight);
+        });
+      }
       return;
     }
     const colorBtn = e.target.closest('[data-text-color]');
@@ -1502,8 +1584,12 @@
     const weightBtn = e.target.closest('[data-text-weight]');
     if (weightBtn) {
       state.textDraft.weight = parseInt(weightBtn.dataset.textWeight, 10);
+      // Keep Bold toggle in sync with the chosen weight
+      state.textDraft.bold = state.textDraft.weight >= 600;
       document.querySelectorAll('.text-weight-pill').forEach(b => b.classList.remove('selected'));
       weightBtn.classList.add('selected');
+      const boldBtn = document.querySelector('[data-format="bold"]');
+      if (boldBtn) boldBtn.classList.toggle('selected', state.textDraft.bold);
       return;
     }
     const del = e.target.closest('[data-delete-layer]');
@@ -1524,6 +1610,18 @@
   });
 
   // Image file input — supports multiple at once
+  // Native color picker — update the live draft as the user pulls
+  // a custom color from the system swatch picker.
+  const customColorInput = document.getElementById('textColorPicker');
+  if (customColorInput) {
+    customColorInput.addEventListener('input', (e) => {
+      state.textDraft.color = e.target.value;
+      document.querySelectorAll('.text-color').forEach(b => b.classList.remove('selected'));
+      const wrap = e.target.closest('.text-color');
+      if (wrap) wrap.classList.add('selected');
+    });
+  }
+
   document.getElementById('imageFile').addEventListener('change', (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -1600,7 +1698,8 @@
           ctx.drawImage(img, -w/2, -(w*ratio)/2, w, w*ratio);
         } else if (l.type === 'text') {
           const fontSize = w * 0.32;
-          ctx.font = `${l.weight} ${fontSize}px "Space Grotesk", sans-serif`;
+          const styleStr = l.italic ? 'italic ' : '';
+          ctx.font = `${styleStr}${l.weight} ${fontSize}px "Space Grotesk", sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillStyle = l.color;
@@ -1608,6 +1707,13 @@
           ctx.shadowBlur = 6;
           ctx.shadowOffsetY = 2;
           ctx.fillText(l.text, 0, 0);
+          // Underline — canvas has no built-in support, draw a line manually
+          if (l.underline) {
+            const metrics = ctx.measureText(l.text);
+            const underlineY = fontSize * 0.40;
+            ctx.shadowColor = 'transparent';
+            ctx.fillRect(-metrics.width / 2, underlineY, metrics.width, Math.max(2, fontSize / 18));
+          }
         }
 
         ctx.restore();

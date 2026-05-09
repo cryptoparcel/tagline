@@ -857,13 +857,18 @@
   // Sources: Unsplash (free, commercial-OK, no attribution required).
   // To swap a photo: upload via /admin or paste a public image URL.
   const PHOTO_MOCKUPS = {
-    // Tee — Unsplash photo-1651761179569 (clean studio white)
-    'tee-base':    'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=1200&q=85&fm=jpg&fit=crop',
-    // Hoodie — Mediamodifier mockup, hanging on hanger, white
-    'hoodie-base': 'https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=1200&q=85&fm=jpg&fit=crop',
-    // Crewneck — Mediamodifier mockup, flat lay, white
-    'crew-base':   'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=1200&q=85&fm=jpg&fit=crop'
-    // sweatpants intentionally omitted — falls back to SVG silhouette
+    // Tee — Unsplash, clean studio white tee
+    'tee-base':        'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=1200&q=85&fm=jpg&fit=crop',
+    // Hoodie — Mediamodifier (Unsplash), hanging on hanger, white
+    'hoodie-base':     'https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=1200&q=85&fm=jpg&fit=crop',
+    // Crewneck — Mediamodifier (Unsplash), flat lay, white
+    'crew-base':       'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=1200&q=85&fm=jpg&fit=crop',
+    // Sweatpants — Pexels photo-6974968, blank white joggers on a pink
+    // backdrop. Cropped via Pexels URL params to focus on the pants.
+    // Note: the soft pink backdrop will pick up some color tint via the
+    // multiply blend; the pants themselves are pure white so they tint
+    // cleanly. Best free hotlinkable sweatpants photo we could find.
+    'sweatpants-base': 'https://images.pexels.com/photos/6974968/pexels-photo-6974968.jpeg?auto=compress&cs=tinysrgb&w=1200&h=1500&fit=crop'
   };
 
   // ===== ICONS / SVG SILHOUETTES =====

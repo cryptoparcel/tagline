@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../lib/supabase.js';
 import { sendEmail, orderShippedHtml } from '../lib/email.js';
+import { getStripe } from '../lib/stripe.js';
 import {
   requireMethod, getBody, ok, badRequest, serverError, requireAdmin, requireSameOrigin
 } from '../lib/util.js';
@@ -254,6 +255,79 @@ export default async function handler(req, res) {
           .eq('id', message_id);
         if (error) throw error;
         return ok(res, { updated: true });
+      }
+
+      // ============ REFUND ============
+      // Issues a Stripe refund for the order's underlying payment intent.
+      // Optional `amount_cents` for partial refunds; omit for full.
+      // The Stripe webhook (charge.refunded) will also fire and write
+      // status=refunded on the order, but we set it here too so the admin
+      // gets immediate feedback even if the webhook is delayed.
+      //
+      // For NowPayments (crypto) orders, Stripe can't refund — return a
+      // helpful error directing the admin to refund manually.
+      if (action === 'refund_order') {
+        if (!order_id || typeof order_id !== 'string' || !uuidRegex.test(order_id)) {
+          return badRequest(res, 'Invalid order_id');
+        }
+
+        const { data: order, error: fetchErr } = await supabase
+          .from('orders')
+          .select('id, status, email, total_cents, stripe_payment_intent, nowpayments_invoice_id')
+          .eq('id', order_id)
+          .maybeSingle();
+        if (fetchErr) throw fetchErr;
+        if (!order) return badRequest(res, 'Order not found');
+
+        if (order.status === 'refunded') {
+          return badRequest(res, 'Order is already refunded.');
+        }
+        if (order.status === 'cancelled') {
+          return badRequest(res, 'Cancelled orders have no charge to refund.');
+        }
+        // Crypto orders go through NowPayments — Stripe can't refund them.
+        if (order.nowpayments_invoice_id && !order.stripe_payment_intent) {
+          return badRequest(res, 'This order was paid in crypto via NowPayments. Refund the wallet manually and then mark the order Refunded with the status update above.');
+        }
+        if (!order.stripe_payment_intent) {
+          return badRequest(res, 'No Stripe payment intent recorded — refund manually in the Stripe dashboard, then mark the order Refunded.');
+        }
+
+        // Optional partial-refund amount, otherwise full
+        let amountCents = null;
+        if (body.amount_cents !== undefined && body.amount_cents !== null && body.amount_cents !== '') {
+          if (!Number.isInteger(body.amount_cents) || body.amount_cents <= 0 || body.amount_cents > order.total_cents) {
+            return badRequest(res, 'amount_cents must be a positive integer no greater than the order total.');
+          }
+          amountCents = body.amount_cents;
+        }
+
+        try {
+          const stripe = getStripe();
+          const refundParams = {
+            payment_intent: order.stripe_payment_intent,
+            reason: 'requested_by_customer'
+          };
+          if (amountCents !== null) refundParams.amount = amountCents;
+          const refund = await stripe.refunds.create(refundParams);
+
+          // Mark refunded immediately (webhook will be a no-op).
+          await supabase
+            .from('orders')
+            .update({ status: 'refunded', updated_at: new Date().toISOString() })
+            .eq('id', order_id);
+
+          return ok(res, {
+            refunded: true,
+            refund_id: refund.id,
+            amount_cents: refund.amount,
+            full_refund: amountCents === null
+          });
+        } catch (err) {
+          console.error('Stripe refund error:', err);
+          // Stripe errors carry a `message` we can show admins safely
+          return serverError(res, 'Refund failed: ' + (err.message || 'Stripe API error'));
+        }
       }
 
       return badRequest(res, 'Unknown action');

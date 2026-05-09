@@ -722,41 +722,6 @@
     PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
   });
 
-  // ============ ADD TO CART BUTTONS (data-add-to-cart) ============
-  // For any inline "Add to cart" button that exists in HTML
-  function wireAddToCart() {
-    document.querySelectorAll('[data-add-to-cart]').forEach(btn => {
-      if (btn.dataset.wired) return;
-      btn.dataset.wired = '1';
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const productId = btn.dataset.addToCart;
-        if (!productId) return;
-        const original = btn.textContent;
-        const added = Cart.add(productId, 1);
-        if (!added) {
-          // Hit the 50-item cap or invalid input — tell the user instead
-          // of silently lying with "Added ✓".
-          btn.textContent = 'Cart full';
-          btn.disabled = true;
-          setTimeout(() => {
-            btn.textContent = original;
-            btn.disabled = false;
-          }, 1800);
-          return;
-        }
-        btn.textContent = 'Added ✓';
-        btn.disabled = true;
-        showToast(PRODUCTS[productId]);
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.disabled = false;
-        }, 1500);
-      });
-    });
-  }
-
   // ============ QUICK VIEW DRAWER ============
   // Internal state of the currently-open product
   let qvCurrentProduct = null;
@@ -1778,7 +1743,6 @@
     safeInit('updateWishlistBadge', () => Wishlist.updateBadge());
     safeInit('updateAuthUI', () => Auth.updateUI());
     safeInit('newsletterForms', () => wireNewsletterForms());
-    safeInit('addToCart', () => wireAddToCart());
     // Render the homepage product grid before wiring it (so cards exist).
     safeInit('renderProductGrid', () => renderProductGrid());
     safeInit('productCards', () => autoWireProductCards());

@@ -71,6 +71,10 @@ export default async function handler(req, res) {
       });
 
     if (uploadErr) {
+      // Never reflect the raw Supabase error back — it can leak the
+      // bucket name, internal paths, or operator-specific hints. Keep
+      // the actionable "bucket not set up" hint (it's our own copy,
+      // not Supabase's text), and otherwise reply generically.
       console.error('Storage upload error:', uploadErr);
       const msg = (uploadErr.message || '').toLowerCase();
       if (msg.includes('not found') || msg.includes('bucket')) {
@@ -78,7 +82,7 @@ export default async function handler(req, res) {
           'Image bucket not configured. Re-run sql/schema.sql in Supabase to set up the product-images bucket.'
         );
       }
-      return serverError(res, 'Upload failed: ' + (uploadErr.message || 'unknown'));
+      return serverError(res, 'Upload failed. Please try again.');
     }
 
     const { data: urlData } = supabase

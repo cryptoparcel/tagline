@@ -73,6 +73,10 @@ export default async function handler(req, res) {
       });
 
     if (uploadErr) {
+      // Don't leak Supabase's raw error string to public callers — it can
+      // include bucket names, internal paths, or RLS hints. Keep the
+      // operator-friendly "not set up" message (it's our own copy) and
+      // otherwise reply generically.
       console.error('Customize upload error:', uploadErr);
       const msg = (uploadErr.message || '').toLowerCase();
       if (msg.includes('not found') || msg.includes('bucket')) {
@@ -80,7 +84,7 @@ export default async function handler(req, res) {
           'Image storage isn\'t set up yet. Tell us at /contact — we\'ll get back to you fast.'
         );
       }
-      return serverError(res, 'Upload failed: ' + (uploadErr.message || 'unknown'));
+      return serverError(res, 'Upload failed. Please try again.');
     }
 
     const { data: urlData } = supabase

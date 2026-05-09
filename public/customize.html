@@ -714,6 +714,7 @@
         </div>
         <div class="config-step-title">Design studio</div>
         <p class="config-step-sub">Add as many images and text as you want. Tap a layer to select it — drag to move, gold dot to resize, top dot to rotate. +$15 if any design is added.</p>
+        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:0 0 12px">Heads up: uploaded images are stored on our servers and may be reachable by direct URL. Don't upload anything you wouldn't share publicly, and only upload artwork you have rights to use.</p>
 
         <div class="studio-actions">
           <button type="button" class="studio-btn" id="addImageBtn">
@@ -828,10 +829,13 @@
 
   // ===== CATALOG =====
   const PRODUCTS = [
-    { id:'blank-hoodie',     name:'Blank Hoodie',     price:50, type:'hoodie' },
-    { id:'blank-tee',        name:'Blank T-Shirt',    price:25, type:'tee' },
-    { id:'blank-crew',       name:'Blank Crewneck',   price:50, type:'crew' },
-    { id:'blank-sweatpants', name:'Blank Sweatpants', price:45, type:'sweatpants' }
+    { id:'blank-hoodie',     name:'Blank Hoodie',         price:50, type:'hoodie' },
+    { id:'blank-tee',        name:'Blank T-Shirt',        price:25, type:'tee' },
+    { id:'blank-crew',       name:'Blank Crewneck',       price:50, type:'crew' },
+    { id:'blank-polo',       name:'Blank Polo',           price:35, type:'polo' },
+    { id:'blank-sweatpants', name:'Blank Sweatpants',     price:45, type:'sweatpants' },
+    { id:'blank-trackpants', name:'Blank Track Pants',    price:48, type:'trackpants' },
+    { id:'blank-slacks',     name:'Blank Slacks (Pro)',   price:55, type:'slacks' }
   ];
 
   const COLORS = [
@@ -876,7 +880,10 @@
     if (type === 'hoodie') return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 10 Q20 6 28 10 L32 16 L30 22 L30 36 L10 36 L10 22 L8 16 Z"/><path d="M15 10 Q20 14 25 10 L24 18 Q20 20 16 18 Z"/></svg>';
     if (type === 'tee')    return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 12 L16 9 Q20 11 24 9 L29 12 L32 18 L28 20 L28 35 L12 35 L12 20 L8 18 Z"/></svg>';
     if (type === 'crew')   return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 11 L16 8 Q20 11 24 8 L29 11 L31 18 L28 20 L28 36 L12 36 L12 20 L9 18 Z"/><path d="M17 8 Q20 10 23 8" /></svg>';
+    if (type === 'polo')   return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 12 L16 9 L17 13 L20 16 L23 13 L24 9 L29 12 L32 18 L28 20 L28 35 L12 35 L12 20 L8 18 Z"/><path d="M20 16 L20 22"/></svg>';
     if (type === 'sweatpants') return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6 L26 6 L27 16 L26 35 L22 35 L20 18 L18 35 L14 35 L13 16 Z"/></svg>';
+    if (type === 'trackpants') return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6 L26 6 L27 16 L26 35 L22 35 L20 18 L18 35 L14 35 L13 16 Z"/><path d="M16 9 L17 34" stroke-dasharray="1.5 1.5"/><path d="M24 9 L23 34" stroke-dasharray="1.5 1.5"/></svg>';
+    if (type === 'slacks') return '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 7 L26 7 L26.5 12 L25 35 L21 35 L20 16 L19 35 L15 35 L13.5 12 Z"/><path d="M20 12 L20 34" stroke-dasharray="1 2"/></svg>';
     return '';
   }
 
@@ -1102,6 +1109,55 @@
       </svg>`;
     }
 
+    if (type === 'polo') {
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
+        ${grad('polo')}
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="354" rx="116" ry="6" fill="rgba(0,0,0,.18)"/>
+        <!-- Left sleeve (short, structured cap) -->
+        <path d="M48 92 Q56 72 100 60 L132 100 Q126 132 116 152 Q92 152 60 138 Z" fill="url(#polo-body)"/>
+        <!-- Right sleeve -->
+        <path d="M272 92 Q264 72 220 60 L188 100 Q194 132 204 152 Q228 152 260 138 Z" fill="url(#polo-body)"/>
+        <!-- Sleeve hem ribbing (turned cuff) -->
+        <path d="M62 134 Q92 152 116 150 L116 156 Q92 158 60 142 Z" fill="${sh2}" opacity=".75"/>
+        <path d="M258 134 Q228 152 204 150 L204 156 Q228 158 260 142 Z" fill="${sh2}" opacity=".75"/>
+        <!-- Body -->
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 Q218 354 212 354 L108 354 Q102 354 102 348 L102 118 L78 102 Z" fill="url(#polo-body)"/>
+        <!-- Body drape lines -->
+        <path d="M132 122 Q130 220 134 340" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".18"/>
+        <path d="M188 122 Q190 220 186 340" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".18"/>
+        <!-- Collar (folded — left flap) -->
+        <path d="M126 64 L156 88 L160 110 L142 96 Z" fill="${sh2}"/>
+        <path d="M126 64 L156 88" stroke="${stroke}" stroke-width="1.2" opacity=".7" fill="none"/>
+        <path d="M142 96 L160 110" stroke="${stroke}" stroke-width=".5" opacity=".5" fill="none"/>
+        <!-- Collar (folded — right flap) -->
+        <path d="M194 64 L164 88 L160 110 L178 96 Z" fill="${sh2}"/>
+        <path d="M194 64 L164 88" stroke="${stroke}" stroke-width="1.2" opacity=".7" fill="none"/>
+        <path d="M178 96 L160 110" stroke="${stroke}" stroke-width=".5" opacity=".5" fill="none"/>
+        <!-- Inner neck shadow -->
+        <path d="M156 88 Q160 96 164 88 L160 110 Z" fill="${deep}" opacity=".7"/>
+        <!-- Button placket (3 buttons) -->
+        <rect x="156" y="100" width="8" height="68" fill="${sh}" opacity=".55"/>
+        <line x1="156" y1="100" x2="156" y2="168" stroke="${stroke}" stroke-width=".5" opacity=".7"/>
+        <line x1="164" y1="100" x2="164" y2="168" stroke="${stroke}" stroke-width=".5" opacity=".7"/>
+        <circle cx="160" cy="116" r="2" fill="${stroke}"/>
+        <circle cx="160" cy="116" r="1" fill="${hi}"/>
+        <circle cx="160" cy="138" r="2" fill="${stroke}"/>
+        <circle cx="160" cy="138" r="1" fill="${hi}"/>
+        <circle cx="160" cy="160" r="2" fill="${stroke}"/>
+        <circle cx="160" cy="160" r="1" fill="${hi}"/>
+        <!-- Side seams (very faint) -->
+        <line x1="106" y1="120" x2="106" y2="350" stroke="${stroke}" stroke-width=".4" opacity=".35"/>
+        <line x1="214" y1="120" x2="214" y2="350" stroke="${stroke}" stroke-width=".4" opacity=".35"/>
+        <!-- Hem stitching -->
+        <line x1="104" y1="346" x2="216" y2="346" stroke="${stroke}" stroke-width=".5" opacity=".5"/>
+        <!-- Body highlight wash -->
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 L102 348 L102 118 L78 102 Z" fill="url(#polo-hi)"/>
+        <!-- Chest occlusion -->
+        <ellipse cx="160" cy="135" rx="76" ry="20" fill="url(#polo-shdow)" opacity=".4"/>
+      </svg>`;
+    }
+
     if (type === 'sweatpants') {
       return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('pants')}
@@ -1163,6 +1219,110 @@
         <path d="M96 46 L224 46 L234 132 L226 340 L180 340 L160 170 L142 340 L94 340 L86 132 Z" fill="url(#pants-hi)"/>
       </svg>`;
     }
+
+    if (type === 'trackpants') {
+      // Track pants: athletic cut with a contrasting side stripe down each
+      // leg. The stripe uses the deep-shadow tone so it remains visible
+      // when the body is recolored via the swatch.
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
+        ${grad('track')}
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="354" rx="80" ry="5" fill="rgba(0,0,0,.18)"/>
+        <!-- Waistband (elastic with subtle bands) -->
+        <rect x="96" y="14" width="128" height="30" rx="3" fill="url(#track-deep)"/>
+        <g stroke="${stroke}" stroke-width=".5" opacity=".55" fill="none">
+          <line x1="100" y1="22" x2="220" y2="22"/>
+          <line x1="100" y1="28" x2="220" y2="28"/>
+          <line x1="100" y1="34" x2="220" y2="34"/>
+          <line x1="100" y1="40" x2="220" y2="40"/>
+        </g>
+        <line x1="96" y1="44" x2="224" y2="44" stroke="${stroke}" stroke-width="1" opacity=".7"/>
+        <!-- Drawcord eyelets + cord -->
+        <circle cx="150" cy="32" r="2" fill="${stroke}"/>
+        <circle cx="150" cy="32" r="1.1" fill="${deep}"/>
+        <circle cx="170" cy="32" r="2" fill="${stroke}"/>
+        <circle cx="170" cy="32" r="1.1" fill="${deep}"/>
+        <path d="M150 32 Q142 50 158 60" fill="none" stroke="${shade(fillHex, -35)}" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>
+        <path d="M170 32 Q178 50 162 60" fill="none" stroke="${shade(fillHex, -35)}" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>
+        <!-- Body / legs (slimmer than sweats — athletic taper) -->
+        <path d="M96 44 L224 44 L232 130 L222 340 Q222 348 214 348 L182 348 Q176 348 174 342 L162 174 Q160 168 158 174 L146 342 Q144 348 138 342 L106 348 Q98 348 96 340 L88 130 Z" fill="url(#track-body)"/>
+        <!-- Side stripes (signature track pant detail) -->
+        <path d="M99 50 L97 130 L91 340 L97 340 L103 130 L105 50 Z" fill="${stroke}" opacity=".75"/>
+        <path d="M221 50 L223 130 L229 340 L223 340 L217 130 L215 50 Z" fill="${stroke}" opacity=".75"/>
+        <!-- Crotch shadow -->
+        <ellipse cx="160" cy="172" rx="22" ry="14" fill="${sh2}" opacity=".4"/>
+        <!-- Knee fold suggestion -->
+        <path d="M114 230 Q124 234 134 230" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <path d="M206 230 Q196 234 186 230" fill="none" stroke="${sh2}" stroke-width="1" opacity=".25"/>
+        <!-- Slash pockets -->
+        <path d="M104 76 Q98 100 106 118" fill="none" stroke="${stroke}" stroke-width="1" opacity=".7"/>
+        <path d="M216 76 Q222 100 214 118" fill="none" stroke="${stroke}" stroke-width="1" opacity=".7"/>
+        <!-- Inner leg seam -->
+        <line x1="160" y1="172" x2="160" y2="340" stroke="${stroke}" stroke-width=".7" opacity=".5"/>
+        <!-- Tapered ribbed cuffs -->
+        <path d="M94 326 L150 326 L146 348 Q140 350 130 348 L102 348 Q96 348 94 344 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".55" opacity=".7" fill="none">
+          <line x1="98" y1="332" x2="148" y2="332"/>
+          <line x1="98" y1="338" x2="148" y2="338"/>
+          <line x1="98" y1="344" x2="148" y2="344"/>
+        </g>
+        <path d="M170 326 L226 326 L226 344 Q224 348 218 348 L190 348 Q180 350 174 348 Z" fill="${sh2}"/>
+        <g stroke="${stroke}" stroke-width=".55" opacity=".7" fill="none">
+          <line x1="172" y1="332" x2="222" y2="332"/>
+          <line x1="172" y1="338" x2="222" y2="338"/>
+          <line x1="172" y1="344" x2="222" y2="344"/>
+        </g>
+        <!-- Highlight wash -->
+        <path d="M96 44 L224 44 L232 130 L222 340 L180 340 L160 174 L140 340 L98 340 L88 130 Z" fill="url(#track-hi)"/>
+      </svg>`;
+    }
+
+    if (type === 'slacks') {
+      // Slacks: dress pants with a clean center crease, no cuff bands,
+      // structured waistband with belt loops + a single front-button closure.
+      // No side stripe; cleaner silhouette than the athletic pants.
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
+        ${grad('slack')}
+        <!-- Floor shadow -->
+        <ellipse cx="160" cy="354" rx="78" ry="5" fill="rgba(0,0,0,.18)"/>
+        <!-- Waistband (rigid, structured) -->
+        <rect x="98" y="16" width="124" height="22" rx="2" fill="url(#slack-deep)"/>
+        <line x1="98" y1="38" x2="222" y2="38" stroke="${stroke}" stroke-width="1" opacity=".75"/>
+        <!-- Belt loops -->
+        <rect x="108" y="14" width="3" height="26" fill="${deep}" opacity=".85"/>
+        <rect x="142" y="14" width="3" height="26" fill="${deep}" opacity=".85"/>
+        <rect x="175" y="14" width="3" height="26" fill="${deep}" opacity=".85"/>
+        <rect x="209" y="14" width="3" height="26" fill="${deep}" opacity=".85"/>
+        <!-- Front button + buttonhole -->
+        <circle cx="160" cy="42" r="2" fill="${stroke}"/>
+        <circle cx="160" cy="42" r="1" fill="${hi}"/>
+        <line x1="156" y1="42" x2="148" y2="42" stroke="${stroke}" stroke-width=".5" opacity=".7"/>
+        <!-- Fly seam -->
+        <line x1="160" y1="46" x2="160" y2="92" stroke="${stroke}" stroke-width=".7" opacity=".7"/>
+        <line x1="158" y1="46" x2="158" y2="92" stroke="${stroke}" stroke-width=".4" stroke-dasharray="2 2" opacity=".55"/>
+        <!-- Body / legs (slimmer, longer leg — dress fit) -->
+        <path d="M98 38 L222 38 L228 124 L222 344 Q222 350 214 350 L182 350 Q176 350 174 344 L162 168 Q160 162 158 168 L146 344 Q144 350 138 344 L106 350 Q98 350 98 344 L92 124 Z" fill="url(#slack-body)"/>
+        <!-- Front center crease (the slacks signature) -->
+        <line x1="125" y1="60" x2="118" y2="346" stroke="${shade(fillHex, +12)}" stroke-width=".9" opacity=".55"/>
+        <line x1="195" y1="60" x2="202" y2="346" stroke="${shade(fillHex, +12)}" stroke-width=".9" opacity=".55"/>
+        <line x1="125" y1="60" x2="118" y2="346" stroke="${sh2}" stroke-width=".4" opacity=".35"/>
+        <line x1="195" y1="60" x2="202" y2="346" stroke="${sh2}" stroke-width=".4" opacity=".35"/>
+        <!-- Slanted slash pockets (dress style) -->
+        <path d="M102 60 Q98 88 116 110" fill="none" stroke="${stroke}" stroke-width=".9" opacity=".65"/>
+        <path d="M218 60 Q222 88 204 110" fill="none" stroke="${stroke}" stroke-width=".9" opacity=".65"/>
+        <!-- Welt back/side seam suggestion -->
+        <line x1="100" y1="40" x2="98" y2="346" stroke="${stroke}" stroke-width=".4" opacity=".4"/>
+        <line x1="220" y1="40" x2="222" y2="346" stroke="${stroke}" stroke-width=".4" opacity=".4"/>
+        <!-- Inner leg seam -->
+        <line x1="160" y1="168" x2="160" y2="346" stroke="${stroke}" stroke-width=".5" opacity=".4"/>
+        <!-- Hemmed cuffs (no rib, just a clean turn) -->
+        <line x1="100" y1="340" x2="146" y2="340" stroke="${stroke}" stroke-width=".7" opacity=".55"/>
+        <line x1="174" y1="340" x2="220" y2="340" stroke="${stroke}" stroke-width=".7" opacity=".55"/>
+        <!-- Highlight wash -->
+        <path d="M98 38 L222 38 L228 124 L222 344 L180 344 L160 168 L140 344 L98 344 L92 124 Z" fill="url(#slack-hi)"/>
+      </svg>`;
+    }
+
     return '';
   }
 

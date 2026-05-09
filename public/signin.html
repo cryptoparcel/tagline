@@ -324,7 +324,14 @@
       });
       const data = await res.json();
       if (!res.ok) {
-        showAlert(data.error_description || data.msg || 'Sign up failed.');
+        // Don't pass through Supabase's raw error_description — it can leak
+        // whether an email is already registered (account enumeration).
+        // Map a couple of common cases; everything else gets a generic note.
+        const raw = (data.error_description || data.msg || '').toLowerCase();
+        let safe = 'Sign up failed. Please double-check your details and try again.';
+        if (raw.includes('password')) safe = 'Pick a stronger password (8+ characters).';
+        else if (raw.includes('rate') || raw.includes('limit')) safe = 'Too many attempts. Please wait a minute and try again.';
+        showAlert(safe);
         btn.disabled = false;
         btn.textContent = 'Create account';
         return;
@@ -333,7 +340,13 @@
         window.Tagline.Auth.setSession(data.access_token, data.user);
         window.location.href = '/account';
       } else {
+        // Email confirmation required. Reset the form and flip the user back
+        // to the Sign in tab so the next thing they see (after they click
+        // the confirmation email) makes sense.
         showAlert('Check your email to confirm your account, then sign in.', 'success');
+        e.target.reset();
+        const signinTab = document.querySelector('.auth-tab[data-tab="signin"]');
+        if (signinTab) signinTab.click();
         btn.disabled = false;
         btn.textContent = 'Create account';
       }

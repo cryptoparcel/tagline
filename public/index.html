@@ -2590,7 +2590,7 @@
         <input type="email" placeholder="your@email.com" required />
         <button type="submit">Subscribe</button>
       </form>
-      <p class="newsletter-fine">No spam, unsubscribe any time.</p>
+      <p class="newsletter-fine">No spam, unsubscribe any time. By subscribing you agree to receive marketing emails from TAGLINE and to our <a href="/privacy" style="color:var(--gold-soft);text-decoration:underline">Privacy Policy</a>.</p>
     </div>
   </div>
 </section>
@@ -2628,7 +2628,7 @@
     <div class="foot-col">
       <h4>Account</h4>
       <a href="/signin">Sign in</a>
-      <a href="/signin">Create account</a>
+      <a href="/signup">Create account</a>
       <a href="/account">Order status</a>
       <a href="/wishlist">Wishlist</a>
       <a href="/about">About us</a>
@@ -2935,22 +2935,10 @@
       });
     });
 
-    // ============ FORMS — prevent broken submits ============
-    document.querySelectorAll('form').forEach(form => {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = form.querySelector('input[type="email"]');
-        const button = form.querySelector('button');
-        if (input && input.value && button) {
-          button.textContent = 'Joined ✓';
-          input.value = '';
-          input.blur();
-          setTimeout(() => {
-            button.textContent = 'Subscribe';
-          }, 3000);
-        }
-      });
-    });
+    // (Newsletter form is wired by tagline-app.js wireNewsletterForms()
+    // which actually POSTs to /api/newsletter — the duplicate inline
+    // handler that used to live here was deleted because it intercepted
+    // the submit and faked success without hitting the API.)
 
     // ============ GENTLE SCROLL HEADER STATE + SCROLL PROGRESS ============
     let lastScroll = 0;

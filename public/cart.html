@@ -353,6 +353,7 @@
     const shipping = subtotal >= 150 ? 0 : 8;
     const total = subtotal + shipping;
     const toFreeShip = Math.max(0, 150 - subtotal);
+    const signedIn = !!window.Tagline?.Auth?.isLoggedIn?.();
 
     container.innerHTML = `
       <div class="cart-layout">
@@ -362,7 +363,15 @@
           <div class="summary-row"><span class="label">Shipping</span><span class="value">${shipping === 0 ? 'Free' : '$' + shipping.toFixed(2)}</span></div>
           ${toFreeShip > 0 ? `<div class="summary-shipping-note">Add $${toFreeShip.toFixed(2)} more for free shipping.</div>` : ''}
           <div class="summary-row total"><span class="label">Total</span><span class="value">$${total.toFixed(2)}</span></div>
-          <button type="button" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:24px">
+          ${!signedIn ? `
+          <p style="font-size:12px;color:var(--ink-soft);margin:18px 0 0;line-height:1.6;text-align:center">
+            You can check out as a guest.
+            <a href="/signin?next=/cart" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:2px">Sign in</a>
+            or
+            <a href="/signup" style="color:var(--gold-soft);text-decoration:underline;text-underline-offset:2px">create an account</a>
+            to track your orders.
+          </p>` : ''}
+          <button type="button" class="btn btn-primary btn-block" id="checkoutBtn" style="margin-top:${signedIn ? '24px' : '14px'}">
             Checkout
           </button>
           <button type="button" class="btn btn-ghost btn-block" id="checkoutCryptoBtn" hidden style="margin-top:8px;font-size:12px">

@@ -57,16 +57,30 @@ create index if not exists idx_profiles_is_admin on profiles(is_admin) where is_
 --   - If the profile already exists, flip is_admin to true.
 --   - If the auth user doesn't exist yet, this is a no-op; the
 --     handle_new_user() trigger above will set is_admin at signup time.
--- Add more emails to the IN list as the team grows.
+--
+-- IMPORTANT: edit the bootstrap-admins list below to include YOUR email
+-- before running this script. Don't commit your real email back to a
+-- public repo — keep it in the local copy / a .gitignored override.
+-- The seed table is private to this schema (intentionally not exposed
+-- via API) and is consulted by both the trigger and the upsert below.
+create table if not exists bootstrap_admins (
+  email text primary key
+);
+
+-- Add your admin email(s) here on first install — uncomment + edit:
+-- insert into bootstrap_admins (email) values ('you@yourdomain.com')
+--   on conflict (email) do nothing;
+
 insert into profiles (id, email, is_admin)
 select u.id, u.email, true
 from auth.users u
-where lower(u.email) in ('monsterxzapp@yahoo.com')
+where lower(u.email) in (select lower(email) from bootstrap_admins)
 on conflict (id) do update set is_admin = true;
 
 -- Auto-create profile when a new auth user signs up.
--- Bootstrap admin: emails listed below are granted is_admin = true on
--- signup, so the founder gets admin without anyone touching the DB after.
+-- Bootstrap admin: emails in the bootstrap_admins table get is_admin =
+-- true on signup, so the founder gets admin without anyone touching the
+-- DB after. Add more emails by inserting into bootstrap_admins.
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
@@ -74,7 +88,9 @@ security definer
 set search_path = public
 as $$
 declare
-  is_bootstrap_admin boolean := lower(new.email) in ('monsterxzapp@yahoo.com');
+  is_bootstrap_admin boolean := exists (
+    select 1 from public.bootstrap_admins where lower(email) = lower(new.email)
+  );
 begin
   insert into public.profiles (id, email, full_name, is_admin)
   values (new.id, new.email, new.raw_user_meta_data->>'full_name', is_bootstrap_admin);

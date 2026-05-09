@@ -22,7 +22,10 @@ export default async function handler(req, res) {
 
   const body = getBody(req);
   const rawEmail = (body.email || '').trim();
-  const source = typeof body.source === 'string' && body.source.length < 50
+  // `source` is free-form (footer, hero, /customize, etc.) but we don't want
+  // to let callers stuff arbitrary text into the column — DB analytics
+  // reports group on it. Allow a tight charset only.
+  const source = typeof body.source === 'string' && /^[a-z0-9_-]{1,50}$/i.test(body.source)
     ? body.source : 'website';
 
   if (!isEmail(rawEmail)) {

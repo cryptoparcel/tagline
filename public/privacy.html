@@ -69,8 +69,10 @@
     <ul>
       <li><strong>Order information:</strong> name, email, shipping address, items ordered, payment confirmation. Required to fulfill orders.</li>
       <li><strong>Account information</strong> (if you create one): email, optional name and phone. Stored in our authentication system (Supabase).</li>
-      <li><strong>Payment details:</strong> handled directly by Stripe. We never see or store your card number — Stripe gives us a token and a confirmation that you paid.</li>
+      <li><strong>Payment details:</strong> handled directly by Stripe (cards) or NowPayments (cryptocurrency). We never see or store your card number or wallet details — the processor gives us a token and a confirmation that you paid.</li>
+      <li><strong>Custom design uploads:</strong> if you use our /customize page and upload images, those images are stored on our file host and may be reachable by direct URL. They're tied to your build request so we can produce the order.</li>
       <li><strong>Site usage:</strong> we don't run third-party analytics or trackers. Your browser stores your cart and saved items locally, on your device.</li>
+      <li><strong>Server logs:</strong> our hosting provider records request metadata (IP address, user agent, timestamp) for short windows for security, abuse-prevention, and rate-limiting purposes.</li>
       <li><strong>Newsletter:</strong> if you sign up, only your email. You can unsubscribe at any time.</li>
       <li><strong>Contact form messages:</strong> stored so we can respond.</li>
     </ul>
@@ -87,8 +89,9 @@
     <h2>Who we share it with</h2>
     <p>Only the third-party services we need to run the store. We never sell your data.</p>
     <ul>
-      <li><strong>Stripe</strong> — to process payments and handle card details securely.</li>
-      <li><strong>Supabase</strong> — our database and authentication provider.</li>
+      <li><strong>Stripe</strong> — to process card payments and handle card details securely.</li>
+      <li><strong>NowPayments</strong> — to process cryptocurrency payments. They receive the order amount and a callback URL; not your name, address, or email.</li>
+      <li><strong>Supabase</strong> — our database, authentication, and file-storage provider.</li>
       <li><strong>Resend</strong> — to send transactional emails (order confirmations, shipping notifications).</li>
       <li><strong>Vercel</strong> — our hosting provider.</li>
       <li><strong>Shipping carriers</strong> — to deliver your order. They get the address you provided.</li>
@@ -110,6 +113,16 @@
 
     <h2>Data security</h2>
     <p>The site uses HTTPS for every page. Passwords are hashed by Supabase and never stored in plain text. Card data is handled exclusively by Stripe — we never see or store it. Our admin endpoints require a server-side admin key and our database has row-level security policies that prevent users from accessing each other's orders.</p>
+
+    <h2>How long we keep your data</h2>
+    <ul>
+      <li><strong>Account data:</strong> kept until you delete your account. After deletion, your profile, saved addresses, and cart are removed; orders are anonymized (no email or address) but kept for tax records.</li>
+      <li><strong>Orders:</strong> retained for the period required by tax and accounting law (typically 7 years), in anonymized form after account deletion.</li>
+      <li><strong>Custom design uploads:</strong> kept while we may need them to fulfill the order; deleted on request.</li>
+      <li><strong>Contact-form messages:</strong> kept while needed to handle your request, then archived or deleted.</li>
+      <li><strong>Newsletter subscribers:</strong> kept until you unsubscribe.</li>
+      <li><strong>Server / abuse logs:</strong> rotated on a short cycle (typically 30–90 days) by our hosting provider.</li>
+    </ul>
 
     <h2>Children</h2>
     <p>This site is not directed at children under 13, and we do not knowingly collect information from anyone under 13.</p>

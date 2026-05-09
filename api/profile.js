@@ -127,6 +127,13 @@ export default async function handler(req, res) {
   // Returns 204 on success. Client should clear localStorage session and
   // redirect away.
   if (req.method === 'DELETE') {
+    // Hard cap on account-deletion attempts: 3 per minute per (user, IP).
+    // Account deletion is destructive + cascades to auth — a runaway
+    // browser tab or hostile script shouldn't be able to spam the
+    // endpoint. The PATCH limiter above (20/min) is too generous here.
+    if (!rateLimit(`profile-del:${user.id}:${getClientId(req)}`, { windowMs: 60_000, max: 3 })) {
+      return badRequest(res, 'Too many requests. Try again in a minute.');
+    }
     try {
       // Anonymize orders (kept for accounting; PII removed)
       const { error: anonErr } = await supabase

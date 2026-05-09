@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#08080a" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080a'/%3E%3Cpath d='M14 4 L18 4 L18 14 L28 14 L28 18 L18 18 L18 28 L14 28 L14 18 L4 18 L4 14 L14 14 Z' fill='%23d4a558'/%3E%3C/svg%3E" />
+<title>Track your order — TAGLINE</title>
+<meta name="description" content="Look up your TAGLINE order with your order ID and email. No account required." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+
+<style>
+  .track-result{
+    margin-top:32px;
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:22px;
+  }
+  .track-result h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px; font-weight:600;
+    letter-spacing:-0.02em;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .track-id{
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--ink-soft); font-size:13px; letter-spacing:.04em;
+    margin-bottom:18px;
+  }
+  .track-status-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .track-pill{
+    display:inline-block; padding:5px 12px;
+    font-size:11px; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase;
+    border:1px solid var(--line-strong); color:var(--ink-soft);
+  }
+  .track-pill.paid{color:var(--gold-soft); border-color:rgba(184,137,61,.4)}
+  .track-pill.shipped{color:#7ba8d8; border-color:rgba(123,168,216,.4)}
+  .track-pill.delivered{color:#7dc88a; border-color:rgba(125,200,138,.4)}
+  .track-pill.pending{color:var(--muted)}
+  .track-pill.cancelled,.track-pill.refunded{color:var(--error); border-color:rgba(229,115,115,.3)}
+
+  .track-timeline{
+    display:flex; align-items:center; gap:6px; margin:18px 0 22px;
+  }
+  .track-timeline-step{
+    flex:1; text-align:center;
+  }
+  .track-timeline-dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--line-strong); margin:0 auto 6px;
+  }
+  .track-timeline-step.done .track-timeline-dot{ background:var(--gold-soft); }
+  .track-timeline-step.current .track-timeline-dot{
+    background:var(--gold-soft);
+    box-shadow:0 0 0 4px rgba(184,137,61,.18);
+  }
+  .track-timeline-label{
+    font-size:10px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .track-timeline-step.done .track-timeline-label{ color:var(--ink-soft); }
+  .track-timeline-bar{
+    flex:0 0 auto; height:1px; width:24px; background:var(--line);
+  }
+  .track-timeline-bar.done{ background:var(--gold-soft); }
+
+  .track-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:18px;
+    border-top:1px solid var(--line); padding-top:18px;
+  }
+  .track-grid h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold-soft); margin-bottom:8px;
+  }
+  .track-grid p, .track-grid li, .track-grid div.kv{
+    font-size:13px; color:var(--ink-soft); line-height:1.6;
+  }
+  .track-grid ul{ list-style:none; padding:0; margin:0; }
+  .track-grid li{ padding:5px 0; border-bottom:1px dashed var(--line); }
+  .track-grid li:last-child{ border-bottom:none; }
+  .track-grid .kv{ display:flex; justify-content:space-between; gap:8px; }
+  .tracking-link{
+    display:inline-flex; align-items:center; gap:5px;
+    color:var(--gold-soft); text-decoration:underline;
+    text-underline-offset:3px; font-weight:500;
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav">
+  <a href="/" class="logo">TAGLINE</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link hide-mobile">Home</a>
+    <a href="/contact" class="nav-link">Contact</a>
+    <a href="/cart" class="cart-icon-btn" aria-label="Cart">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12a2 2 0 0 1-2 1.8h-7a2 2 0 0 1-2-1.8L5 7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="page-narrow" id="main" tabindex="-1">
+  <div class="section-marker"><span class="label">Order lookup</span></div>
+  <h1 class="page-title">Track your order.</h1>
+  <p class="page-sub">No account required. Enter the order ID from your confirmation email plus the email you used at checkout.</p>
+
+  <div class="card">
+    <div id="alertContainer" role="alert" aria-live="polite" aria-atomic="true"></div>
+    <form id="trackForm">
+      <div class="form-group">
+        <label class="form-label" for="orderId">Order ID</label>
+        <input class="form-input" type="text" id="orderId" name="order_id" required maxlength="40" autocomplete="off" placeholder="A1B2C3D4 or full ID" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input class="form-input" type="email" id="email" name="email" required autocomplete="email" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Look up order</button>
+    </form>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6">
+      Have an account? You can also see all your orders on your <a href="/account" style="color:var(--gold-soft);text-decoration:underline">account page</a>.
+    </p>
+  </div>
+
+  <div id="trackResultContainer"></div>
+</main>
+
+<footer>
+  <span>© 2026 TAGLINE</span>
+  <div style="display:flex;gap:18px;flex-wrap:wrap"><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+</footer>
+
+<script src="/tagline-app.js" defer></script>
+<script>
+(function(){
+  function showAlert(message, type='error'){
+    const c = document.getElementById('alertContainer');
+    c.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'alert alert-' + (type === 'success' ? 'success' : 'error');
+    div.textContent = message;
+    c.appendChild(div);
+  }
+
+  function escHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // Best-effort tracking URL — same heuristic the /account page uses.
+  function trackingUrl(num){
+    const t = String(num || '').trim();
+    if (!t) return null;
+    if (/^1Z[A-Z0-9]{16}$/i.test(t)) return 'https://www.ups.com/track?loc=en_US&tracknum=' + encodeURIComponent(t);
+    if (/^\d{12}$|^\d{15}$|^\d{20}$/.test(t)) return 'https://www.fedex.com/fedextrack/?trknbr=' + encodeURIComponent(t);
+    if (/^\d{22}$|^9\d{19,21}$|^[A-Z]{2}\d{9}US$/.test(t)) return 'https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=' + encodeURIComponent(t);
+    if (/^\d{10,11}$/.test(t)) return 'https://www.dhl.com/en/express/tracking.html?AWB=' + encodeURIComponent(t);
+    return null;
+  }
+
+  function renderTimeline(status){
+    if (status === 'cancelled' || status === 'refunded') return '';
+    const steps = [
+      { id:'pending',   label:'Ordered'   },
+      { id:'paid',      label:'Paid'      },
+      { id:'shipped',   label:'Shipped'   },
+      { id:'delivered', label:'Delivered' }
+    ];
+    const cur = steps.findIndex(s => s.id === status);
+    let html = '<div class="track-timeline">';
+    steps.forEach((s, i) => {
+      const cls = i < cur ? 'done' : i === cur ? 'done current' : '';
+      html += `
+        <div class="track-timeline-step ${cls}">
+          <div class="track-timeline-dot"></div>
+          <div class="track-timeline-label">${s.label}</div>
+        </div>`;
+      if (i < steps.length - 1) {
+        const barCls = i < cur ? 'done' : '';
+        html += `<div class="track-timeline-bar ${barCls}"></div>`;
+      }
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderAddress(a){
+    if (!a || typeof a !== 'object') return '<p style="color:var(--muted);font-size:12px">Not provided.</p>';
+    const lines = [];
+    if (a.name) lines.push(escHtml(a.name));
+    if (a.line1) lines.push(escHtml(a.line1));
+    if (a.line2) lines.push(escHtml(a.line2));
+    const cityLine = [a.city, a.state, a.zip].filter(Boolean).map(escHtml).join(', ');
+    if (cityLine) lines.push(cityLine);
+    if (a.country) lines.push(escHtml(a.country));
+    if (!lines.length) return '<p style="color:var(--muted);font-size:12px">Not provided.</p>';
+    return `<p>${lines.join('<br/>')}</p>`;
+  }
+
+  function renderItems(items){
+    if (!Array.isArray(items) || !items.length) {
+      return '<li style="color:var(--muted)">No items recorded.</li>';
+    }
+    return items.map(i => {
+      const meta = [];
+      if (i.color) meta.push(escHtml(i.color));
+      if (i.size)  meta.push('Size ' + escHtml(i.size));
+      meta.push('×' + escHtml(String(i.quantity || 1)));
+      const lineTotal = ((i.price_cents || 0) * (i.quantity || 1)) / 100;
+      return `
+        <li>
+          <div class="kv">
+            <span><strong style="color:var(--ink)">${escHtml(i.name || 'Item')}</strong> · <span style="color:var(--muted)">${meta.join(' · ')}</span></span>
+            <span style="white-space:nowrap">$${lineTotal.toFixed(2)}</span>
+          </div>
+        </li>
+      `;
+    }).join('');
+  }
+
+  function renderOrder(o){
+    const status = o.status || 'pending';
+    const date = new Date(o.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    const trackUrl = o.tracking_number ? trackingUrl(o.tracking_number) : null;
+    const sub = ((o.subtotal_cents || 0) / 100).toFixed(2);
+    const ship = ((o.shipping_cents || 0) / 100).toFixed(2);
+    const tax = o.tax_cents ? ((o.tax_cents) / 100).toFixed(2) : null;
+    const total = ((o.total_cents || 0) / 100).toFixed(2);
+    return `
+      <div class="track-result">
+        <div class="track-status-row">
+          <span class="track-pill ${status}">${escHtml(status)}</span>
+          <span style="color:var(--muted);font-size:12px">Placed ${escHtml(date)}</span>
+        </div>
+        <h2>Order #${escHtml(o.id.slice(0,8).toUpperCase())}</h2>
+        <div class="track-id">${escHtml(o.id)}</div>
+        ${renderTimeline(status)}
+        ${o.tracking_number ? `
+          <p style="font-size:13px;margin-bottom:14px">
+            <strong style="color:var(--ink)">Tracking:</strong> ${escHtml(o.tracking_number)}
+            ${trackUrl ? ` — <a href="${escHtml(trackUrl)}" class="tracking-link" target="_blank" rel="noopener noreferrer">Track on carrier site →</a>` : ''}
+          </p>` : ''}
+        <div class="track-grid">
+          <div>
+            <h3>Items</h3>
+            <ul>${renderItems(o.items)}</ul>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)">
+              <div class="kv"><span>Subtotal</span><span>$${sub}</span></div>
+              <div class="kv"><span>Shipping</span><span>${o.shipping_cents === 0 ? 'Free' : '$' + ship}</span></div>
+              ${tax ? `<div class="kv"><span>Tax</span><span>$${tax}</span></div>` : ''}
+              <div class="kv" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font-weight:600;color:var(--ink)"><span>Total</span><span>$${total}</span></div>
+            </div>
+          </div>
+          <div>
+            <h3>Shipping to</h3>
+            ${renderAddress(o.shipping_address)}
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:18px;line-height:1.6">
+          Questions about this order? <a href="/contact?subject=Order+${escHtml(o.id.slice(0,8).toUpperCase())}" style="color:var(--gold-soft);text-decoration:underline">Contact us</a>.
+        </p>
+      </div>
+    `;
+  }
+
+  // Pre-fill order ID from URL ?order=… (so confirmation emails can deep-link)
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderParam = urlParams.get('order');
+  if (orderParam && /^[a-fA-F0-9-]{1,40}$/.test(orderParam)) {
+    document.getElementById('orderId').value = orderParam;
+  }
+
+  document.getElementById('trackForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Looking up…';
+    document.getElementById('trackResultContainer').innerHTML = '';
+
+    const result = await window.Tagline.API.request('/api/track-order', {
+      method: 'POST',
+      body: { order_id: data.order_id, email: data.email }
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Look up order';
+
+    if (result.ok && Array.isArray(result.orders) && result.orders.length > 0) {
+      document.getElementById('alertContainer').innerHTML = '';
+      document.getElementById('trackResultContainer').innerHTML = result.orders.map(renderOrder).join('');
+    } else if (result.preview) {
+      showAlert('Order tracking activates at launch.', 'success');
+    } else {
+      showAlert(result.error || 'We couldn\'t find an order matching that ID and email.');
+    }
+  });
+})();
+</script>
+</body>
+</html>

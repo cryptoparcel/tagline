@@ -6,6 +6,10 @@
     {
       "path": "/api/cleanup-pending",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/low-stock-alert",
+      "schedule": "0 6 * * *"
     }
   ],
   "rewrites": [
@@ -18,6 +22,7 @@
     { "source": "/contact", "destination": "/contact.html" },
     { "source": "/success", "destination": "/success.html" },
     { "source": "/customize", "destination": "/customize.html" },
+    { "source": "/track", "destination": "/track.html" },
     { "source": "/sizing", "destination": "/sizing.html" },
     { "source": "/help", "destination": "/help.html" },
     { "source": "/about", "destination": "/about.html" },

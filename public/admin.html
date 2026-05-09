@@ -822,7 +822,13 @@
         `;
       }).join('');
       target.innerHTML = `
-        <div class="table-actions">
+        <div class="table-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input type="search" id="orderFilterInput" placeholder="Search by email, order ID, or tracking…" class="form-input" style="flex:1;min-width:220px;padding:10px 12px;font-size:13px" />
+          <select id="orderFilterStatus" class="form-input" style="width:auto;padding:10px 12px;font-size:13px">
+            <option value="">All statuses</option>
+            ${STATUSES.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+          <span id="orderFilterCount" style="font-size:11px;color:var(--muted);letter-spacing:.04em">${(result.orders||[]).length} order${(result.orders||[]).length===1?'':'s'}</span>
           <button type="button" class="export-btn" data-export="orders" ${!result.orders?.length ? 'disabled' : ''}>Export CSV</button>
         </div>
         <div class="data-table-wrap">
@@ -832,6 +838,62 @@
           </table>
         </div>
       `;
+
+      // Live filter — wires both the search input + status dropdown to
+      // hide rows that don't match. Filtering is purely client-side over
+      // the already-fetched 200-row payload (server-side search would
+      // need a new endpoint and a new index; this is plenty for ops).
+      (function wireOrderFilter(){
+        const search = target.querySelector('#orderFilterInput');
+        const statusSel = target.querySelector('#orderFilterStatus');
+        const countLbl = target.querySelector('#orderFilterCount');
+        if (!search || !statusSel) return;
+        // Cache the rows + order data so the filter doesn't have to
+        // re-query the DOM for each keystroke.
+        const allRows = Array.from(target.querySelectorAll('tr[data-order-id]'));
+        const allDetails = Array.from(target.querySelectorAll('tr.order-detail-row'));
+        const searchableByRow = new Map(allRows.map(tr => {
+          const id = tr.dataset.orderId.toLowerCase();
+          const email = (tr.children[2]?.textContent || '').toLowerCase();
+          const tracking = (tr.querySelector('.order-tracking-input')?.value || '').toLowerCase();
+          const status = (tr.querySelector('.status-pill')?.textContent || '').toLowerCase();
+          return [tr, { id, email, tracking, status }];
+        }));
+        function applyFilter() {
+          const q = search.value.trim().toLowerCase();
+          const wantStatus = statusSel.value;
+          let visible = 0;
+          allRows.forEach((tr) => {
+            const meta = searchableByRow.get(tr);
+            const matchesQ = !q || meta.id.includes(q) || meta.email.includes(q) || meta.tracking.includes(q);
+            const matchesStatus = !wantStatus || meta.status === wantStatus;
+            const show = matchesQ && matchesStatus;
+            tr.style.display = show ? '' : 'none';
+            if (show) visible++;
+          });
+          // Hide any open detail rows attached to filtered-out orders so
+          // they don't dangle under a hidden parent. (Detail rows whose
+          // parent is visible keep their open/closed state — the user
+          // didn't toggle them.)
+          allDetails.forEach((dr) => {
+            const parent = target.querySelector(`tr[data-order-id="${CSS.escape(dr.dataset.detailFor)}"]`);
+            if (!parent || parent.style.display === 'none') {
+              dr.classList.remove('open');
+              dr.style.display = 'none';
+            } else {
+              // Restore default — let the .open toggle handle visibility
+              dr.style.display = '';
+            }
+          });
+          countLbl.textContent = `${visible} of ${allRows.length} order${allRows.length===1?'':'s'}`;
+        }
+        // Debounce keystroke filtering so a fast typist doesn't run the
+        // filter on every char (cheap here, but consistent feels nicer).
+        let t = 0;
+        search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(applyFilter, 80); });
+        statusSel.addEventListener('change', applyFilter);
+      })();
+
       target.querySelectorAll('tr[data-order-id]').forEach(tr => {
         const id = tr.dataset.orderId;
         const saveBtn = tr.querySelector('.order-save-btn');

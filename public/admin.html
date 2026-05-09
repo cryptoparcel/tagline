@@ -98,6 +98,48 @@
   .status-pill.pending{color:var(--muted)}
   .status-pill.cancelled,.status-pill.refunded,.status-pill.new{color:var(--error);border-color:rgba(229,115,115,.3)}
 
+  /* ============ ORDER DETAIL PANEL ============
+     A second <tr> directly under each order row that toggles open
+     when "Details" is clicked. Spans all columns with one fat <td>
+     so the layout doesn't fight the parent <table>. */
+  .order-detail-row{ display:none; background:rgba(0,0,0,.25); }
+  .order-detail-row.open{ display:table-row; }
+  .order-detail-row > td{ padding:0 !important; border-top:1px solid var(--gold-soft) !important; }
+  .order-detail-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:24px;
+    padding:20px 22px;
+  }
+  .order-detail-grid h4{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold-soft);
+    margin-bottom:10px;
+  }
+  .order-detail-grid p,
+  .order-detail-grid li,
+  .order-detail-grid div.kv{ font-size:13px; line-height:1.6; color:var(--ink-soft); }
+  .order-detail-grid .kv{ display:flex; gap:8px; }
+  .order-detail-grid .kv .k{ color:var(--muted); min-width:90px; }
+  .order-detail-grid ul{ list-style:none; }
+  .order-detail-grid li{ padding:6px 0; border-bottom:1px dashed var(--line); }
+  .order-detail-grid li:last-child{ border-bottom:none; }
+  .order-detail-notes{
+    width:100%; min-height:90px; resize:vertical;
+    background:var(--surface); border:1px solid var(--line-strong);
+    padding:10px 12px; color:var(--ink); font-family:inherit;
+    font-size:13px; line-height:1.5;
+  }
+  .order-detail-notes:focus{ outline:none; border-color:var(--gold); }
+  .order-toggle-btn{
+    background:transparent; border:none; color:var(--gold-soft);
+    cursor:pointer; font-size:11px; letter-spacing:.06em;
+    text-decoration:underline; text-underline-offset:3px; padding:4px 0;
+  }
+  .order-toggle-btn:hover{ color:var(--ink); }
+
   .auth-prompt{
     max-width:420px;margin:120px auto;
     background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
@@ -684,11 +726,40 @@
 
     if (activeView === 'orders') {
       const STATUSES = ['pending','paid','shipped','delivered','cancelled','refunded'];
+
+      // Render the address dictionary as a stack of plain lines. Always
+      // accept the bare-minimum set we ourselves write; tolerate missing
+      // fields without throwing (older orders predate certain columns).
+      const renderAddress = (a) => {
+        if (!a || typeof a !== 'object') return '<p style="color:var(--muted)">No address on file.</p>';
+        const line2 = a.line2 ? `<div>${escapeHtml(a.line2)}</div>` : '';
+        return `
+          <div>${escapeHtml(a.line1 || '')}</div>
+          ${line2}
+          <div>${escapeHtml(a.city || '')}${a.state ? ', ' + escapeHtml(a.state) : ''} ${escapeHtml(a.zip || '')}</div>
+          <div>${escapeHtml(a.country || 'US')}</div>
+        `;
+      };
+
+      const renderItems = (items) => {
+        if (!Array.isArray(items) || !items.length) return '<li style="color:var(--muted)">No items.</li>';
+        return items.map(i => `
+          <li>
+            <div style="display:flex;justify-content:space-between;gap:12px">
+              <span>${escapeHtml(i.name || 'Item')}${i.color ? ' · ' + escapeHtml(i.color) : ''}${i.size ? ' · ' + escapeHtml(i.size) : ''} <span style="color:var(--muted)">×${escapeHtml(String(i.quantity || 1))}</span></span>
+              <span class="mono" style="color:var(--ink-soft)">$${(((i.price_cents || 0) * (i.quantity || 1)) / 100).toFixed(2)}</span>
+            </div>
+          </li>
+        `).join('');
+      };
+
       const rows = (result.orders || []).map(o => {
         const safeStatus = STATUSES.includes(o.status) ? o.status : 'pending';
-        const itemsHtml = (o.items||[]).map(i => `${escapeHtml(i.name)} ×${escapeHtml(String(i.quantity))}`).join('<br/>');
+        const itemsSummary = (o.items||[]).map(i => `${escapeHtml(i.name)} ×${escapeHtml(String(i.quantity))}`).join('<br/>');
         const opts = STATUSES.map(s => `<option value="${s}"${s===safeStatus?' selected':''}>${s}</option>`).join('');
         const tracking = o.tracking_number ? escapeHtml(o.tracking_number) : '';
+        const paymentSource = o.stripe_payment_intent ? 'Stripe' : (o.nowpayments_invoice_id ? 'NowPayments (crypto)' : 'Unknown');
+        const paymentRef = o.stripe_payment_intent || o.nowpayments_invoice_id || '—';
         return `
           <tr data-order-id="${escapeHtml(o.id)}">
             <td class="mono">#${escapeHtml(o.id.slice(0,8).toUpperCase())}</td>
@@ -696,14 +767,55 @@
             <td>${escapeHtml(o.email)}</td>
             <td><span class="status-pill ${safeStatus}">${escapeHtml(o.status)}</span></td>
             <td>$${(o.total_cents/100).toFixed(2)}</td>
-            <td style="font-size:12px;color:var(--ink-soft)">${itemsHtml}</td>
+            <td style="font-size:12px;color:var(--ink-soft)">${itemsSummary}</td>
             <td>
               <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
                 <select class="form-input order-status-select" style="padding:6px 8px;font-size:13px;width:auto;min-width:110px">${opts}</select>
                 <input class="form-input order-tracking-input" type="text" placeholder="Tracking #" value="${tracking}" maxlength="40" style="padding:6px 8px;font-size:13px;width:140px" />
                 <button type="button" class="btn btn-ghost order-save-btn" style="padding:6px 12px;min-height:32px;font-size:11px">Save</button>
                 <button type="button" class="btn btn-ghost order-refund-btn" style="padding:6px 12px;min-height:32px;font-size:11px;border-color:rgba(229,115,115,.4);color:var(--error)" title="Issue Stripe refund for the full order amount">Refund</button>
+                <button type="button" class="order-toggle-btn" data-detail-toggle>Details ▾</button>
                 <span class="order-save-msg" style="font-size:11px;color:var(--muted)"></span>
+              </div>
+            </td>
+          </tr>
+          <tr class="order-detail-row" data-detail-for="${escapeHtml(o.id)}">
+            <td colspan="7">
+              <div class="order-detail-grid">
+                <div>
+                  <h4>Customer</h4>
+                  <div class="kv"><span class="k">Email</span><span>${escapeHtml(o.email)}</span></div>
+                  <div class="kv"><span class="k">Order ID</span><span class="mono" style="color:var(--ink-soft)">${escapeHtml(o.id)}</span></div>
+                  <div class="kv"><span class="k">Placed</span><span>${escapeHtml(new Date(o.created_at).toLocaleString())}</span></div>
+                  ${o.updated_at && o.updated_at !== o.created_at ? `<div class="kv"><span class="k">Updated</span><span>${escapeHtml(new Date(o.updated_at).toLocaleString())}</span></div>` : ''}
+                </div>
+                <div>
+                  <h4>Shipping address</h4>
+                  ${renderAddress(o.shipping_address)}
+                </div>
+                <div>
+                  <h4>Items</h4>
+                  <ul>${renderItems(o.items)}</ul>
+                  <div class="kv" style="margin-top:10px"><span class="k">Subtotal</span><span>$${(((o.subtotal_cents)||0)/100).toFixed(2)}</span></div>
+                  <div class="kv"><span class="k">Shipping</span><span>$${(((o.shipping_cents)||0)/100).toFixed(2)}</span></div>
+                  ${o.tax_cents ? `<div class="kv"><span class="k">Tax</span><span>$${(o.tax_cents/100).toFixed(2)}</span></div>` : ''}
+                  <div class="kv" style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span class="k">Total</span><span style="color:var(--ink)">$${(o.total_cents/100).toFixed(2)}</span></div>
+                </div>
+                <div>
+                  <h4>Payment</h4>
+                  <div class="kv"><span class="k">Source</span><span>${escapeHtml(paymentSource)}</span></div>
+                  <div class="kv"><span class="k">Reference</span><span class="mono" style="word-break:break-all">${escapeHtml(paymentRef)}</span></div>
+                  <div class="kv"><span class="k">Tracking</span><span>${tracking || '—'}</span></div>
+                </div>
+                <div style="grid-column:1/-1">
+                  <h4>Internal notes</h4>
+                  <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Visible to admins only. Customer never sees these.</p>
+                  <textarea class="order-detail-notes" placeholder="Refund reason, packaging quirk, custom artwork notes…" maxlength="4000">${escapeHtml(o.notes || '')}</textarea>
+                  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+                    <button type="button" class="btn btn-ghost order-notes-save" style="padding:6px 14px;min-height:32px;font-size:11px">Save notes</button>
+                    <span class="order-notes-msg" style="font-size:11px;color:var(--muted)"></span>
+                  </div>
+                </div>
               </div>
             </td>
           </tr>
@@ -724,7 +836,9 @@
         const id = tr.dataset.orderId;
         const saveBtn = tr.querySelector('.order-save-btn');
         const refundBtn = tr.querySelector('.order-refund-btn');
+        const toggleBtn = tr.querySelector('[data-detail-toggle]');
         const msg = tr.querySelector('.order-save-msg');
+        const detailRow = target.querySelector(`tr.order-detail-row[data-detail-for="${CSS.escape(id)}"]`);
 
         saveBtn.addEventListener('click', async () => {
           const status = tr.querySelector('.order-status-select').value;
@@ -773,6 +887,39 @@
             msg.style.color = 'var(--error)';
           }
         });
+
+        if (toggleBtn && detailRow) {
+          toggleBtn.addEventListener('click', () => {
+            const open = detailRow.classList.toggle('open');
+            toggleBtn.textContent = open ? 'Details ▴' : 'Details ▾';
+          });
+        }
+
+        if (detailRow) {
+          const notesBtn = detailRow.querySelector('.order-notes-save');
+          const notesArea = detailRow.querySelector('.order-detail-notes');
+          const notesMsg = detailRow.querySelector('.order-notes-msg');
+          if (notesBtn && notesArea) {
+            notesBtn.addEventListener('click', async () => {
+              notesBtn.disabled = true;
+              notesMsg.textContent = 'Saving…';
+              notesMsg.style.color = 'var(--muted)';
+              const r = await adminPost('/api/admin', {
+                action: 'update_order',
+                order_id: id,
+                notes: notesArea.value
+              });
+              notesBtn.disabled = false;
+              if (r.ok) {
+                notesMsg.textContent = 'Saved';
+                notesMsg.style.color = 'var(--gold-soft)';
+              } else {
+                notesMsg.textContent = r.error || 'Failed';
+                notesMsg.style.color = 'var(--error)';
+              }
+            });
+          }
+        }
       });
     }
 

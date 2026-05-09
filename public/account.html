@@ -657,6 +657,13 @@
                 <h4>Shipping address</h4>
                 ${renderShipping(o.shipping_address, esc)}
               </div>
+              ${o.status === 'pending' ? `
+              <div class="od-section" style="grid-column:1/-1;border-top:1px dashed var(--line);padding-top:14px">
+                <h4>Need to cancel?</h4>
+                <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">If you haven't completed payment, you can cancel this order. Once it's marked Paid we have to handle it as a return.</p>
+                <button type="button" class="btn btn-ghost order-cancel-btn" data-cancel-order="${esc(o.id)}" style="font-size:11px;padding:8px 16px;min-height:36px;border-color:rgba(229,115,115,.4);color:var(--error)">Cancel order</button>
+                <span class="order-cancel-msg" style="font-size:11px;color:var(--muted);margin-left:10px"></span>
+              </div>` : ''}
             </div>
           </div>
         </div>
@@ -665,6 +672,7 @@
 
     // Wire expand/collapse — single delegated listener on the container
     container.addEventListener('click', onOrderRowClick);
+    container.addEventListener('click', onOrderCancelClick);
     container.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const row = e.target.closest('.order-row');
@@ -677,9 +685,42 @@
   function onOrderRowClick(e) {
     // Don't toggle when the user clicks a real link (e.g. tracking link)
     if (e.target.closest('a')) return;
+    // Don't toggle when the user clicks a button inside the row (e.g. Cancel)
+    if (e.target.closest('button')) return;
     const row = e.target.closest('.order-row');
     if (!row) return;
     toggleOrderRow(row);
+  }
+
+  // Customer-initiated cancel for pending orders. Best-effort — server
+  // is the source of truth, but we update the row immediately on success
+  // for snappy feedback. On failure we surface the server's reason.
+  async function onOrderCancelClick(e) {
+    const btn = e.target.closest('[data-cancel-order]');
+    if (!btn) return;
+    e.stopPropagation();
+    const orderId = btn.getAttribute('data-cancel-order');
+    if (!orderId) return;
+    if (!window.confirm('Cancel this order? This is permanent.')) return;
+    const msg = btn.parentElement.querySelector('.order-cancel-msg');
+    btn.disabled = true;
+    if (msg) { msg.textContent = 'Cancelling…'; msg.style.color = 'var(--muted)'; }
+    const r = await window.Tagline.API.request('/api/cancel-order', {
+      method: 'POST',
+      body: { order_id: orderId },
+      auth: true
+    });
+    if (r.ok) {
+      // Refresh the orders list so the cancelled row picks up the new
+      // status pill + drops the cancel button.
+      loadOrders();
+    } else {
+      btn.disabled = false;
+      if (msg) {
+        msg.textContent = r.error || 'Could not cancel.';
+        msg.style.color = 'var(--error)';
+      }
+    }
   }
   function toggleOrderRow(row) {
     const open = row.classList.toggle('expanded');

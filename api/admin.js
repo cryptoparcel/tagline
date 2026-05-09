@@ -114,6 +114,17 @@ export default async function handler(req, res) {
           }
           updates.tracking_number = tracking_number.toUpperCase();
         }
+        // Internal notes — admin-only annotations on the order. 4kb cap so a
+        // pasted essay doesn't blow up the row size; not surfaced to customer.
+        if (body.notes !== undefined) {
+          if (body.notes === null || body.notes === '') {
+            updates.notes = null;
+          } else if (typeof body.notes === 'string' && body.notes.length <= 4000) {
+            updates.notes = body.notes;
+          } else {
+            return badRequest(res, 'Notes must be a string under 4000 characters.');
+          }
+        }
 
         // Read the order's prior status so we only fire the "shipped" email
         // on the actual transition (not on subsequent edits to a shipped order).

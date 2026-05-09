@@ -848,14 +848,22 @@
   const DESIGN_FEE = 15;
 
   // ===== REAL PHOTO MOCKUPS =====
-  // Map of (product type, color id) -> URL of a real product photo.
-  // When a match exists, the preview shows the photo instead of the
-  // SVG silhouette. Unmapped combos fall back to SVG.
+  // Map of product type -> URL of a real WHITE-version product photo.
+  // The renderPreview function tints the photo to match the chosen
+  // color via a multiply-blend overlay. Unmapped types fall back to
+  // the SVG silhouette (currently sweatpants — no clean free photo
+  // exists on Unsplash; all the good ones are on-body or paid).
+  //
   // Sources: Unsplash (free, commercial-OK, no attribution required).
-  // To add a photo: upload via /admin or paste a public image URL here.
-  // Format: PHOTO_MOCKUPS[`${type}-${colorId}`] = 'https://...'.
+  // To swap a photo: upload via /admin or paste a public image URL.
   const PHOTO_MOCKUPS = {
-    'tee-white': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=1200&q=85&fm=jpg&fit=crop'
+    // Tee — Unsplash photo-1651761179569 (clean studio white)
+    'tee-base':    'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=1200&q=85&fm=jpg&fit=crop',
+    // Hoodie — Mediamodifier mockup, hanging on hanger, white
+    'hoodie-base': 'https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=1200&q=85&fm=jpg&fit=crop',
+    // Crewneck — Mediamodifier mockup, flat lay, white
+    'crew-base':   'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=1200&q=85&fm=jpg&fit=crop'
+    // sweatpants intentionally omitted — falls back to SVG silhouette
   };
 
   // ===== ICONS / SVG SILHOUETTES =====

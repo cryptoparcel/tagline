@@ -11,7 +11,12 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<!-- Inter + Space Grotesk are the site UI fonts. The rest are display
+     fonts the user can pick for text layers in the design studio:
+     Bebas Neue / Anton / Oswald (athletic), Permanent Marker (handwritten),
+     Bungee (block), Creepster (horror), Pacifico (script), Press Start 2P
+     (pixel). All loaded with display=swap so the page never blocks. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Bebas+Neue&family=Anton&family=Oswald:wght@500;700&family=Permanent+Marker&family=Bungee&family=Creepster&family=Pacifico&family=Press+Start+2P&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/styles.css" />
 
 <style>
@@ -582,6 +587,126 @@
   .submit-status.error{ color:#f3a4a8; }
   .submit-status.success{ color:var(--gold-soft); }
 
+  /* ============ TEMPLATES ============
+     Quick-start tiles — applies a pre-made design to the active product. */
+  .templates-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .template-tile{
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+    padding:0;
+    cursor:pointer; text-align:left;
+    color:inherit; font-family:inherit;
+    transition:all .2s;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .template-tile:hover{ border-color:var(--gold); transform:translateY(-1px); }
+  .template-tile-preview{
+    aspect-ratio:1/1;
+    background:#1a1814;
+    display:grid; place-items:center;
+    color:var(--ink);
+    position:relative;
+    overflow:hidden;
+  }
+  .template-tile-preview svg{ width:80%; height:80%; }
+  .template-tile-text{
+    padding:10px 12px;
+  }
+  .template-tile-name{
+    font-size:12px; font-weight:600; color:var(--ink);
+    line-height:1.25; margin-bottom:3px;
+  }
+  .template-tile-desc{
+    font-size:10px; color:var(--muted);
+    letter-spacing:.04em; line-height:1.3;
+  }
+
+  /* ============ GRAPHICS LIBRARY DRAWER ============
+     Inline drawer (not a modal) revealed when "Add graphic" clicked.
+     Categorized chips at top, grid of SVG icons below. Click an icon
+     and it's added as an image layer just like an upload would be. */
+  .graphics-drawer{
+    display:none;
+    margin-top:14px;
+    padding:14px;
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--gold);
+    box-shadow:0 0 0 3px rgba(184,137,61,.05);
+  }
+  .graphics-drawer.open{ display:block; }
+  .graphics-cats{
+    display:flex; gap:6px; flex-wrap:wrap;
+    margin-bottom:12px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .graphics-cat{
+    background:transparent;
+    border:1px solid var(--line);
+    padding:6px 12px;
+    color:var(--ink-soft);
+    font-size:11px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .graphics-cat:hover{ border-color:var(--line-strong); color:var(--ink); }
+  .graphics-cat.selected{
+    background:var(--gold); color:var(--bg);
+    border-color:var(--gold);
+  }
+  .graphics-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(64px, 1fr));
+    gap:6px;
+    max-height:280px; overflow-y:auto;
+    padding-right:4px;
+  }
+  .graphic-tile{
+    aspect-ratio:1/1;
+    background:rgba(255,255,255,.04);
+    border:1px solid transparent;
+    cursor:pointer;
+    display:grid; place-items:center;
+    color:var(--ink-soft);
+    transition:all .15s;
+    padding:0;
+  }
+  .graphic-tile:hover{
+    background:rgba(184,137,61,.1);
+    border-color:var(--gold);
+    color:var(--gold-soft);
+  }
+  .graphic-tile svg{ width:60%; height:60%; pointer-events:none; }
+  .graphics-close{
+    background:transparent; border:none;
+    color:var(--muted); font-size:11px;
+    cursor:pointer; padding:6px 0;
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .graphics-close:hover{ color:var(--ink); }
+
+  /* ============ FONT PICKER ============
+     Dropdown in the text editor. Each option previews its own font. */
+  .text-font-select{
+    padding:8px 12px;
+    font-size:13px;
+    background:var(--surface);
+    color:var(--ink);
+    border:1px solid var(--line-strong);
+    cursor:pointer;
+    min-height:36px;
+    flex:1;
+    min-width:140px;
+  }
+  .text-font-select:focus{ outline:none; border-color:var(--gold); }
+
   /* Mobile tweaks */
   @media (max-width:640px){
     .config-step{ padding:18px 0 }
@@ -713,13 +838,22 @@
           <span class="config-step-tag">Optional</span>
         </div>
         <div class="config-step-title">Design studio</div>
-        <p class="config-step-sub">Add as many images and text as you want. Tap a layer to select it — drag to move, gold dot to resize, top dot to rotate. +$15 if any design is added.</p>
-        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:0 0 12px">Heads up: uploaded images are stored on our servers and may be reachable by direct URL. Don't upload anything you wouldn't share publicly, and only upload artwork you have rights to use.</p>
+        <p class="config-step-sub">Start from a template or build from scratch. Tap a layer to select it — drag to move, gold dot to resize, top dot to rotate. +$15 if any design is added.</p>
+        <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:0 0 16px">Heads up: uploaded images are stored on our servers and may be reachable by direct URL. Don't upload anything you wouldn't share publicly, and only upload artwork you have rights to use.</p>
 
+        <!-- ===== TEMPLATES ===== -->
+        <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:8px">Quick start</div>
+        <div class="templates-grid" id="templatesGrid"></div>
+
+        <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);margin:18px 0 8px">Build from scratch</div>
         <div class="studio-actions">
           <button type="button" class="studio-btn" id="addImageBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Add image
+            Upload image
+          </button>
+          <button type="button" class="studio-btn" id="addGraphicBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L14.39 8.36 L21 9.27 L16.18 14.14 L17.41 21 L12 17.77 L6.59 21 L7.82 14.14 L3 9.27 L9.61 8.36 Z"/></svg>
+            Graphics
           </button>
           <button type="button" class="studio-btn" id="addTextBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M12 6v14"/></svg>
@@ -728,9 +862,26 @@
           <input type="file" accept="image/png,image/jpeg,image/webp" id="imageFile" hidden multiple />
         </div>
 
+        <!-- ===== GRAPHICS LIBRARY DRAWER ===== -->
+        <div class="graphics-drawer" id="graphicsDrawer" aria-label="Graphics library">
+          <div class="graphics-cats" id="graphicsCats"></div>
+          <div class="graphics-grid" id="graphicsGrid"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+            <span style="font-size:11px;color:var(--muted)">Click any icon to drop it on your design.</span>
+            <button type="button" class="graphics-close" id="graphicsCloseBtn">Close</button>
+          </div>
+        </div>
+
         <!-- Inline text editor (shown after Add Text clicked) -->
         <div class="text-editor" id="textEditor">
           <input type="text" id="textInput" placeholder="Type your text" maxlength="60" autocomplete="off" />
+          <!-- Font family — populated by JS from the FONTS catalog. Each
+               option's font-family is set on the <option> directly so the
+               dropdown previews the actual font you'd be picking. -->
+          <div class="text-style-row">
+            <span class="text-style-label">Font</span>
+            <select id="textFontSelect" class="text-font-select" aria-label="Font family"></select>
+          </div>
           <!-- Format toggles: bold, italic, underline -->
           <div class="text-style-row">
             <span class="text-style-label">Style</span>
@@ -823,7 +974,9 @@
     layers: [],            // [{ id, type, side, ...payload, x, y, width, rotation }]
     selectedLayerId: null,
     nextLayerId: 1,
-    textDraft: { text: '', color: '#ffffff', weight: 700, italic: false, underline: false, bold: true },
+    // textDraft.font defaults to Inter; user-selected font on the picker
+    // overrides this for the layer being added.
+    textDraft: { text: '', color: '#ffffff', weight: 700, italic: false, underline: false, bold: true, font: 'Inter, sans-serif' },
     submitting: false
   };
 
@@ -850,6 +1003,194 @@
   ];
 
   const DESIGN_FEE = 15;
+
+  // ===== FONTS =====
+  // Display fonts available for text layers. The first three are the
+  // site UI fonts (already loaded for the rest of the page); the rest
+  // are loaded lazily via the additional Google Fonts <link> in <head>.
+  // Stored as font-family strings so renderPreview / canvas-export can
+  // use them directly with no lookup table.
+  const FONTS = [
+    { id:'inter',         name:'Inter (default)',   stack:'Inter, sans-serif' },
+    { id:'space-grotesk', name:'Space Grotesk',     stack:'"Space Grotesk", sans-serif' },
+    { id:'bebas',         name:'Bebas Neue',        stack:'"Bebas Neue", sans-serif' },
+    { id:'anton',         name:'Anton',             stack:'Anton, sans-serif' },
+    { id:'oswald',        name:'Oswald',            stack:'Oswald, sans-serif' },
+    { id:'permanent',     name:'Permanent Marker',  stack:'"Permanent Marker", cursive' },
+    { id:'bungee',        name:'Bungee',            stack:'Bungee, sans-serif' },
+    { id:'pacifico',      name:'Pacifico',          stack:'Pacifico, cursive' },
+    { id:'creepster',     name:'Creepster',         stack:'Creepster, cursive' },
+    { id:'pixel',         name:'Press Start 2P',    stack:'"Press Start 2P", monospace' }
+  ];
+  const DEFAULT_FONT = FONTS[0].stack;
+
+  // ===== TEMPLATES =====
+  // Pre-made designs the user can apply with one click. Each layer is a
+  // partial spec — addLayerFromTemplate fills in id/side defaults.
+  // Templates can include front + back layers; we put each on the side
+  // it belongs to so the preview shows the full design rotated.
+  // The preview field is an inline SVG snippet shown in the tile
+  // (kept tiny — just enough for a recognizable thumbnail).
+  const TEMPLATES = [
+    {
+      id: 'team-back-name',
+      name: 'Team name on back',
+      desc: 'Big arched name + number',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="40" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">CHAMPIONS</text><text x="50" y="78" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="38" fill="#d4a558">12</text></svg>`,
+      layers: [
+        { type:'text', side:'back', text:'CHAMPIONS', x:50, y:25, width:78, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Anton, sans-serif' },
+        { type:'text', side:'back', text:'12',         x:50, y:55, width:50, rotation:0, color:'#d4a558', weight:700, italic:false, underline:false, font:'"Bebas Neue", sans-serif' }
+      ]
+    },
+    {
+      id: 'left-chest-mono',
+      name: 'Left-chest monogram',
+      desc: 'Subtle initials, top-left',
+      preview: `<svg viewBox="0 0 100 100"><rect x="20" y="22" width="22" height="22" fill="none" stroke="#d4a558" stroke-width="1.6"/><text x="31" y="38" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" font-weight="700" fill="#fff">TL</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'T L', x:24, y:22, width:18, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'"Space Grotesk", sans-serif' }
+      ]
+    },
+    {
+      id: 'big-front-script',
+      name: 'Front script',
+      desc: 'Center-chest cursive',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="58" text-anchor="middle" font-family="Pacifico,cursive" font-size="22" fill="#fff">tagline</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'tagline', x:50, y:42, width:62, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Pacifico, cursive' }
+      ]
+    },
+    {
+      id: 'verse-stack',
+      name: 'Bible verse stack',
+      desc: 'Reference + short phrase',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="42" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="18" fill="#d4a558">PHIL 4:13</text><text x="50" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#fff" font-weight="600">I CAN DO ALL</text><text x="50" y="74" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#fff" font-weight="600">THINGS</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'PHIL 4:13',           x:50, y:35, width:60, rotation:0, color:'#d4a558', weight:700, italic:false, underline:false, font:'"Bebas Neue", sans-serif' },
+        { type:'text', side:'front', text:'I CAN DO ALL THINGS', x:50, y:48, width:72, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Inter, sans-serif' }
+      ]
+    },
+    {
+      id: 'block-front-name',
+      name: 'Block front',
+      desc: 'Bold block letters',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="62" text-anchor="middle" font-family="Bungee,sans-serif" font-size="18" fill="#fff">YOUR NAME</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'YOUR NAME', x:50, y:48, width:72, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Bungee, sans-serif' }
+      ]
+    },
+    {
+      id: 'minimal-tagline',
+      name: 'Minimal tagline',
+      desc: 'Bottom-hem subtle line',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="82" text-anchor="middle" font-family="Inter,sans-serif" font-size="7" font-weight="700" letter-spacing="2" fill="#d4a558">— GOD HEALTH WEALTH —</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'— GOD · HEALTH · WEALTH —', x:50, y:88, width:62, rotation:0, color:'#d4a558', weight:700, italic:false, underline:false, font:'Inter, sans-serif' }
+      ]
+    },
+    {
+      id: 'arched-back',
+      name: 'Arched team title',
+      desc: 'Sweeping back banner',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="44" text-anchor="middle" font-family="Anton,sans-serif" font-size="13" fill="#fff">ATHLETIC CLUB</text><text x="50" y="68" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="24" fill="#fff">EST. 2026</text></svg>`,
+      layers: [
+        { type:'text', side:'back', text:'ATHLETIC CLUB', x:50, y:24, width:75, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Anton, sans-serif' },
+        { type:'text', side:'back', text:'EST. 2026',     x:50, y:50, width:60, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'"Bebas Neue", sans-serif' }
+      ]
+    },
+    {
+      id: 'pixel-arcade',
+      name: 'Arcade pixel',
+      desc: '8-bit retro vibe',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="58" text-anchor="middle" font-family="Press Start 2P,monospace" font-size="9" fill="#d4a558">LEVEL UP</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'LEVEL UP', x:50, y:48, width:72, rotation:0, color:'#d4a558', weight:400, italic:false, underline:false, font:'"Press Start 2P", monospace' }
+      ]
+    },
+    {
+      id: 'bold-statement',
+      name: 'Bold statement',
+      desc: 'Single-word punch',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="62" text-anchor="middle" font-family="Anton,sans-serif" font-size="32" fill="#fff">FAITH</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'FAITH', x:50, y:48, width:60, rotation:0, color:'#ffffff', weight:700, italic:false, underline:false, font:'Anton, sans-serif' }
+      ]
+    },
+    {
+      id: 'sleeve-number',
+      name: 'Number on front',
+      desc: 'Big varsity digit',
+      preview: `<svg viewBox="0 0 100 100"><text x="50" y="74" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="62" fill="#d4a558">7</text></svg>`,
+      layers: [
+        { type:'text', side:'front', text:'7', x:50, y:50, width:55, rotation:0, color:'#d4a558', weight:700, italic:false, underline:false, font:'"Bebas Neue", sans-serif' }
+      ]
+    }
+  ];
+
+  // ===== GRAPHICS LIBRARY =====
+  // Stock SVG icons grouped by category. Each entry has a `body` field
+  // — the contents of the <svg> *without* the wrapper. We assemble the
+  // full svg + serialize it to a data URL when added as an image layer
+  // so it goes through the existing image-layer pipeline.
+  // Currentcolor is intentional: when used as a CSS svg these are gold-
+  // tinted on hover, but as image layers the color is baked into the
+  // SVG fill at insertion time (#fafaf5 default — light on dark garments,
+  // legible on light too).
+  const GRAPHIC_CATEGORIES = ['Symbols', 'Sport', 'Faith', 'Shapes', 'Type'];
+  const GRAPHICS = [
+    // ----- Symbols -----
+    { id:'star',        cat:'Symbols', name:'Star',        body:`<path d="M32 4 L39.6 23.7 L60 25.4 L44.5 38.8 L48.5 60 L32 49 L15.5 60 L19.5 38.8 L4 25.4 L24.4 23.7 Z" fill="currentColor"/>` },
+    { id:'star-outline',cat:'Symbols', name:'Star outline',body:`<path d="M32 4 L39.6 23.7 L60 25.4 L44.5 38.8 L48.5 60 L32 49 L15.5 60 L19.5 38.8 L4 25.4 L24.4 23.7 Z" fill="none" stroke="currentColor" stroke-width="3"/>` },
+    { id:'lightning',   cat:'Symbols', name:'Lightning',   body:`<path d="M36 4 L14 36 L28 36 L22 60 L48 26 L34 26 L40 4 Z" fill="currentColor"/>` },
+    { id:'fire',        cat:'Symbols', name:'Fire',        body:`<path d="M32 4 Q40 18 36 26 Q42 22 44 30 Q52 36 50 46 Q48 56 32 60 Q14 56 14 46 Q14 36 22 32 Q20 22 32 4 Z" fill="currentColor"/>` },
+    { id:'heart',       cat:'Symbols', name:'Heart',       body:`<path d="M32 56 L8 32 Q-4 18 8 8 Q20 0 32 14 Q44 0 56 8 Q68 18 56 32 Z" fill="currentColor"/>` },
+    { id:'crown',       cat:'Symbols', name:'Crown',       body:`<path d="M8 24 L16 36 L24 18 L32 38 L40 18 L48 36 L56 24 L52 52 L12 52 Z" fill="currentColor"/>` },
+    { id:'wings',       cat:'Symbols', name:'Wings',       body:`<path d="M32 32 Q12 20 4 28 Q12 32 12 38 Q22 32 32 38 Q42 32 52 38 Q52 32 60 28 Q52 20 32 32 Z" fill="currentColor"/>` },
+    { id:'sun-rays',    cat:'Symbols', name:'Sun',         body:`<circle cx="32" cy="32" r="10" fill="currentColor"/><g fill="currentColor"><rect x="30" y="2" width="4" height="10"/><rect x="30" y="52" width="4" height="10"/><rect x="2" y="30" width="10" height="4"/><rect x="52" y="30" width="10" height="4"/><rect x="9" y="9" width="10" height="4" transform="rotate(-45 14 11)"/><rect x="45" y="9" width="10" height="4" transform="rotate(45 50 11)"/><rect x="9" y="51" width="10" height="4" transform="rotate(45 14 53)"/><rect x="45" y="51" width="10" height="4" transform="rotate(-45 50 53)"/></g>` },
+    { id:'compass',     cat:'Symbols', name:'Compass',     body:`<circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3"/><path d="M32 12 L36 32 L32 52 L28 32 Z" fill="currentColor"/>` },
+    { id:'arrow-up',    cat:'Symbols', name:'Arrow',       body:`<path d="M32 6 L52 28 L40 28 L40 58 L24 58 L24 28 L12 28 Z" fill="currentColor"/>` },
+    // ----- Sport -----
+    { id:'ball-base',   cat:'Sport',   name:'Baseball',    body:`<circle cx="32" cy="32" r="26" fill="currentColor"/><path d="M14 18 Q32 28 50 18 M14 46 Q32 36 50 46" fill="none" stroke="#08080a" stroke-width="2"/>` },
+    { id:'helmet',      cat:'Sport',   name:'Helmet',      body:`<path d="M10 36 Q10 14 32 14 Q54 14 54 36 L54 44 Q54 50 48 50 L16 50 Q10 50 10 44 Z" fill="currentColor"/><rect x="20" y="42" width="24" height="3" fill="#08080a"/>` },
+    { id:'whistle',     cat:'Sport',   name:'Whistle',     body:`<path d="M8 28 L32 20 Q44 20 48 32 Q44 44 32 44 L20 44 L20 50 L14 50 L14 44 L8 36 Z" fill="currentColor"/>` },
+    { id:'medal',       cat:'Sport',   name:'Medal',       body:`<path d="M22 4 L42 4 L36 30 L28 30 Z" fill="currentColor"/><circle cx="32" cy="42" r="16" fill="currentColor"/><text x="32" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#08080a">1</text>` },
+    { id:'dumbbell',    cat:'Sport',   name:'Dumbbell',    body:`<rect x="4" y="22" width="6" height="20" fill="currentColor"/><rect x="54" y="22" width="6" height="20" fill="currentColor"/><rect x="10" y="28" width="6" height="8" fill="currentColor"/><rect x="48" y="28" width="6" height="8" fill="currentColor"/><rect x="16" y="30" width="32" height="4" fill="currentColor"/>` },
+    { id:'trophy',      cat:'Sport',   name:'Trophy',      body:`<path d="M16 8 L48 8 L46 32 Q44 40 32 40 Q20 40 18 32 Z" fill="currentColor"/><rect x="26" y="40" width="12" height="10" fill="currentColor"/><rect x="20" y="50" width="24" height="6" fill="currentColor"/>` },
+    // ----- Faith -----
+    { id:'cross',       cat:'Faith',   name:'Cross',       body:`<rect x="26" y="6" width="12" height="52" fill="currentColor"/><rect x="12" y="20" width="40" height="12" fill="currentColor"/>` },
+    { id:'cross-thin',  cat:'Faith',   name:'Thin cross',  body:`<rect x="29" y="6" width="6" height="52" fill="currentColor"/><rect x="14" y="22" width="36" height="6" fill="currentColor"/>` },
+    { id:'dove',        cat:'Faith',   name:'Dove',        body:`<path d="M8 32 Q20 22 32 30 Q40 18 56 18 L46 30 L52 36 L36 38 Q32 50 16 48 L24 38 Z" fill="currentColor"/>` },
+    { id:'hands',       cat:'Faith',   name:'Praying hands',body:`<path d="M28 6 L24 32 L18 50 L26 56 L32 36 L38 56 L46 50 L40 32 L36 6 Z" fill="currentColor"/>` },
+    { id:'fish',        cat:'Faith',   name:'Ichthus',     body:`<path d="M6 32 Q20 16 40 32 Q20 48 6 32 Z M40 28 L58 18 L58 46 L40 36 Z" fill="currentColor"/>` },
+    { id:'dove-olive',  cat:'Faith',   name:'Dove + branch',body:`<path d="M8 36 Q22 24 36 32 Q44 28 50 22 L46 32 L52 38 L34 40 Q26 50 16 48 Z" fill="currentColor"/><circle cx="46" cy="20" r="2" fill="currentColor"/><circle cx="50" cy="14" r="2" fill="currentColor"/>` },
+    // ----- Shapes -----
+    { id:'circle',      cat:'Shapes',  name:'Circle',      body:`<circle cx="32" cy="32" r="26" fill="currentColor"/>` },
+    { id:'square',      cat:'Shapes',  name:'Square',      body:`<rect x="6" y="6" width="52" height="52" fill="currentColor"/>` },
+    { id:'triangle',    cat:'Shapes',  name:'Triangle',    body:`<path d="M32 4 L60 56 L4 56 Z" fill="currentColor"/>` },
+    { id:'diamond',     cat:'Shapes',  name:'Diamond',     body:`<path d="M32 4 L60 32 L32 60 L4 32 Z" fill="currentColor"/>` },
+    { id:'hexagon',     cat:'Shapes',  name:'Hexagon',     body:`<path d="M16 8 L48 8 L60 32 L48 56 L16 56 L4 32 Z" fill="currentColor"/>` },
+    { id:'banner',      cat:'Shapes',  name:'Banner',      body:`<path d="M4 16 L60 16 L52 32 L60 48 L4 48 L12 32 Z" fill="currentColor"/>` },
+    { id:'shield',      cat:'Shapes',  name:'Shield',      body:`<path d="M32 4 L56 12 L54 36 Q50 52 32 60 Q14 52 10 36 L8 12 Z" fill="currentColor"/>` },
+    { id:'stripes',     cat:'Shapes',  name:'Athletic stripes', body:`<rect x="4" y="14" width="56" height="6" fill="currentColor"/><rect x="4" y="26" width="56" height="6" fill="currentColor"/><rect x="4" y="38" width="56" height="6" fill="currentColor"/>` },
+    // ----- Type -----
+    { id:'amp',         cat:'Type',    name:'Ampersand',   body:`<text x="32" y="50" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="56" fill="currentColor">&amp;</text>` },
+    { id:'hash',        cat:'Type',    name:'Hash',        body:`<text x="32" y="48" text-anchor="middle" font-family="Anton,sans-serif" font-size="48" fill="currentColor">#</text>` },
+    { id:'plus',        cat:'Type',    name:'Plus',        body:`<rect x="28" y="6" width="8" height="52" fill="currentColor"/><rect x="6" y="28" width="52" height="8" fill="currentColor"/>` },
+    { id:'asterisk',    cat:'Type',    name:'Asterisk',    body:`<g fill="currentColor"><rect x="28" y="6" width="8" height="52"/><rect x="28" y="6" width="8" height="52" transform="rotate(60 32 32)"/><rect x="28" y="6" width="8" height="52" transform="rotate(120 32 32)"/></g>` }
+  ];
+
+  // Wrap a graphic body in a full SVG and convert to a data URL — the
+  // image-layer pipeline takes a URL/dataURL and renders it as an <img>.
+  // Default fill (#fafaf5) is light enough to read on most garments;
+  // user can recolor by overlaying a tinted text layer or, in a future
+  // pass, by editing the layer color directly.
+  function graphicToDataUrl(graphic) {
+    const fill = '#fafaf5';
+    const wrapped =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" style="color:${fill}">${graphic.body}</svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(wrapped);
+  }
+
 
   // ===== REAL PHOTO MOCKUPS =====
   // Map of product type -> URL of a real WHITE-version product photo.
@@ -1345,6 +1686,66 @@
     renderQuote();
   }
 
+  // ===== TEMPLATES PICKER =====
+  // Rendered once at init. Each tile shows a tiny SVG preview + name;
+  // clicking applies the template to the current product.
+  function renderTemplates() {
+    const grid = document.getElementById('templatesGrid');
+    if (!grid) return;
+    grid.innerHTML = TEMPLATES.map(t => `
+      <button type="button" class="template-tile" data-template-id="${t.id}" aria-label="Apply template: ${t.name}">
+        <span class="template-tile-preview">${t.preview}</span>
+        <span class="template-tile-text">
+          <span class="template-tile-name">${t.name}</span>
+          <span class="template-tile-desc">${t.desc}</span>
+        </span>
+      </button>
+    `).join('');
+  }
+
+  // ===== GRAPHICS LIBRARY =====
+  // Rendered lazily the first time the drawer is opened so we don't
+  // pay the DOM cost up front for users who never open it.
+  let activeGraphicCat = GRAPHIC_CATEGORIES[0];
+  let graphicsRendered = false;
+  function renderGraphics() {
+    const cats = document.getElementById('graphicsCats');
+    const grid = document.getElementById('graphicsGrid');
+    if (!cats || !grid) return;
+    cats.innerHTML = GRAPHIC_CATEGORIES.map(c => `
+      <button type="button" class="graphics-cat ${c === activeGraphicCat ? 'selected' : ''}" data-cat="${c}">${c}</button>
+    `).join('');
+    const visible = GRAPHICS.filter(g => g.cat === activeGraphicCat);
+    grid.innerHTML = visible.map(g => `
+      <button type="button" class="graphic-tile" data-graphic-id="${g.id}" aria-label="Add ${g.name}" title="${g.name}">
+        <svg viewBox="0 0 64 64" fill="none">${g.body}</svg>
+      </button>
+    `).join('');
+    graphicsRendered = true;
+  }
+  function openGraphicsDrawer() {
+    if (!graphicsRendered) renderGraphics();
+    document.getElementById('graphicsDrawer').classList.add('open');
+  }
+  function closeGraphicsDrawer() {
+    document.getElementById('graphicsDrawer').classList.remove('open');
+  }
+
+  // ===== FONT PICKER =====
+  // One-shot init: build the <option> list with each option styled in
+  // its own font so the dropdown is actually previewing the choices.
+  function initFontPicker() {
+    const sel = document.getElementById('textFontSelect');
+    if (!sel) return;
+    sel.innerHTML = FONTS.map(f =>
+      `<option value="${f.stack.replace(/"/g, '&quot;')}" style="font-family:${f.stack}">${f.name}</option>`
+    ).join('');
+    sel.value = state.textDraft.font;
+    sel.addEventListener('change', () => {
+      state.textDraft.font = sel.value || DEFAULT_FONT;
+    });
+  }
+
   function renderProductPicker() {
     document.getElementById('blankPicker').innerHTML = PRODUCTS.map(p => `
       <button type="button" class="product-option ${state.product?.id === p.id ? 'selected' : ''}" data-id="${p.id}">
@@ -1408,6 +1809,7 @@
               `font-weight:${l.weight}`,
               `font-size:calc(var(--layer-w, 30) * 0.4px)`
             ];
+            if (l.font)      styleParts.push(`font-family:${escapeAttr(l.font)}`);
             if (l.italic)    styleParts.push('font-style:italic');
             if (l.underline) styleParts.push('text-decoration:underline');
             return `<div class="layer-text" style="${styleParts.join(';')}">${escapeHtml(l.text)}</div>`;
@@ -1625,7 +2027,7 @@
     setStatus(`Image added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
   }
 
-  function addTextLayer(text, color, weight, italic, underline) {
+  function addTextLayer(text, color, weight, italic, underline, font) {
     const id = state.nextLayerId++;
     state.layers.push({
       id, type:'text',
@@ -1635,11 +2037,64 @@
       weight: italic === undefined && weight === 700 ? (state.textDraft.bold ? 700 : 400) : weight,
       italic: !!italic,
       underline: !!underline,
+      font: font || state.textDraft.font || DEFAULT_FONT,
       x: 50, y: 55, width: 50, rotation: 0
     });
     state.selectedLayerId = id;
     render();
     setStatus(`Text added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
+  }
+
+  // ===== TEMPLATE APPLICATION =====
+  // Replace any existing layers with the template's layers, assigning
+  // fresh IDs. We also flip the active side to wherever the template
+  // has its first layer so the user immediately sees what they applied.
+  function applyTemplate(templateId) {
+    const tmpl = TEMPLATES.find(t => t.id === templateId);
+    if (!tmpl) return;
+    if (state.layers.length > 0 && !confirm('This will replace your current design. Continue?')) return;
+    state.layers = tmpl.layers.map(spec => ({
+      id: state.nextLayerId++,
+      type: spec.type,
+      side: spec.side || 'front',
+      x: spec.x ?? 50,
+      y: spec.y ?? 50,
+      width: spec.width ?? 50,
+      rotation: spec.rotation ?? 0,
+      // Type-specific fields
+      ...(spec.type === 'text' ? {
+        text: spec.text || '',
+        color: spec.color || '#ffffff',
+        weight: spec.weight ?? 700,
+        italic: !!spec.italic,
+        underline: !!spec.underline,
+        font: spec.font || DEFAULT_FONT
+      } : {
+        dataUrl: spec.dataUrl
+      })
+    }));
+    // Flip to the side where the first layer lives so the user sees it
+    if (state.layers.length > 0) {
+      state.activeSide = state.layers[0].side;
+      const sideBtn = document.querySelector(`#sideToggle button[data-side="${state.activeSide}"]`);
+      if (sideBtn) {
+        document.querySelectorAll('#sideToggle button').forEach(b => b.classList.remove('active'));
+        sideBtn.classList.add('active');
+      }
+    }
+    state.selectedLayerId = null;
+    render();
+    setStatus(`Applied template "${tmpl.name}". Edit any layer to make it yours.`, '');
+  }
+
+  // ===== ADD A STOCK GRAPHIC =====
+  // Resolves the graphic's body to a data URL and reuses the existing
+  // image-layer path so dragging / resizing / rotating just works.
+  function addGraphicLayer(graphicId) {
+    const g = GRAPHICS.find(x => x.id === graphicId);
+    if (!g) return;
+    addImageLayer(graphicToDataUrl(g));
+    closeGraphicsDrawer();
   }
 
   function deleteLayer(id) {
@@ -1725,9 +2180,36 @@
       const text = document.getElementById('textInput').value.trim();
       if (text.length === 0) { setStatus('Type something first.', 'error'); return; }
       addTextLayer(text, state.textDraft.color, state.textDraft.weight,
-                   state.textDraft.italic, state.textDraft.underline);
+                   state.textDraft.italic, state.textDraft.underline,
+                   state.textDraft.font);
       document.getElementById('textEditor').classList.remove('open');
       document.getElementById('textInput').value = '';
+      return;
+    }
+    // Templates — apply on click
+    const tmplBtn = e.target.closest('[data-template-id]');
+    if (tmplBtn) {
+      applyTemplate(tmplBtn.dataset.templateId);
+      return;
+    }
+    // Graphics drawer — open / close + category switch + tile click
+    if (e.target.id === 'addGraphicBtn' || e.target.closest('#addGraphicBtn')) {
+      openGraphicsDrawer();
+      return;
+    }
+    if (e.target.id === 'graphicsCloseBtn') {
+      closeGraphicsDrawer();
+      return;
+    }
+    const catBtn = e.target.closest('.graphics-cat');
+    if (catBtn) {
+      activeGraphicCat = catBtn.dataset.cat;
+      renderGraphics();
+      return;
+    }
+    const graphicBtn = e.target.closest('[data-graphic-id]');
+    if (graphicBtn) {
+      addGraphicLayer(graphicBtn.dataset.graphicId);
       return;
     }
     // Bold / Italic / Underline toggle buttons
@@ -1872,7 +2354,11 @@
         } else if (l.type === 'text') {
           const fontSize = w * 0.32;
           const styleStr = l.italic ? 'italic ' : '';
-          ctx.font = `${styleStr}${l.weight} ${fontSize}px "Space Grotesk", sans-serif`;
+          // Honor the layer's chosen font, falling back to the legacy
+          // default if missing (older drafts persisted before the font
+          // field existed).
+          const fontStack = l.font || 'Inter, sans-serif';
+          ctx.font = `${styleStr}${l.weight} ${fontSize}px ${fontStack}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillStyle = l.color;
@@ -2066,6 +2552,11 @@
   state.product = PRODUCTS[0];          // Blank Hoodie
   state.color   = COLORS[0];            // Black
   wireStageDeselect();
+  // Templates / graphics drawer / font picker are one-shot UI — render
+  // them once at boot rather than on every render(), since they don't
+  // depend on state that changes during a session.
+  renderTemplates();
+  initFontPicker();
   render();
   // Re-sync text font sizes if window resizes (preview width may change)
   window.addEventListener('resize', () => {

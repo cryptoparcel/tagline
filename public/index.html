@@ -1056,6 +1056,20 @@
     text-transform:uppercase;
     margin-top:6px;
   }
+  /* Tiny star row + count under the product name, only shown when
+     review_count > 0 (set by fetchLiveCatalog from /api/products). */
+  .product-meta .rating-row{
+    display:flex; align-items:center; gap:6px;
+    margin-top:6px;
+    font-size:11px;
+    color:rgba(255,255,250,.55);
+    line-height:1;
+  }
+  .product-meta .rating-row svg{
+    width:11px; height:11px;
+    color:var(--gold-soft, #d4a558);
+  }
+  .product-meta .rating-row .rating-count{ color:rgba(255,255,250,.42); font-weight:500; }
   /* Price floats as a glass pill in the bottom-right of the image area.
      Absolute positioning is relative to .product-card (the only positioned
      ancestor) so it always pins to the card's bottom-right corner. */

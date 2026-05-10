@@ -686,6 +686,7 @@
       <div class="admin-tabs">
         <button class="admin-tab ${activeView==='orders' ? 'active' : ''}" data-view="orders">Orders</button>
         <button class="admin-tab ${activeView==='products' ? 'active' : ''}" data-view="products">Products</button>
+        <button class="admin-tab ${activeView==='reviews' ? 'active' : ''}" data-view="reviews">Reviews</button>
         <button class="admin-tab ${activeView==='subscribers' ? 'active' : ''}" data-view="subscribers">Subscribers</button>
         <button class="admin-tab ${activeView==='messages' ? 'active' : ''}" data-view="messages">Messages</button>
         <button class="admin-tab ${activeView==='setup' ? 'active' : ''}" data-view="setup">Setup</button>
@@ -1064,6 +1065,96 @@
             const pill = tr.querySelector('.status-pill');
             if (pill) { pill.className = 'status-pill ' + status; pill.textContent = status; }
           } else {
+            msg.textContent = r.error || 'Failed';
+            msg.style.color = 'var(--error)';
+          }
+        });
+      });
+    }
+
+    if (activeView === 'reviews') {
+      const RSTATUSES = ['approved','pending','hidden'];
+      const reviews = result.reviews || [];
+      const renderStars = (n) => {
+        let s = '';
+        for (let i = 1; i <= 5; i++) {
+          s += `<svg style="width:12px;height:12px;color:${i<=n ? 'var(--gold-soft)' : 'var(--line-strong)'};display:inline-block;vertical-align:-2px" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L14.39 8.36 L21 9.27 L16.18 14.14 L17.41 21 L12 17.77 L6.59 21 L7.82 14.14 L3 9.27 L9.61 8.36 Z"/></svg>`;
+        }
+        return s;
+      };
+      const rows = reviews.map(r => {
+        const safeStatus = RSTATUSES.includes(r.status) ? r.status : 'pending';
+        const opts = RSTATUSES.map(s => `<option value="${s}"${s===safeStatus?' selected':''}>${s}</option>`).join('');
+        const bodyTrunc = r.body && r.body.length > 240 ? r.body.slice(0,240) + '…' : (r.body || '');
+        return `
+          <tr data-review-id="${escapeHtml(r.id)}">
+            <td>${escapeHtml(new Date(r.created_at).toLocaleDateString())}</td>
+            <td class="mono" style="font-size:12px">${escapeHtml(r.product_id)}</td>
+            <td>${renderStars(r.rating | 0)} <span style="font-size:11px;color:var(--muted)">${escapeHtml(String(r.rating))}/5</span></td>
+            <td>${escapeHtml(r.display_name || '')}<br/><span style="font-size:11px;color:var(--muted)">${escapeHtml(r.email || '')}</span></td>
+            <td style="max-width:340px;font-size:12px;color:var(--ink-soft);white-space:pre-wrap">${r.title ? '<strong style=\"color:var(--ink)\">' + escapeHtml(r.title) + '</strong><br/>' : ''}${escapeHtml(bodyTrunc)}</td>
+            <td><span class="status-pill ${safeStatus === 'approved' ? 'paid' : (safeStatus === 'hidden' ? 'cancelled' : 'pending')}">${escapeHtml(r.status)}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                <select class="form-input review-status-select" style="padding:6px 8px;font-size:13px;width:auto;min-width:100px">${opts}</select>
+                <button type="button" class="btn btn-ghost review-save-btn" style="padding:6px 12px;min-height:32px;font-size:11px">Save</button>
+                <button type="button" class="btn btn-ghost review-delete-btn" style="padding:6px 12px;min-height:32px;font-size:11px;border-color:rgba(229,115,115,.4);color:var(--error)" title="Permanently delete this review">Delete</button>
+                <span class="review-save-msg" style="font-size:11px;color:var(--muted)"></span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      target.innerHTML = `
+        <div class="table-actions">
+          <span style="font-size:12px;color:var(--muted)">${reviews.length} review${reviews.length === 1 ? '' : 's'}. Hidden reviews stay in the DB but disappear from the public product page.</span>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Product</th><th>Rating</th><th>Reviewer</th><th>Review</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="7" style="padding:32px;text-align:center;color:var(--muted)">No reviews yet.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+      target.querySelectorAll('tr[data-review-id]').forEach(tr => {
+        const id = tr.dataset.reviewId;
+        const saveBtn = tr.querySelector('.review-save-btn');
+        const delBtn = tr.querySelector('.review-delete-btn');
+        const msg = tr.querySelector('.review-save-msg');
+
+        saveBtn.addEventListener('click', async () => {
+          const status = tr.querySelector('.review-status-select').value;
+          saveBtn.disabled = true;
+          msg.textContent = 'Saving…';
+          msg.style.color = 'var(--muted)';
+          const r = await adminPost('/api/admin', { action: 'update_review', review_id: id, review_status: status });
+          saveBtn.disabled = false;
+          if (r.ok) {
+            msg.textContent = 'Saved';
+            msg.style.color = 'var(--gold-soft)';
+            const pill = tr.querySelector('.status-pill');
+            if (pill) {
+              pill.className = 'status-pill ' + (status === 'approved' ? 'paid' : (status === 'hidden' ? 'cancelled' : 'pending'));
+              pill.textContent = status;
+            }
+          } else {
+            msg.textContent = r.error || 'Failed';
+            msg.style.color = 'var(--error)';
+          }
+        });
+
+        delBtn.addEventListener('click', async () => {
+          if (!confirm('Permanently delete this review? Cannot be undone.')) return;
+          delBtn.disabled = true;
+          saveBtn.disabled = true;
+          msg.textContent = 'Deleting…';
+          msg.style.color = 'var(--muted)';
+          const r = await adminPost('/api/admin', { action: 'delete_review', review_id: id });
+          if (r.ok) {
+            tr.remove();
+          } else {
+            delBtn.disabled = false;
+            saveBtn.disabled = false;
             msg.textContent = r.error || 'Failed';
             msg.style.color = 'var(--error)';
           }

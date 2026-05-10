@@ -219,6 +219,54 @@ create index if not exists idx_processed_events_at on processed_webhook_events(p
 alter table processed_webhook_events enable row level security;
 
 -- ============================================================
+-- PRODUCT REVIEWS
+-- ============================================================
+-- Verified-buyer reviews on individual products. The "verified" check
+-- is enforced server-side at insert time (api/reviews.js): the user must
+-- be signed in AND have at least one paid/shipped/delivered order whose
+-- items array contains the product_id.
+--
+-- Status flow: pending → approved (auto on insert when verified) or
+-- hidden (admin can flip from approved). Hidden rows are kept (audit
+-- trail) but not surfaced anywhere customer-facing.
+create table if not exists product_reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_id text not null references products(id) on delete cascade,
+  user_id uuid references profiles(id) on delete set null,
+  order_id uuid references orders(id) on delete set null,
+  email text not null,                 -- normalized (lower-case)
+  display_name text,                   -- e.g. "John D." — optional, capped at 60
+  rating int not null check (rating between 1 and 5),
+  title text,                          -- optional, capped at 120
+  body text,                           -- capped at 2000
+  status text not null default 'approved'
+    check (status in ('pending','approved','hidden')),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Hot path: the product page asks for "approved reviews for product X
+-- ordered by newest." A partial index on status='approved' keeps the
+-- query small once a moderator has hidden any abuse.
+create index if not exists idx_reviews_product_approved
+  on product_reviews(product_id, created_at desc)
+  where status = 'approved';
+create index if not exists idx_reviews_status on product_reviews(status);
+create index if not exists idx_reviews_user on product_reviews(user_id);
+
+-- Prevent the same buyer leaving more than one review on the same
+-- order line. They can still review again from a future order.
+create unique index if not exists uq_reviews_user_order_product
+  on product_reviews(user_id, order_id, product_id)
+  where user_id is not null and order_id is not null;
+
+-- RLS: anyone can read approved reviews; everything else server-only.
+alter table product_reviews enable row level security;
+drop policy if exists "reviews_read_approved" on product_reviews;
+create policy "reviews_read_approved" on product_reviews
+  for select using (status = 'approved');
+
+-- ============================================================
 -- ATOMIC STOCK DECREMENT
 -- ============================================================
 -- Decrements stock if sufficient is available. Returns true on success,

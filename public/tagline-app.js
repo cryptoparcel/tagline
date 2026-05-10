@@ -1269,6 +1269,11 @@
         if (typeof row.stock === 'number') cur.stock = row.stock;
         if (typeof row.description === 'string') cur.description = row.description;
         if (row.image_url !== undefined) cur.image_url = row.image_url || cur.image_url;
+        // Review aggregates — only available once /api/reviews has data.
+        // For products with zero reviews these stay 0/0 which means the
+        // rating row in renderRatingPills() simply won't be added.
+        if (typeof row.review_count === 'number') cur.review_count = row.review_count;
+        if (typeof row.review_avg === 'number') cur.review_avg = row.review_avg;
         mutated = true;
       }
       // Hide static cards for products that admin has deactivated/deleted —
@@ -1322,9 +1327,46 @@
           PRODUCT_NAME_TO_ID[PRODUCTS[id].name] = id;
         });
       }
+      // After merge, paint the rating rows on cards that have any
+      // approved reviews. Idempotent — if the row already exists for
+      // a product, we update it in place rather than appending again.
+      paintRatingRows();
     } catch {
       // Network error — silent. Static defaults remain visible.
     }
+  }
+
+  // ============ STAR-ROW PAINTER ============
+  // Adds a small "★ 4.6 (12)" row under the product name on every card
+  // that has at least one approved review. Reads avg + count from the
+  // PRODUCTS state, which fetchLiveCatalog populates from /api/products.
+  function paintRatingRows() {
+    document.querySelectorAll('.product-card[data-product-id]').forEach(card => {
+      const id = card.dataset.productId;
+      const p = PRODUCTS[id];
+      if (!p) return;
+      const count = p.review_count | 0;
+      const avg = Number(p.review_avg) || 0;
+      const meta = card.querySelector('.product-meta > div');
+      if (!meta) return;
+      let row = meta.querySelector('.rating-row');
+      if (count <= 0) {
+        if (row) row.remove();
+        return;
+      }
+      // Build the star SVG markup once. Filled stars up to round(avg).
+      const filledTo = Math.round(Math.max(0, Math.min(5, avg)));
+      const star = (filled) => `<svg viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2 L14.39 8.36 L21 9.27 L16.18 14.14 L17.41 21 L12 17.77 L6.59 21 L7.82 14.14 L3 9.27 L9.61 8.36 Z"/></svg>`;
+      let stars = '';
+      for (let i = 1; i <= 5; i++) stars += star(i <= filledTo);
+      const html = `${stars}<span aria-label="${avg} out of 5">${avg.toFixed(1)}</span><span class="rating-count">(${count})</span>`;
+      if (!row) {
+        row = document.createElement('div');
+        row.className = 'rating-row';
+        meta.appendChild(row);
+      }
+      row.innerHTML = html;
+    });
   }
 
   // ============ CARD LAYOUT REWRITE ============

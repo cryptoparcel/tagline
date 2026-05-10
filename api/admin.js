@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   // GET: dashboard data
   if (req.method === 'GET') {
     try {
-      const allowedViews = ['orders', 'subscribers', 'messages', 'stats', 'products'];
+      const allowedViews = ['orders', 'subscribers', 'messages', 'stats', 'products', 'reviews'];
       const view = (req.query?.view || 'orders').toString();
       if (!allowedViews.includes(view)) {
         return badRequest(res, 'Unknown view');
@@ -61,6 +61,19 @@ export default async function handler(req, res) {
           .limit(200);
         if (error) throw error;
         return ok(res, { messages: data });
+      }
+
+      if (view === 'reviews') {
+        // Show every status — admin needs to see hidden + pending too,
+        // unlike the public /api/reviews endpoint which only returns
+        // approved ones. Newest first; cap 200.
+        const { data, error } = await supabase
+          .from('product_reviews')
+          .select('id, product_id, user_id, order_id, email, display_name, rating, title, body, status, created_at')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        return ok(res, { reviews: data });
       }
 
       if (view === 'stats') {
@@ -266,6 +279,39 @@ export default async function handler(req, res) {
           .eq('id', message_id);
         if (error) throw error;
         return ok(res, { updated: true });
+      }
+
+      // ============ REVIEW MODERATION ============
+      // Flip a review's status between approved/hidden/pending, or
+      // outright delete it. Useful for spam, off-topic content, or
+      // a reviewer who asks us to take their words down.
+      if (action === 'update_review') {
+        const { review_id, review_status } = body;
+        if (!review_id || typeof review_id !== 'string' || !uuidRegex.test(review_id)) {
+          return badRequest(res, 'Invalid review_id');
+        }
+        const valid = ['approved', 'hidden', 'pending'];
+        if (!valid.includes(review_status)) {
+          return badRequest(res, 'invalid review_status');
+        }
+        const { error } = await supabase
+          .from('product_reviews')
+          .update({ status: review_status, updated_at: new Date().toISOString() })
+          .eq('id', review_id);
+        if (error) throw error;
+        return ok(res, { updated: true });
+      }
+      if (action === 'delete_review') {
+        const { review_id } = body;
+        if (!review_id || typeof review_id !== 'string' || !uuidRegex.test(review_id)) {
+          return badRequest(res, 'Invalid review_id');
+        }
+        const { error } = await supabase
+          .from('product_reviews')
+          .delete()
+          .eq('id', review_id);
+        if (error) throw error;
+        return ok(res, { deleted: true });
       }
 
       // ============ REFUND ============

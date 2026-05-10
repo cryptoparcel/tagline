@@ -198,6 +198,150 @@
   .pdp-back:hover{ color:var(--gold-soft); }
   .pdp-back svg{ width:14px; height:14px; }
 
+  /* ============ REVIEWS ============
+     Verified-buyer star ratings + free-form review body.
+     Lives directly under the main product info on PDP. */
+  .pdp-reviews{
+    margin-top:64px;
+    padding-top:32px;
+    border-top:1px solid var(--line);
+  }
+  @media (max-width:640px){ .pdp-reviews{ margin-top:40px; } }
+  .pdp-reviews h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px; font-weight:600;
+    letter-spacing:-0.02em; color:var(--ink);
+    margin-bottom:18px;
+  }
+  .reviews-summary{
+    display:flex; gap:24px; align-items:center; flex-wrap:wrap;
+    margin-bottom:24px;
+    padding-bottom:24px;
+    border-bottom:1px solid var(--line);
+  }
+  .reviews-avg{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:42px; font-weight:600;
+    letter-spacing:-0.025em; color:var(--ink);
+    line-height:1;
+  }
+  .reviews-avg-meta{ color:var(--muted); font-size:13px; margin-top:4px; }
+  .reviews-stars{ display:flex; gap:2px; align-items:center; }
+  .reviews-stars svg{ width:18px; height:18px; }
+  .reviews-stars .star{ color:var(--line-strong); }
+  .reviews-stars .star.on{ color:var(--gold-soft); }
+  .reviews-empty{
+    color:var(--muted); font-size:14px; padding:18px 0;
+  }
+
+  .review-card{
+    padding:18px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .review-card:last-child{ border-bottom:none; }
+  .review-head{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    margin-bottom:6px;
+  }
+  .review-author{ font-weight:600; color:var(--ink); font-size:14px; }
+  .review-date{ color:var(--muted); font-size:12px; }
+  .review-verified{
+    background:rgba(184,137,61,.12);
+    color:var(--gold-soft); font-size:10px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase;
+    padding:3px 8px; border:1px solid rgba(184,137,61,.3);
+  }
+  .review-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px; font-weight:600;
+    color:var(--ink); margin:6px 0 4px;
+  }
+  .review-body{
+    color:var(--ink-soft); font-size:14px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  /* Leave-a-review form */
+  .review-form{
+    margin-top:32px;
+    padding:22px;
+    background:linear-gradient(160deg,#14110c 0%,#0d0c0a 100%);
+    border:1px solid var(--line);
+  }
+  .review-form h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px; font-weight:600;
+    color:var(--ink); margin-bottom:14px;
+  }
+  .review-form label{
+    display:block; font-size:11px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-soft); margin-bottom:6px;
+  }
+  .review-form input[type=text], .review-form textarea{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    padding:11px 13px;
+    color:var(--ink); font-family:inherit;
+    font-size:14px; line-height:1.5;
+    margin-bottom:14px;
+  }
+  .review-form input[type=text]:focus, .review-form textarea:focus{
+    outline:none; border-color:var(--gold);
+  }
+  .review-form textarea{ min-height:90px; resize:vertical; }
+
+  /* Star input — bigger, click-to-set, hover-to-preview */
+  .star-input{
+    display:inline-flex; gap:4px; cursor:pointer;
+    margin-bottom:14px;
+  }
+  .star-input button{
+    background:transparent; border:none; padding:4px;
+    cursor:pointer; color:var(--line-strong);
+    transition:color .15s ease, transform .12s ease;
+  }
+  .star-input button:hover, .star-input button.preview{ color:var(--gold-soft); }
+  .star-input button.on{ color:var(--gold); }
+  .star-input button:active{ transform:scale(.92); }
+  .star-input svg{ width:26px; height:26px; display:block; }
+
+  .review-form .review-submit-row{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  }
+  .review-locked{
+    margin-top:32px;
+    padding:22px;
+    border:1px dashed var(--line-strong);
+    background:rgba(0,0,0,.18);
+    color:var(--ink-soft); font-size:13px; line-height:1.6;
+  }
+  .review-locked a{
+    color:var(--gold-soft); text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .review-msg{
+    font-size:12px; color:var(--muted); min-height:18px;
+  }
+  .review-msg.error{ color:var(--error); }
+  .review-msg.success{ color:var(--gold-soft); }
+
+  /* PDP rating row — sits just under the product name on the info col. */
+  .pdp-rating{
+    display:flex; align-items:center; gap:10px;
+    margin:-2px 0 12px;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+  .pdp-rating .pdp-stars{ display:flex; gap:2px; }
+  .pdp-rating .pdp-stars svg{ width:14px; height:14px; }
+  .pdp-rating .pdp-stars .star{ color:var(--line-strong); }
+  .pdp-rating .pdp-stars .star.on{ color:var(--gold-soft); }
+  .pdp-rating a{ color:var(--gold-soft); text-decoration:underline; text-underline-offset:3px; }
+
   /* Loading + 404 states */
   .pdp-loading, .pdp-missing{
     text-align:center;
@@ -372,6 +516,7 @@
         <div class="pdp-info">
           <div class="pdp-eyebrow">${escapeHtml(p.category || 'TAGLINE')}</div>
           <h1 class="pdp-name">${escapeHtml(p.name)}</h1>
+          <div class="pdp-rating" id="pdpRating" hidden></div>
           <div class="pdp-price">$${escapeHtml(String(p.price))}</div>
           <div class="pdp-stock ${stockClass}">${stockText}</div>
           <div class="pdp-description">${escapeHtml(p.description || 'Premium athletic wear, made to last.')}</div>
@@ -389,11 +534,208 @@
           </div>
         </div>
       </div>
+
+      <section class="pdp-reviews" id="pdpReviews" aria-label="Customer reviews">
+        <h2>Customer reviews</h2>
+        <div id="reviewsContent">
+          <div class="reviews-empty">Loading reviews…</div>
+        </div>
+        <div id="reviewWriteSlot"></div>
+      </section>
     `;
 
     wireActions(p);
     setMeta(p);
     injectJsonLd(p);
+    loadReviews(p);
+  }
+
+  // ============ REVIEWS ============
+  // Star SVG used in both the summary header and individual review cards.
+  function starSvg(filled) {
+    const cls = filled ? 'star on' : 'star';
+    return `<svg class="${cls}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 L14.39 8.36 L21 9.27 L16.18 14.14 L17.41 21 L12 17.77 L6.59 21 L7.82 14.14 L3 9.27 L9.61 8.36 Z"/></svg>`;
+  }
+
+  // Render the X-out-of-5 stars row given a 0-5 numeric rating.
+  // 4.6 → 5 filled / 0 empty (we don't do half-stars; cleaner visual).
+  // We round half-up at .5 so a 4.5 average looks like ★★★★★.
+  function starsRow(rating) {
+    const r = Math.round(Math.max(0, Math.min(5, Number(rating) || 0)));
+    let html = '';
+    for (let i = 1; i <= 5; i++) html += starSvg(i <= r);
+    return html;
+  }
+
+  function fmtReviewDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    } catch { return ''; }
+  }
+
+  async function loadReviews(p) {
+    const target = document.getElementById('reviewsContent');
+    if (!target) return;
+    let data;
+    try {
+      const res = await fetch('/api/reviews?product_id=' + encodeURIComponent(productId));
+      if (res.status === 404) {
+        target.innerHTML = '';
+        return;
+      }
+      data = await res.json().catch(() => ({}));
+      if (!res.ok || !data) {
+        target.innerHTML = '<div class="reviews-empty">Reviews are temporarily unavailable.</div>';
+        return;
+      }
+    } catch {
+      target.innerHTML = '<div class="reviews-empty">Could not load reviews.</div>';
+      return;
+    }
+
+    const summary = data.summary || { count: 0, average: 0 };
+    const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+
+    // Surface the average + count up at the top of the info column too,
+    // so customers see social proof without scrolling.
+    const ratingRow = document.getElementById('pdpRating');
+    if (ratingRow) {
+      if (summary.count > 0) {
+        ratingRow.innerHTML = `
+          <div class="pdp-stars">${starsRow(summary.average)}</div>
+          <a href="#pdpReviews">${escapeHtml(String(summary.average))} (${escapeHtml(String(summary.count))} review${summary.count === 1 ? '' : 's'})</a>
+        `;
+        ratingRow.hidden = false;
+      } else {
+        ratingRow.hidden = true;
+      }
+    }
+
+    if (reviews.length === 0) {
+      target.innerHTML = '<div class="reviews-empty">No reviews yet. Be the first — only verified buyers can post.</div>';
+    } else {
+      const head = `
+        <div class="reviews-summary">
+          <div>
+            <div class="reviews-avg">${escapeHtml(String(summary.average.toFixed(1)))}</div>
+            <div class="reviews-avg-meta">out of 5 · ${escapeHtml(String(summary.count))} review${summary.count === 1 ? '' : 's'}</div>
+          </div>
+          <div class="reviews-stars" aria-hidden="true">${starsRow(summary.average)}</div>
+        </div>
+      `;
+      const cards = reviews.map(r => `
+        <div class="review-card">
+          <div class="review-head">
+            <div class="reviews-stars" aria-label="${escapeHtml(String(r.rating))} out of 5 stars">${starsRow(r.rating)}</div>
+            <span class="review-author">${escapeHtml(r.display_name || 'Verified buyer')}</span>
+            <span class="review-verified">Verified buyer</span>
+            <span class="review-date">${escapeHtml(fmtReviewDate(r.created_at))}</span>
+          </div>
+          ${r.title ? `<div class="review-title">${escapeHtml(r.title)}</div>` : ''}
+          ${r.body ? `<div class="review-body">${escapeHtml(r.body)}</div>` : ''}
+        </div>
+      `).join('');
+      target.innerHTML = head + cards;
+    }
+
+    renderReviewWriteSlot(p);
+  }
+
+  // Render the "Leave a review" form (or a sign-in prompt) below the
+  // reviews list. Verified-buyer enforcement happens server-side; the
+  // client just nudges the right CTA based on auth state.
+  function renderReviewWriteSlot(p) {
+    const slot = document.getElementById('reviewWriteSlot');
+    if (!slot) return;
+
+    const signedIn = !!window.Tagline?.Auth?.isLoggedIn?.();
+    if (!signedIn) {
+      slot.innerHTML = `
+        <div class="review-locked">
+          Reviews are limited to verified buyers. <a href="/signin?next=${encodeURIComponent(window.location.pathname)}">Sign in</a>
+          if you've already bought this — or
+          <a href="/signup">create an account</a> after your order ships.
+        </div>
+      `;
+      return;
+    }
+
+    slot.innerHTML = `
+      <form class="review-form" id="reviewForm" novalidate>
+        <h3>Leave a review</h3>
+        <label>Rating</label>
+        <div class="star-input" id="starInput" role="radiogroup" aria-label="Rating">
+          ${[1,2,3,4,5].map(n => `<button type="button" data-star="${n}" role="radio" aria-checked="false" aria-label="${n} star${n === 1 ? '' : 's'}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 L14.39 8.36 L21 9.27 L16.18 14.14 L17.41 21 L12 17.77 L6.59 21 L7.82 14.14 L3 9.27 L9.61 8.36 Z"/></svg></button>`).join('')}
+        </div>
+        <label for="reviewTitle">Title (optional)</label>
+        <input type="text" id="reviewTitle" maxlength="120" placeholder="Sums up your take in one line" />
+        <label for="reviewBody">Review</label>
+        <textarea id="reviewBody" maxlength="2000" placeholder="What did you like? How did it fit?"></textarea>
+        <div class="review-submit-row">
+          <button type="submit" class="btn btn-primary" style="padding:11px 22px;min-height:42px;font-size:12px">Submit review</button>
+          <span class="review-msg" id="reviewMsg"></span>
+        </div>
+      </form>
+    `;
+
+    let chosen = 0;
+    const starButtons = slot.querySelectorAll('.star-input button');
+    starButtons.forEach(btn => {
+      const n = Number(btn.dataset.star);
+      btn.addEventListener('mouseenter', () => {
+        starButtons.forEach((b, i) => b.classList.toggle('preview', i < n));
+      });
+      btn.addEventListener('mouseleave', () => {
+        starButtons.forEach(b => b.classList.remove('preview'));
+      });
+      btn.addEventListener('click', () => {
+        chosen = n;
+        starButtons.forEach((b, i) => {
+          const on = i < n;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      });
+    });
+
+    const form = slot.querySelector('#reviewForm');
+    const msg = slot.querySelector('#reviewMsg');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.className = 'review-msg';
+      if (chosen < 1 || chosen > 5) {
+        msg.textContent = 'Pick a star rating first.';
+        msg.className = 'review-msg error';
+        return;
+      }
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      msg.textContent = 'Submitting…';
+
+      const result = await window.Tagline.API.request('/api/reviews', {
+        method: 'POST',
+        body: {
+          product_id: productId,
+          rating: chosen,
+          title: form.querySelector('#reviewTitle').value.trim(),
+          body:  form.querySelector('#reviewBody').value.trim()
+        },
+        auth: true
+      });
+
+      submitBtn.disabled = false;
+      if (result.ok) {
+        msg.textContent = 'Thanks! Your review is live.';
+        msg.className = 'review-msg success';
+        form.querySelector('#reviewTitle').value = '';
+        form.querySelector('#reviewBody').value = '';
+        // Refresh the reviews list so the new one appears immediately
+        loadReviews(p);
+      } else {
+        msg.textContent = result.error || 'Could not save review.';
+        msg.className = 'review-msg error';
+      }
+    });
   }
 
   function wireActions(p) {

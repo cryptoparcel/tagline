@@ -39,8 +39,11 @@
   .config-preview{
     position:sticky;
     top:96px;
+    /* Clean neutral grey backdrop — looks like a real product photo
+       studio. No yellow/cream cast so light-colored garments (white,
+       cream, heather) still read clearly against it. */
     background:
-      radial-gradient(ellipse 80% 60% at 50% 35%, #ffffff 0%, #f0ebe1 65%, #d9d3c5 100%);
+      radial-gradient(ellipse 80% 60% at 50% 38%, #f5f4ef 0%, #e8e5dd 70%, #c9c5bb 100%);
     border:1px solid var(--line);
     aspect-ratio:1/1.15;
     overflow:hidden;
@@ -51,7 +54,7 @@
   .config-preview::after{
     content:'';
     position:absolute; inset:0;
-    background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.18) 100%);
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.14) 100%);
     pointer-events:none;
     z-index:1;
   }
@@ -145,16 +148,13 @@
   }
   .preview-product{
     position:relative;
-    width:64%;
-    max-width:540px;
+    width:78%;
+    max-width:600px;
     transition:width .35s ease;
-    /* Soft elliptical floor shadow under the product — gives it a
-       sense of "sitting" in the stage rather than floating. Only
-       drawn when there's actually a product visible (CSS :has). */
     filter:drop-shadow(0 22px 18px rgba(60,40,15,.18))
            drop-shadow(0 8px 10px rgba(60,40,15,.12));
   }
-  @media (max-width:640px){ .preview-product{width:72%} }
+  @media (max-width:640px){ .preview-product{width:86%} }
   .preview-product svg{ width:100%; height:auto; display:block; }
 
   /* ===== LAYERS ===== */
@@ -1779,22 +1779,11 @@
     }
 
     const fillHex = state.color?.hex || '#dcd9d0';
-    // Prefer a real photo mockup when ANY photo is mapped for this product
-    // type (any color). The base photo is always the white version; we
-    // tint it to match the chosen color via a multiply-blend overlay.
-    // mix-blend-mode multiplies the picked color into the photo's
-    // brightness, so creases / folds / shadows stay visible.
-    const baseKey = `${state.product.type}-base`;
-    const photoUrl = PHOTO_MOCKUPS[baseKey] || PHOTO_MOCKUPS[`${state.product.type}-white`];
-    let svg;
-    if (photoUrl) {
-      svg = `<div class="photo-wrap" style="position:relative;width:100%">
-        <img src="${escapeAttr(photoUrl)}" alt="" style="width:100%;height:auto;display:block;pointer-events:none;filter:drop-shadow(0 16px 24px rgba(0,0,0,.18))" />
-        <div class="photo-tint" style="position:absolute;inset:0;background:${fillHex};mix-blend-mode:multiply;pointer-events:none"></div>
-      </div>`;
-    } else {
-      svg = getProductPreviewSVG(state.product.type, fillHex);
-    }
+    // Photo mockups were unreliable on dark colors (multiply blend
+    // crushed to mud) and showed background scenery through the tint.
+    // Clean SVG silhouettes recolor cleanly at any swatch and look
+    // consistent across all 7 garments. Always use SVG now.
+    const svg = getProductPreviewSVG(state.product.type, fillHex);
 
     // Build layers — only those on the active side
     const visibleLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
@@ -2545,12 +2534,11 @@
   }
 
   // ===== INIT =====
-  // Pre-select sensible defaults so the page is immediately interactive
-  // — landing on /customize used to show an empty stage with "Pick a
-  // piece below to start". Now you see a black hoodie ready to design.
-  // Anything can still be changed; this is just a starting point.
-  state.product = PRODUCTS[0];          // Blank Hoodie
-  state.color   = COLORS[0];            // Black
+  // Default = blank white T-shirt. The simplest, most universally
+  // recognizable garment to customize. User can swap to any other
+  // product / color from the picker.
+  state.product = PRODUCTS.find(p => p.id === 'blank-tee') || PRODUCTS[0];
+  state.color   = COLORS.find(c => c.id === 'white') || COLORS[0];
   wireStageDeselect();
   // Templates / graphics drawer / font picker are one-shot UI — render
   // them once at boot rather than on every render(), since they don't

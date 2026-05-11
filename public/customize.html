@@ -802,13 +802,22 @@
 
   <div class="config-layout">
 
-    <!-- Live preview — front-only for now. Back-view rendering was a
-         broken duplicate of front; removing the toggle until we can
-         render a real back silhouette per garment. Zoom controls were
-         confusing UX on a screen this size; the SVG is already sized
-         to fill the stage. -->
+    <!-- Live preview -->
     <div class="config-preview" id="configPreview">
       <span class="config-preview-label">Preview</span>
+      <div class="side-toggle" id="sideToggle">
+        <button type="button" class="active" data-side="front">Front</button>
+        <button type="button" data-side="back">Back</button>
+      </div>
+      <div class="zoom-controls" id="zoomControls" aria-label="Zoom in or out">
+        <button type="button" id="zoomIn" aria-label="Zoom in">+</button>
+        <div class="divider"></div>
+        <span class="zoom-level" id="zoomLevel">100%</span>
+        <div class="divider"></div>
+        <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
+        <div class="divider"></div>
+        <button type="button" id="zoomReset" aria-label="Reset zoom" style="font-size:11px">⟳</button>
+      </div>
       <div class="preview-stage" id="previewStage">
         <div class="preview-product" id="previewProduct">
           <div class="preview-empty">Pick a piece below to start</div>
@@ -901,6 +910,13 @@
             <span class="text-style-label">Font</span>
             <select id="textFontSelect" class="text-font-select" aria-label="Font family"></select>
           </div>
+          <!-- Format toggles: bold, italic, underline -->
+          <div class="text-style-row">
+            <span class="text-style-label">Style</span>
+            <button type="button" class="text-format selected" data-format="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+            <button type="button" class="text-format" data-format="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+            <button type="button" class="text-format" data-format="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+          </div>
           <!-- Color: 6 presets + a native color picker for everything else -->
           <div class="text-style-row">
             <span class="text-style-label">Color</span>
@@ -934,6 +950,15 @@
       </div>
 
       <!-- Quote -->
+      <!-- "Other inquiries" CTA — for anything that doesn't fit the
+           configurator (bulk orders, fully bespoke pieces, sponsorship
+           inquiries, etc.). Goes to the standard /contact form. -->
+      <div style="margin-top:18px;padding:18px;border:1px dashed var(--line-strong);background:rgba(0,0,0,.18)">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Need something else?</div>
+        <p style="font-size:12px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px">Bulk order, embroidery, a fully custom piece, or anything the studio above can't do? Send us your details and we'll email you back.</p>
+        <a href="/contact?subject=Custom+order+inquiry" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(184,137,61,.4);padding-bottom:3px">Contact us →</a>
+      </div>
+
       <div class="quote-card" id="quoteCard">
         <div class="quote-row"><span class="label">Item</span><span class="value" id="qItem">—</span></div>
         <div class="quote-row"><span class="label">Color</span><span class="value" id="qColor">—</span></div>
@@ -1379,77 +1404,41 @@
     }
 
     if (type === 'tee') {
-      // Single contiguous t-shirt silhouette. Proportions: body roughly
-      // 1.3:1 tall (real tees are squarish). Outline stroke is darker
-      // than the body fill so the shape reads even on a white shirt
-      // against a light backdrop. Stroke opacity tuned so dark shirts
-      // don't look outlined-cartoon.
-      //
-      // For light shirts (white/cream/heather) we use a noticeably
-      // darker outline so the silhouette doesn't disappear into the
-      // cream studio backdrop. For dark shirts the default stroke
-      // is fine — extra contrast would just look cartoonish.
-      const r = parseInt(fillHex.slice(1,3), 16);
-      const g = parseInt(fillHex.slice(3,5), 16);
-      const b = parseInt(fillHex.slice(5,7), 16);
-      const luminance = (r + g + b) / 3;
-      const isLight = luminance > 200;
-      const outline = isLight ? shade(fillHex, -95) : stroke;
-      const outlineOpacity = isLight ? 0.7 : 0.55;
-      return `<svg viewBox="0 0 320 340" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
+      return `<svg viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">
         ${grad('tee')}
         <!-- Floor shadow -->
-        <ellipse cx="160" cy="328" rx="100" ry="5" fill="rgba(0,0,0,.18)"/>
-        <!-- Full t-shirt silhouette as ONE path so the outline is
-             contiguous (no seam where sleeves meet body). Path traces:
-             top-left shoulder → out to left sleeve tip → down sleeve →
-             back up to underarm → down left side → across hem →
-             up right side → up to right underarm → out to right
-             sleeve tip → back to top-right shoulder → curve through
-             neckline → back to start. -->
-        <path d="
-          M 105 56
-          L 60 78
-          Q 44 84 40 100
-          L 56 132
-          Q 64 140 78 138
-          L 100 122
-          L 100 290
-          Q 100 298 108 298
-          L 212 298
-          Q 220 298 220 290
-          L 220 122
-          L 242 138
-          Q 256 140 264 132
-          L 280 100
-          Q 276 84 260 78
-          L 215 56
-          L 188 70
-          Q 160 84 132 70
-          Z"
-          fill="url(#tee-body)"
-          stroke="${outline}" stroke-width="1.4" stroke-opacity="${outlineOpacity}"
-          stroke-linejoin="round" stroke-linecap="round"/>
-        <!-- Crew neckline ribbing -->
-        <path d="M 132 70 Q 160 88 188 70 L 186 78 Q 160 92 134 78 Z"
-              fill="${sh2}" opacity=".8"/>
-        <path d="M 132 70 Q 160 88 188 70"
-              fill="none" stroke="${stroke}" stroke-width="1.2" stroke-opacity=".75"/>
-        <!-- Inner collar shadow (small ellipse below the rib band) -->
-        <ellipse cx="160" cy="80" rx="22" ry="3" fill="${deep}" opacity=".4"/>
-        <!-- Subtle drape lines down body — only visible on darker shirts -->
-        <path d="M 132 130 Q 130 200 134 280" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".18"/>
-        <path d="M 188 130 Q 190 200 186 280" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".18"/>
-        <!-- Sleeve hem stitches -->
-        <path d="M 56 132 Q 70 138 78 138" fill="none" stroke="${stroke}" stroke-width=".7" stroke-opacity=".5"/>
-        <path d="M 264 132 Q 250 138 242 138" fill="none" stroke="${stroke}" stroke-width=".7" stroke-opacity=".5"/>
-        <!-- Body hem stitch (dashed) -->
-        <line x1="106" y1="293" x2="214" y2="293" stroke="${stroke}" stroke-width=".6" stroke-dasharray="3 2" stroke-opacity=".45"/>
-        <!-- Soft chest highlight (radial) -->
-        <ellipse cx="160" cy="160" rx="60" ry="38" fill="url(#tee-hi)" opacity=".55"/>
-        <!-- Underarm shadows — subtle, helps the eye read shoulder line -->
-        <ellipse cx="100" cy="118" rx="12" ry="6" fill="${sh2}" opacity=".25"/>
-        <ellipse cx="220" cy="118" rx="12" ry="6" fill="${sh2}" opacity=".25"/>
+        <ellipse cx="160" cy="352" rx="105" ry="5" fill="rgba(0,0,0,.16)"/>
+        <!-- Left sleeve -->
+        <path d="M48 92 Q56 76 100 60 L132 100 Q126 124 116 144 Q92 144 60 130 Z" fill="url(#tee-body)"/>
+        <!-- Right sleeve -->
+        <path d="M272 92 Q264 76 220 60 L188 100 Q194 124 204 144 Q228 144 260 130 Z" fill="url(#tee-body)"/>
+        <!-- Sleeve hem rolls -->
+        <path d="M60 130 Q86 140 116 144" fill="none" stroke="${stroke}" stroke-width="1" opacity=".5"/>
+        <path d="M260 130 Q234 140 204 144" fill="none" stroke="${stroke}" stroke-width="1" opacity=".5"/>
+        <!-- Sleeve cap shadow -->
+        <path d="M100 60 Q120 86 132 100" fill="none" stroke="${sh2}" stroke-width="1" opacity=".35"/>
+        <path d="M220 60 Q200 86 188 100" fill="none" stroke="${sh2}" stroke-width="1" opacity=".35"/>
+        <!-- Body -->
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 Q218 354 212 354 L108 354 Q102 354 102 348 L102 118 L78 102 Z" fill="url(#tee-body)"/>
+        <!-- Drape lines down body -->
+        <path d="M126 120 Q124 200 128 320" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".22"/>
+        <path d="M194 120 Q196 200 192 320" fill="none" stroke="${sh2}" stroke-width=".7" opacity=".22"/>
+        <!-- Side seam shadows -->
+        <path d="M105 120 Q103 200 105 340" fill="none" stroke="${sh2}" stroke-width="1.5" opacity=".22"/>
+        <path d="M215 120 Q217 200 215 340" fill="none" stroke="${sh2}" stroke-width="1.5" opacity=".22"/>
+        <!-- Crew neckline ribbing (visible band) -->
+        <path d="M132 78 Q160 96 188 78 L186 88 Q160 99 134 88 Z" fill="${sh2}"/>
+        <path d="M132 78 Q160 96 188 78" fill="none" stroke="${stroke}" stroke-width="1.4" opacity=".85"/>
+        <path d="M134 84 Q160 99 186 84" fill="none" stroke="${stroke}" stroke-width=".5" opacity=".6"/>
+        <!-- Body hem stitch (double row) -->
+        <line x1="106" y1="346" x2="214" y2="346" stroke="${stroke}" stroke-width=".6" opacity=".5"/>
+        <line x1="106" y1="349" x2="214" y2="349" stroke="${stroke}" stroke-width=".6" stroke-dasharray="2 2" opacity=".5"/>
+        <!-- Tag bump on inside collar (back) -->
+        <rect x="156" y="84" width="8" height="3" fill="${stroke}" opacity=".4"/>
+        <!-- Chest highlight -->
+        <path d="M100 60 L130 78 Q160 90 190 78 L220 60 L242 102 L218 118 L218 348 L102 348 L102 118 L78 102 Z" fill="url(#tee-hi)"/>
+        <!-- Subtle ambient occlusion under arms -->
+        <ellipse cx="160" cy="135" rx="78" ry="20" fill="url(#tee-shdow)" opacity=".4"/>
       </svg>`;
     }
 
@@ -1913,13 +1902,15 @@
 
   function renderLayersPanel() {
     const panel = document.getElementById('layersPanel');
-    // All layers live on the front side now — front/back toggle removed.
-    // Keep the side filter for forward compatibility but drop the
-    // "+X on other side" footer since there's no way to get there.
     const sideLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
+    const otherCount = state.layers.length - sideLayers.length;
 
-    if (sideLayers.length === 0) {
+    if (state.layers.length === 0) {
       panel.innerHTML = '<div class="layers-empty">No layers yet. Use Add image or Add text above.</div>';
+      return;
+    }
+    if (sideLayers.length === 0) {
+      panel.innerHTML = `<div class="layers-empty">No layers on the <strong>${state.activeSide}</strong> yet.<br>${otherCount} layer${otherCount===1?'':'s'} on the other side.</div>`;
       return;
     }
     // Display newest layer at top of list
@@ -1937,7 +1928,10 @@
         <button type="button" class="layer-row-remove" data-delete-layer="${l.id}" aria-label="Remove">×</button>
       </div>`;
     }).join('');
-    panel.innerHTML = items;
+    const footer = otherCount > 0
+      ? `<div class="layers-empty" style="border-top:1px solid var(--line);padding:10px 12px;font-size:11px">+ ${otherCount} layer${otherCount===1?'':'s'} on the ${state.activeSide === 'front' ? 'back' : 'front'}</div>`
+      : '';
+    panel.innerHTML = items + footer;
   }
 
   function renderQuote() {
@@ -2079,7 +2073,7 @@
     });
     state.selectedLayerId = id;
     render();
-    setStatus('Image added. Drag to position, resize, rotate.', '');
+    setStatus(`Image added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
   }
 
   function addTextLayer(text, color, weight, italic, underline, font) {
@@ -2097,14 +2091,13 @@
     });
     state.selectedLayerId = id;
     render();
-    setStatus('Text added. Drag to position, resize, rotate.', '');
+    setStatus(`Text added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
   }
 
   // ===== TEMPLATE APPLICATION =====
   // Replace any existing layers with the template's layers, assigning
-  // fresh IDs. Front/back toggle was removed in the cleanup pass, so
-  // any back-side layers in a template are remapped to front — the
-  // user can shift the design themselves if they need it elsewhere.
+  // fresh IDs. We also flip the active side to wherever the template
+  // has its first layer so the user immediately sees what they applied.
   function applyTemplate(templateId) {
     const tmpl = TEMPLATES.find(t => t.id === templateId);
     if (!tmpl) return;
@@ -2112,7 +2105,7 @@
     state.layers = tmpl.layers.map(spec => ({
       id: state.nextLayerId++,
       type: spec.type,
-      side: 'front',
+      side: spec.side || 'front',
       x: spec.x ?? 50,
       y: spec.y ?? 50,
       width: spec.width ?? 50,
@@ -2129,7 +2122,15 @@
         dataUrl: spec.dataUrl
       })
     }));
-    state.activeSide = 'front';
+    // Flip to the side where the first layer lives so the user sees it
+    if (state.layers.length > 0) {
+      state.activeSide = state.layers[0].side;
+      const sideBtn = document.querySelector(`#sideToggle button[data-side="${state.activeSide}"]`);
+      if (sideBtn) {
+        document.querySelectorAll('#sideToggle button').forEach(b => b.classList.remove('active'));
+        sideBtn.classList.add('active');
+      }
+    }
     state.selectedLayerId = null;
     render();
     setStatus(`Applied template "${tmpl.name}". Edit any layer to make it yours.`, '');
@@ -2151,16 +2152,45 @@
     render();
   }
 
-  // setActiveSide / setZoom dropped along with their UI. state.zoom and
-  // state.activeSide stay in the state shape (always 1 and 'front') so
-  // renderPreview / renderLayersPanel keep working without conditional
-  // branches.
+  function setActiveSide(side) {
+    if (side !== 'front' && side !== 'back') return;
+    state.activeSide = side;
+    state.selectedLayerId = null;
+    document.querySelectorAll('#sideToggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.side === side);
+    });
+    render();
+  }
+
+  // Zoom in/out — applies a CSS transform:scale to .preview-product so
+  // the user can inspect their design at higher detail. Layer drag math
+  // already accounts for the rendered size via getBoundingClientRect(),
+  // so dragging works correctly at any zoom level.
+  function setZoom(z) {
+    state.zoom = Math.max(0.5, Math.min(2.5, z));
+    const product = document.getElementById('previewProduct');
+    if (product) {
+      product.style.transform = `scale(${state.zoom})`;
+      product.style.transformOrigin = 'center center';
+    }
+    const label = document.getElementById('zoomLevel');
+    if (label) label.textContent = Math.round(state.zoom * 100) + '%';
+    const inBtn = document.getElementById('zoomIn');
+    const outBtn = document.getElementById('zoomOut');
+    if (inBtn) inBtn.disabled = state.zoom >= 2.5;
+    if (outBtn) outBtn.disabled = state.zoom <= 0.5;
+  }
+  function zoomIn()    { setZoom(state.zoom + 0.25); }
+  function zoomOut()   { setZoom(state.zoom - 0.25); }
+  function zoomReset() { setZoom(1); }
 
   // ===== EVENTS =====
-  // Zoom + front/back toggle handlers removed with their UI in the
-  // simplification pass. setZoom/setActiveSide still exist as no-ops
-  // in case any layout code still references them.
   document.addEventListener('click', (e) => {
+    if (e.target.id === 'zoomIn')    { zoomIn();    return; }
+    if (e.target.id === 'zoomOut')   { zoomOut();   return; }
+    if (e.target.id === 'zoomReset') { zoomReset(); return; }
+    const sideBtn = e.target.closest('#sideToggle button');
+    if (sideBtn) { setActiveSide(sideBtn.dataset.side); return; }
     const product = e.target.closest('.product-option');
     if (product) {
       state.product = PRODUCTS.find(p => p.id === product.dataset.id);
@@ -2231,7 +2261,23 @@
       addGraphicLayer(graphicBtn.dataset.graphicId);
       return;
     }
-    // Text color presets
+    // Bold / Italic / Underline toggle buttons
+    const fmtBtn = e.target.closest('[data-format]');
+    if (fmtBtn) {
+      const fmt = fmtBtn.dataset.format;
+      const next = !fmtBtn.classList.contains('selected');
+      fmtBtn.classList.toggle('selected', next);
+      if (fmt === 'bold')      { state.textDraft.bold = next; state.textDraft.weight = next ? 700 : 400; }
+      if (fmt === 'italic')    { state.textDraft.italic = next; }
+      if (fmt === 'underline') { state.textDraft.underline = next; }
+      // Sync the Weight pill row when bold toggles
+      if (fmt === 'bold') {
+        document.querySelectorAll('.text-weight-pill').forEach(b => {
+          b.classList.toggle('selected', parseInt(b.dataset.textWeight, 10) === state.textDraft.weight);
+        });
+      }
+      return;
+    }
     const colorBtn = e.target.closest('[data-text-color]');
     if (colorBtn) {
       state.textDraft.color = colorBtn.dataset.textColor;
@@ -2239,12 +2285,15 @@
       colorBtn.classList.add('selected');
       return;
     }
-    // Font-weight pills — directly map to state.textDraft.weight
     const weightBtn = e.target.closest('[data-text-weight]');
     if (weightBtn) {
       state.textDraft.weight = parseInt(weightBtn.dataset.textWeight, 10);
+      // Keep Bold toggle in sync with the chosen weight
+      state.textDraft.bold = state.textDraft.weight >= 600;
       document.querySelectorAll('.text-weight-pill').forEach(b => b.classList.remove('selected'));
       weightBtn.classList.add('selected');
+      const boldBtn = document.querySelector('[data-format="bold"]');
+      if (boldBtn) boldBtn.classList.toggle('selected', state.textDraft.bold);
       return;
     }
     const del = e.target.closest('[data-delete-layer]');

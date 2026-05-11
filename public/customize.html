@@ -1913,15 +1913,13 @@
 
   function renderLayersPanel() {
     const panel = document.getElementById('layersPanel');
+    // All layers live on the front side now — front/back toggle removed.
+    // Keep the side filter for forward compatibility but drop the
+    // "+X on other side" footer since there's no way to get there.
     const sideLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
-    const otherCount = state.layers.length - sideLayers.length;
 
-    if (state.layers.length === 0) {
-      panel.innerHTML = '<div class="layers-empty">No layers yet. Use Add image or Add text above.</div>';
-      return;
-    }
     if (sideLayers.length === 0) {
-      panel.innerHTML = `<div class="layers-empty">No layers on the <strong>${state.activeSide}</strong> yet.<br>${otherCount} layer${otherCount===1?'':'s'} on the other side.</div>`;
+      panel.innerHTML = '<div class="layers-empty">No layers yet. Use Add image or Add text above.</div>';
       return;
     }
     // Display newest layer at top of list
@@ -1939,10 +1937,7 @@
         <button type="button" class="layer-row-remove" data-delete-layer="${l.id}" aria-label="Remove">×</button>
       </div>`;
     }).join('');
-    const footer = otherCount > 0
-      ? `<div class="layers-empty" style="border-top:1px solid var(--line);padding:10px 12px;font-size:11px">+ ${otherCount} layer${otherCount===1?'':'s'} on the ${state.activeSide === 'front' ? 'back' : 'front'}</div>`
-      : '';
-    panel.innerHTML = items + footer;
+    panel.innerHTML = items;
   }
 
   function renderQuote() {
@@ -2084,7 +2079,7 @@
     });
     state.selectedLayerId = id;
     render();
-    setStatus(`Image added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
+    setStatus('Image added. Drag to position, resize, rotate.', '');
   }
 
   function addTextLayer(text, color, weight, italic, underline, font) {
@@ -2102,13 +2097,14 @@
     });
     state.selectedLayerId = id;
     render();
-    setStatus(`Text added to ${state.activeSide}. Drag to position, resize, rotate.`, '');
+    setStatus('Text added. Drag to position, resize, rotate.', '');
   }
 
   // ===== TEMPLATE APPLICATION =====
   // Replace any existing layers with the template's layers, assigning
-  // fresh IDs. We also flip the active side to wherever the template
-  // has its first layer so the user immediately sees what they applied.
+  // fresh IDs. Front/back toggle was removed in the cleanup pass, so
+  // any back-side layers in a template are remapped to front — the
+  // user can shift the design themselves if they need it elsewhere.
   function applyTemplate(templateId) {
     const tmpl = TEMPLATES.find(t => t.id === templateId);
     if (!tmpl) return;
@@ -2116,7 +2112,7 @@
     state.layers = tmpl.layers.map(spec => ({
       id: state.nextLayerId++,
       type: spec.type,
-      side: spec.side || 'front',
+      side: 'front',
       x: spec.x ?? 50,
       y: spec.y ?? 50,
       width: spec.width ?? 50,
@@ -2133,15 +2129,7 @@
         dataUrl: spec.dataUrl
       })
     }));
-    // Flip to the side where the first layer lives so the user sees it
-    if (state.layers.length > 0) {
-      state.activeSide = state.layers[0].side;
-      const sideBtn = document.querySelector(`#sideToggle button[data-side="${state.activeSide}"]`);
-      if (sideBtn) {
-        document.querySelectorAll('#sideToggle button').forEach(b => b.classList.remove('active'));
-        sideBtn.classList.add('active');
-      }
-    }
+    state.activeSide = 'front';
     state.selectedLayerId = null;
     render();
     setStatus(`Applied template "${tmpl.name}". Edit any layer to make it yours.`, '');
@@ -2163,37 +2151,10 @@
     render();
   }
 
-  function setActiveSide(side) {
-    if (side !== 'front' && side !== 'back') return;
-    state.activeSide = side;
-    state.selectedLayerId = null;
-    document.querySelectorAll('#sideToggle button').forEach(b => {
-      b.classList.toggle('active', b.dataset.side === side);
-    });
-    render();
-  }
-
-  // Zoom in/out — applies a CSS transform:scale to .preview-product so
-  // the user can inspect their design at higher detail. Layer drag math
-  // already accounts for the rendered size via getBoundingClientRect(),
-  // so dragging works correctly at any zoom level.
-  function setZoom(z) {
-    state.zoom = Math.max(0.5, Math.min(2.5, z));
-    const product = document.getElementById('previewProduct');
-    if (product) {
-      product.style.transform = `scale(${state.zoom})`;
-      product.style.transformOrigin = 'center center';
-    }
-    const label = document.getElementById('zoomLevel');
-    if (label) label.textContent = Math.round(state.zoom * 100) + '%';
-    const inBtn = document.getElementById('zoomIn');
-    const outBtn = document.getElementById('zoomOut');
-    if (inBtn) inBtn.disabled = state.zoom >= 2.5;
-    if (outBtn) outBtn.disabled = state.zoom <= 0.5;
-  }
-  function zoomIn()    { setZoom(state.zoom + 0.25); }
-  function zoomOut()   { setZoom(state.zoom - 0.25); }
-  function zoomReset() { setZoom(1); }
+  // setActiveSide / setZoom dropped along with their UI. state.zoom and
+  // state.activeSide stay in the state shape (always 1 and 'front') so
+  // renderPreview / renderLayersPanel keep working without conditional
+  // branches.
 
   // ===== EVENTS =====
   // Zoom + front/back toggle handlers removed with their UI in the

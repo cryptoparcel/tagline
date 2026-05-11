@@ -83,8 +83,8 @@ export default async function handler(req, res) {
         <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#6b7689;text-align:left">
           ${escapeHtml(i.category || '')}
         </td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:13px;text-align:right;font-weight:600;color:${i.stock === 0 ? '#c43b3b' : '#b8893d'}">
-          ${escapeHtml(String(i.stock))}
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e5e5;font-size:13px;text-align:right;font-weight:600;color:${(i.stock | 0) === 0 ? '#c43b3b' : '#b8893d'}">
+          ${escapeHtml(String(i.stock | 0))}
         </td>
       </tr>
     `;

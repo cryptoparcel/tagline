@@ -157,6 +157,34 @@
   @media (max-width:640px){ .preview-product{width:86%} }
   .preview-product svg{ width:100%; height:auto; display:block; }
 
+  /* ============ PRINT-ZONE INDICATOR ============
+     Subtle dashed rectangle telling the user where on the garment the
+     design will print. Positioned in % so it tracks the SVG silhouette.
+     Hidden once the user starts adding layers — by then they've got
+     the idea and the dashes would clash with the actual design. */
+  .print-zone{
+    position:absolute;
+    border:1.5px dashed rgba(184,137,61,.55);
+    pointer-events:none;
+    z-index:3;
+    box-sizing:border-box;
+    transition:opacity .25s ease;
+  }
+  .print-zone::before{
+    content:'PRINT ZONE';
+    position:absolute;
+    top:-9px; left:8px;
+    background:rgba(8,8,10,.85);
+    color:var(--gold-soft);
+    font-size:8px; font-weight:700;
+    letter-spacing:.16em;
+    padding:2px 6px;
+    border-radius:2px;
+  }
+  /* Hide once any layers exist on the active side — handled in JS by
+     toggling .has-layers on .preview-product. */
+  .preview-product.has-layers .print-zone{ opacity:0; }
+
   /* ===== LAYERS ===== */
   /* Each layer is a positioned div containing an image or text. The
      transform handles rotation; width is in % so it scales with the
@@ -1191,6 +1219,28 @@
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(wrapped);
   }
 
+  // ===== PRINT ZONES =====
+  // Per (garment type, side): the safe-print rectangle as percentages of
+  // the preview area. Values approximated from where the garment body
+  // visually sits inside its 320x360 SVG viewBox.
+  //   x,y = top-left as % of preview
+  //   w,h = width / height as % of preview
+  // Note: hoodie front zone stops above the kangaroo pocket (~y 60%).
+  // Polo zone is tighter (avoids the placket + collar). Slacks have a
+  // small thigh area since dress pants rarely get printed.
+  const PRINT_ZONES = {
+    'tee':        { front:{x:30,y:25,w:40,h:42}, back:{x:28,y:22,w:44,h:52} },
+    'hoodie':     { front:{x:30,y:25,w:40,h:32}, back:{x:28,y:20,w:44,h:54} },
+    'crew':       { front:{x:30,y:25,w:40,h:42}, back:{x:28,y:22,w:44,h:52} },
+    'polo':       { front:{x:32,y:32,w:36,h:34}, back:{x:30,y:24,w:40,h:46} },
+    'sweatpants': { front:{x:34,y:55,w:14,h:20}, back:{x:34,y:55,w:14,h:20} },
+    'trackpants': { front:{x:34,y:55,w:14,h:20}, back:{x:34,y:55,w:14,h:20} },
+    'slacks':     { front:{x:34,y:55,w:14,h:18}, back:{x:34,y:55,w:14,h:18} }
+  };
+  function getPrintZone(type, side) {
+    return PRINT_ZONES[type]?.[side] || PRINT_ZONES['tee'][side] || null;
+  }
+
 
   // ===== REAL PHOTO MOCKUPS =====
   // Map of product type -> URL of a real WHITE-version product photo.
@@ -1787,6 +1837,12 @@
 
     // Build layers — only those on the active side
     const visibleLayers = state.layers.filter(l => (l.side || 'front') === state.activeSide);
+
+    // Print-zone overlay — empty if no zone is mapped (defensive).
+    const zone = getPrintZone(state.product.type, state.activeSide);
+    const zoneHtml = zone
+      ? `<div class="print-zone" style="left:${zone.x}%;top:${zone.y}%;width:${zone.w}%;height:${zone.h}%;"></div>`
+      : '';
     const layersHtml = visibleLayers.map(l => {
       const selected = state.selectedLayerId === l.id ? 'selected' : '';
       const transform = `translate(-50%, -50%) rotate(${l.rotation || 0}deg)`;
@@ -1812,7 +1868,11 @@
       </div>`;
     }).join('');
 
-    product.innerHTML = svg + layersHtml;
+    product.innerHTML = svg + zoneHtml + layersHtml;
+    // Hide the print-zone hint once any layers exist on this side —
+    // by then the user knows where to put things; the dashes would
+    // just clash with their design.
+    product.classList.toggle('has-layers', visibleLayers.length > 0);
     // Re-apply zoom transform after innerHTML wipe
     product.style.transform = `scale(${state.zoom})`;
     product.style.transformOrigin = 'center center';
